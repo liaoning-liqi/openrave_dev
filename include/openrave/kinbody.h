@@ -2438,7 +2438,7 @@ protected:
     typedef boost::shared_ptr<KinBodyInfo> KinBodyInfoPtr;
     typedef boost::shared_ptr<KinBodyInfo const> KinBodyInfoConstPtr;
 
-    /// \brief Alias for list of non-colliding link pairs, mostly used for Grabbed checking.
+    /// \brief Alias for list of non-colliding link pairs, mainly used for collision checking for Grabbed.
     using ListNonCollidingLinkPairs = std::list<std::pair<KinBody::LinkConstPtr, KinBody::LinkConstPtr> >;
 
     /// \brief Saved data for Grabbed used in KinBodyStateSaver and KinBodyStateSaverRef
@@ -3824,7 +3824,18 @@ protected:
     mutable std::string __hashKinematicsGeometryDynamics; ///< hash serializing kinematics, dynamics and geometry properties of the KinBody
     int64_t _lastModifiedAtUS=0; ///< us, linux epoch, last modified time of the kinbody when it was originally loaded from the environment.
     int64_t _revisionId = 0; ///< the webstack revision for this loaded kinbody
-    std::unordered_map<uint64_t, ListNonCollidingLinkPairs> _mapListNonCollidingInterGrabbedLinkPairsWhenGrabbed; ///< map of list of link pairs. This is computed when grabbed bodies are grabbed, and at taht time, two grabbed bodies are not touching each other. Since these links are not colliding at the time of grabbing, they should remain non-colliding with the grabbed body throughout. If, while grabbing, they collide with the grabbed body at some point, CheckSelfCollision should return true. It is important to note that the enable state of a link does *not* affect its membership of this list. Each pair in the list should be [Grabbed1-link, Grabbed2-link]. Note that this does not contain link pairs of [Grabbed-link, Grabber-link], c.f. Grabbed::_listNonCollidingGrabbedGrabberLinkPairsWhenGrabbed. Note that the key of this map is 'environment body indices pair', which lower 32bits are for the first KinBody's envBodyIndex, and which higher 32bits are for the second KinBody's envBodyIndex. The first envBodyIndex should be always smaller than the second envBodyIndex to simplify searching. Please also see _ComputeEnvironmentBodyIndicesPair.
+    /// _mapListNonCollidingInterGrabbedLinkPairsWhenGrabbed maps a pair of envBodyIndices of two grabbed bodies
+    /// (encoded into one uint64_t via _ComputeEnvironmentBodyIndicesPair) to a list of initially non-colliding link
+    /// pairs between the two. The ListNonCollidingLinkPairs for body1 and body2 is computed from state when the latest
+    /// body between body1 and body2 has been grabbed. Since these links in each pair are not colliding with each other
+    /// at the time of grabbing, they should remain non-colliding throughout (i.e. until either of them is released).
+    /// Notes:
+    /// - The enable states of links do *not* affect the membership of this ListNonCollidingLinkPair.
+    /// - ListNonCollidingLinkPair, which is the values of this map, only contains link pairs of *grabbed* bodies (i.e.
+    ///   not grabber's links).
+    /// - Each link pair (grabbed1Link, grabbed2Link) in ListNonCollidingLinkPair must be such that the first element
+    ///   corresponds to the grabbed body with lower environment body index.
+    std::unordered_map<uint64_t, ListNonCollidingLinkPairs> _mapListNonCollidingInterGrabbedLinkPairsWhenGrabbed;
     uint64_t _nextGrabbedBodyUniqueId = 0; ///< This indicates the unique id of the next grabbed body. Monotonically increasing, except for the resetting when all grabbed bodies are released, ...etc. Lower unique id means grabbed earlier, and we can identify the order of grabbed bodies through this Id.
 
 private:
@@ -3908,14 +3919,14 @@ public:
     const uint64_t _uniqueId = 0; ///< The unique id of this Grabbed instance. Lower unique id means grabbed earlier, and we can identify the order of grabbed bodies through this Id.
 private:
 
-    /// \brief push inter-grabbed-bodies non colliding link pairs to grabber.
+    /// \brief update grabber's _mapListNonCollidingInterGrabbedLinkPairsWhenGrabbed. if there is the existing list, push the inter-grabbed link pairs to it. otherwise, create the new list in the map and push the inter-grabbed link pairs to it.
     /// \param[out] pGrabber : updated grabber.
     /// \param[out] pchecker : collision checker
     /// \param[in] grabbedBody, otherGrabbedBody : grabbed body by this class, and other grabbed body to check.
-    void _PushNonCollidingLinkPairsForGrabbedBodies(KinBodyPtr& pGrabber,
-                                                    CollisionCheckerBasePtr& pchecker,
-                                                    const KinBody& grabbedBody,
-                                                    const KinBody& otherGrabbedBody);
+    void _UpdateMapListNonCollidingInterGrabbedLinkPairs(KinBodyPtr& pGrabber,
+                                                         CollisionCheckerBasePtr& pchecker,
+                                                         const KinBody& grabbedBody,
+                                                         const KinBody& otherGrabbedBody);
 
     bool _listNonCollidingIsValid = false; ///< a flag indicating whether the current _listNonCollidingLinksWhenGrabbed is valid or not.
     std::vector<KinBody::LinkPtr> _vAttachedToGrabbingLink; ///< vector of all links that are rigidly attached to _pGrabbingLink
