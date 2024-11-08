@@ -305,16 +305,18 @@ bool KinBody::Grab(KinBodyPtr pGrabbedBody, LinkPtr pGrabbingLink, const std::se
         if( !!pPreviouslyGrabbed ) {
             RAVELOG_INFO_FORMAT("env=%s, body '%s' grabs body '%s' that has previously been grabbed", GetEnv()->GetNameId()%GetName()%pGrabbedBody->GetName());
         }
-        else if( IS_DEBUGLEVEL(Level_Verbose) ) {
+        else {
             std::set<KinBodyPtr> setAttached;
             pGrabbedBody->GetAttached(setAttached);
-            std::stringstream ss;
-            if( setAttached.size() > 1 ) {
-                FOREACH(itbody, setAttached) {
-                    ss << (*itbody)->GetName() << ",";
+            for(const KinBodyPtr& pAttachedBodyToGrabbedBody : setAttached) {
+                if( pAttachedBodyToGrabbedBody->IsGrabbing(pGrabbedBody) ) {
+                    std::stringstream ss;
+                    FOREACH(itbody, setAttached) {
+                        ss << (*itbody)->GetName() << ",";
+                    }
+                    throw OPENRAVE_EXCEPTION_FORMAT("env=%s, body '%s' trying to grab body '%s', which is already grabbed by '%s' at least. grab body '%s' has %d attached bodies [%s]", GetEnv()->GetNameId()%GetName()%pGrabbedBody->GetName()%pAttachedBodyToGrabbedBody->GetName()%pGrabbedBody->GetName()%setAttached.size()%ss.str(), ORE_InvalidArguments);
                 }
             }
-            RAVELOG_VERBOSE_FORMAT("env=%s, body '%s' trying to grab body '%s' with %d attached bodies [%s]", GetEnv()->GetNameId()%GetName()%pGrabbedBody->GetName()%setAttached.size()%ss.str());
         }
     }
 
