@@ -88,6 +88,31 @@ static void _CreateSaverForGrabbedAndGrabber(KinBody::KinBodyStateSaverPtr& pSav
     }
 }
 
+/// \brief strictly check if pGrabbedBody is already grabbed by other bodies. If already grabbed, throw exception.
+/// \param[in] pGrabbedBody : newly grabbed body.
+/// \param[in] envNameId, newGrabberName : env name id, and the new grabber name which tries to grab pGrabbedBody.
+static void _CheckIfGrabbedBodyIsAlreadyGrabbedByOthers(const KinBodyPtr& pGrabbedBody,
+                                                        const std::string& newGrabberName,
+                                                        const std::string& envNameId)
+{
+    std::set<KinBodyPtr> setAttached;
+    pGrabbedBody->GetAttached(setAttached);
+    for(const KinBodyPtr& pAttachedBodyToGrabbedBody : setAttached) {
+        if( pAttachedBodyToGrabbedBody->GetNumGrabbed() == 0 ) {
+            continue;
+        }
+        if( pAttachedBodyToGrabbedBody->IsGrabbing(*pGrabbedBody) ) {
+            std::stringstream ss;
+            FOREACH(itbody, setAttached) {
+                ss << (*itbody)->GetName() << ",";
+            }
+            throw OPENRAVE_EXCEPTION_FORMAT("env=%s, body '%s' trying to grab body '%s', which is already grabbed by '%s' at least. grab body '%s' has %d attached bodies [%s]",
+                                            envNameId%newGrabberName%pGrabbedBody->GetName()%pAttachedBodyToGrabbedBody->GetName()%pGrabbedBody->GetName()%setAttached.size()%ss.str(),
+                                            ORE_InvalidArguments);
+        }
+    }
+}
+
 Grabbed::Grabbed(KinBodyPtr pGrabbedBody, KinBody::LinkPtr pGrabbingLink)
 {
     _pGrabbedBody = pGrabbedBody;
@@ -306,17 +331,7 @@ bool KinBody::Grab(KinBodyPtr pGrabbedBody, LinkPtr pGrabbingLink, const std::se
             RAVELOG_INFO_FORMAT("env=%s, body '%s' grabs body '%s' that has previously been grabbed", GetEnv()->GetNameId()%GetName()%pGrabbedBody->GetName());
         }
         else {
-            std::set<KinBodyPtr> setAttached;
-            pGrabbedBody->GetAttached(setAttached);
-            for(const KinBodyPtr& pAttachedBodyToGrabbedBody : setAttached) {
-                if( pAttachedBodyToGrabbedBody->IsGrabbing(pGrabbedBody) ) {
-                    std::stringstream ss;
-                    FOREACH(itbody, setAttached) {
-                        ss << (*itbody)->GetName() << ",";
-                    }
-                    throw OPENRAVE_EXCEPTION_FORMAT("env=%s, body '%s' trying to grab body '%s', which is already grabbed by '%s' at least. grab body '%s' has %d attached bodies [%s]", GetEnv()->GetNameId()%GetName()%pGrabbedBody->GetName()%pAttachedBodyToGrabbedBody->GetName()%pGrabbedBody->GetName()%setAttached.size()%ss.str(), ORE_InvalidArguments);
-                }
-            }
+            _CheckIfGrabbedBodyIsAlreadyGrabbedByOthers(pGrabbedBody, GetName(), GetEnv()->GetNameId());
         }
     }
 
@@ -506,6 +521,9 @@ void KinBody::RegrabAll()
         if (!pBody) {
             RAVELOG_WARN_FORMAT("env=%s, grabbed body with index %d does not exist any more", GetEnv()->GetNameId()%grabbedBodyEnvIndex);
             continue;
+        }
+        if( pBody->HasAttached() ) {
+            _CheckIfGrabbedBodyIsAlreadyGrabbedByOthers(pBody, GetName(), GetEnv()->GetNameId());
         }
 
         GrabbedPtr pNewGrabbed(new Grabbed(pBody, pGrabbed->_pGrabbingLink));
@@ -853,6 +871,9 @@ void KinBody::ResetGrabbed(const std::vector<KinBody::GrabbedInfoConstPtr>& vGra
 
         // Assert that we are not trying to self-grab
         OPENRAVE_ASSERT_FORMAT(pBody.get() != this, "env=%s, body '%s' cannot grab itself", GetEnv()->GetNameId()%pBody->GetName(), ORE_InvalidArguments);
+        if( pBody->HasAttached() ) {
+            _CheckIfGrabbedBodyIsAlreadyGrabbedByOthers(pBody, GetName(), GetEnv()->GetNameId());
+        }
 
         // If we have a collision checker that is _not_ the default environment collision checker, we need to update it manually
         if (!!_selfcollisionchecker && _selfcollisionchecker != GetEnv()->GetCollisionChecker()) {
