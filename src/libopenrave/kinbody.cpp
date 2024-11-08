@@ -5898,6 +5898,7 @@ void KinBody::Clone(InterfaceBaseConstPtr preference, int cloningoptions)
                         throw OPENRAVE_EXCEPTION_FORMAT(_("When cloning body '%s' from env=%s, could not find grabbed object '%s' in env=%s"), GetName()%r->GetEnv()->GetNameId()%pbodyref->GetName()%GetEnv()->GetNameId(), ORE_InvalidState);
                     }
                 }
+                pgrabbedbody->_CheckIfAlreadyGrabbedOnGrab(GetName(), __FUNCTION__, /*bThrowException*/ false);
                 //BOOST_ASSERT(pgrabbedbody->GetName() == pbodyref->GetName());
 
                 GrabbedPtr pgrabbed(new Grabbed(pgrabbedbody,_veclinks.at(KinBody::LinkPtr(pgrabbedref->_pGrabbingLink)->GetIndex())));

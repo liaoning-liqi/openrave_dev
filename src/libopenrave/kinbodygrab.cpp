@@ -88,27 +88,29 @@ static void _CreateSaverForGrabbedAndGrabber(KinBody::KinBodyStateSaverPtr& pSav
     }
 }
 
-/// \brief strictly check if pGrabbedBody is already grabbed by other bodies. If already grabbed, throw exception.
-/// \param[in] pGrabbedBody : newly grabbed body.
-/// \param[in] envNameId, newGrabberName : env name id, and the new grabber name which tries to grab pGrabbedBody.
-static void _CheckIfGrabbedBodyIsAlreadyGrabbedByOthers(const KinBodyPtr& pGrabbedBody,
-                                                        const std::string& newGrabberName,
-                                                        const std::string& envNameId)
+void KinBody::_CheckIfAlreadyGrabbedOnGrab(const std::string& newGrabberName, const char* context, const bool bThrowException) const
 {
+    if( !HasAttached() ) {
+        return;
+    }
     std::set<KinBodyPtr> setAttached;
-    pGrabbedBody->GetAttached(setAttached);
+    GetAttached(setAttached);
     for(const KinBodyPtr& pAttachedBodyToGrabbedBody : setAttached) {
         if( pAttachedBodyToGrabbedBody->GetNumGrabbed() == 0 ) {
             continue;
         }
-        if( pAttachedBodyToGrabbedBody->IsGrabbing(*pGrabbedBody) ) {
+        if( pAttachedBodyToGrabbedBody->IsGrabbing(*this) ) {
             std::stringstream ss;
             FOREACH(itbody, setAttached) {
                 ss << (*itbody)->GetName() << ",";
             }
-            throw OPENRAVE_EXCEPTION_FORMAT("env=%s, body '%s' trying to grab body '%s', which is already grabbed by '%s' at least. grab body '%s' has %d attached bodies [%s]",
-                                            envNameId%newGrabberName%pGrabbedBody->GetName()%pAttachedBodyToGrabbedBody->GetName()%pGrabbedBody->GetName()%setAttached.size()%ss.str(),
-                                            ORE_InvalidArguments);
+            const std::string message = boost::str(boost::format("env=%s, body '%s' trying to grab body '%s', which is already grabbed by '%s' at least. grab body '%s' has %d attached bodies [%s]. context=%s")%GetEnv()%newGrabberName%GetName()%pAttachedBodyToGrabbedBody->GetName()%GetName()%setAttached.size()%ss.str()%context);
+            if( bThrowException ) {
+                throw OPENRAVE_EXCEPTION_FORMAT0(message, ORE_InvalidArguments);
+            }
+            else {
+                RAVELOG_WARN(message);
+            }
         }
     }
 }
@@ -330,10 +332,8 @@ bool KinBody::Grab(KinBodyPtr pGrabbedBody, LinkPtr pGrabbingLink, const std::se
         if( !!pPreviouslyGrabbed ) {
             RAVELOG_INFO_FORMAT("env=%s, body '%s' grabs body '%s' that has previously been grabbed", GetEnv()->GetNameId()%GetName()%pGrabbedBody->GetName());
         }
-        else {
-            _CheckIfGrabbedBodyIsAlreadyGrabbedByOthers(pGrabbedBody, GetName(), GetEnv()->GetNameId());
-        }
     }
+    pGrabbedBody->_CheckIfAlreadyGrabbedOnGrab(GetName(), __FUNCTION__, /*bThrowException*/ true);
 
     // The body has previously been grabbed. Check if anything changes.
     Transform tGrabbingLink = pGrabbingLink->GetTransform();
@@ -522,9 +522,7 @@ void KinBody::RegrabAll()
             RAVELOG_WARN_FORMAT("env=%s, grabbed body with index %d does not exist any more", GetEnv()->GetNameId()%grabbedBodyEnvIndex);
             continue;
         }
-        if( pBody->HasAttached() ) {
-            _CheckIfGrabbedBodyIsAlreadyGrabbedByOthers(pBody, GetName(), GetEnv()->GetNameId());
-        }
+        pBody->_CheckIfAlreadyGrabbedOnGrab(GetName(), __FUNCTION__, /*bThrowException*/ true);
 
         GrabbedPtr pNewGrabbed(new Grabbed(pBody, pGrabbed->_pGrabbingLink));
         pNewGrabbed->_tRelative = pGrabbed->_tRelative;
@@ -871,9 +869,7 @@ void KinBody::ResetGrabbed(const std::vector<KinBody::GrabbedInfoConstPtr>& vGra
 
         // Assert that we are not trying to self-grab
         OPENRAVE_ASSERT_FORMAT(pBody.get() != this, "env=%s, body '%s' cannot grab itself", GetEnv()->GetNameId()%pBody->GetName(), ORE_InvalidArguments);
-        if( pBody->HasAttached() ) {
-            _CheckIfGrabbedBodyIsAlreadyGrabbedByOthers(pBody, GetName(), GetEnv()->GetNameId());
-        }
+        pBody->_CheckIfAlreadyGrabbedOnGrab(GetName(), __FUNCTION__, /*bThrowException*/ true);
 
         // If we have a collision checker that is _not_ the default environment collision checker, we need to update it manually
         if (!!_selfcollisionchecker && _selfcollisionchecker != GetEnv()->GetCollisionChecker()) {

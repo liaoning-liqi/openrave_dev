@@ -115,6 +115,7 @@ void KinBody::_RestoreGrabbedBodiesFromSavedData(const KinBody& savedBody,
                     // body is supposed to already be set to some "proper" configuration as the newly
                     // initialized Grabbed objects will save the current state of pbody for later computation of
                     // _listNonCollidingLinksWhenGrabbed (in case it is not yet computed).
+                    pNewGrabbedBody->_CheckIfAlreadyGrabbedOnGrab(GetName(), __FUNCTION__, /*bThrowException*/ false);
                     KinBody::LinkPtr pNewGrabbingLink = GetLinks().at(pGrabbingLink->GetIndex());
                     GrabbedPtr pNewGrabbed(new Grabbed(pNewGrabbedBody, pNewGrabbingLink));
                     pNewGrabbed->_tRelative = pGrabbed->_tRelative;

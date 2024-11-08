@@ -3729,6 +3729,9 @@ protected:
     /// Ensures that _vAllPairsShortestPaths is initialized if it is not already
     void _EnsureAllPairsShortestPaths() const;
 
+    /// \brief strictly check if pGrabbedBody is already grabbed by other bodies. If already grabbed, throw exception.
+    void _CheckIfAlreadyGrabbedOnGrab(const std::string& newGrabberName, const char* context, const bool bThrowException) const;
+
     std::string _name; ///< name of body
 
     std::vector<JointPtr> _vecjoints; ///< \see GetJoints
