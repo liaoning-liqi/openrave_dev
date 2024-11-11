@@ -5709,7 +5709,6 @@ private:
             }
             _nNonAdjacentLinkCache |= AO_Enabled;
             std::sort(_vNonAdjacentLinks[AO_Enabled].begin(), _vNonAdjacentLinks[AO_Enabled].end(), CompareNonAdjacentFarthest);
-            KinBody::_PrintNonAdjacentLinks(_vNonAdjacentLinks, AO_Enabled, GetEnv()->GetNameId(), GetName());
         }
         else {
             throw OPENRAVE_EXCEPTION_FORMAT(_("no support for adjacentoptions %d"), adjacentoptions,ORE_InvalidArguments);
