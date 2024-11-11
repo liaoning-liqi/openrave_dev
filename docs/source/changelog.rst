@@ -8,6 +8,11 @@ Version 0.158.0
 
 - Add print message related to non adjacent links to track the self collision issue.
 
+Version 0.157.1
+===============
+
+- Exclude disabled and virtual links from manipulator child links AABB computation that is used for manipulator speed/acceleration computation in trajectory post-processing.
+
 Version 0.157.0
 ===============
 
