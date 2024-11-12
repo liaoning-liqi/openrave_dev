@@ -1,3 +1,4 @@
+set(CMAKE_CXX_STANDARD 14)
 file(GLOB ann_files ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
 add_definitions(-DANN_STATIC_LIBRARY) # for windows compilation, just exports the symbols (even though library is being built statically)
