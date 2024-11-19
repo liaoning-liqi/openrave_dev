@@ -428,20 +428,24 @@ public:
 
     /// transform a vector by the rotation component only
     inline RaveVector<T> rotate(const RaveVector<T>& r) const {
-        T xx = 2 * rot.y * rot.y;
-        T xy = 2 * rot.y * rot.z;
-        T xz = 2 * rot.y * rot.w;
-        T xw = 2 * rot.y * rot.x;
-        T yy = 2 * rot.z * rot.z;
-        T yz = 2 * rot.z * rot.w;
-        T yw = 2 * rot.z * rot.x;
-        T zz = 2 * rot.w * rot.w;
-        T zw = 2 * rot.w * rot.x;
+        /*
+           Let u be the vector part of the quaternion this->rot and s be the scalar part of the quaternion this->rot.
+           (Note that u = [rot.y, rot.z, rot.w] and s = rot.x.)
 
-        RaveVector<T> v;
-        v.x = (1-yy-zz) * r.x + (xy-zw) * r.y + (xz+yw)*r.z;
-        v.y = (xy+zw) * r.x + (1-xx-zz) * r.y + (yz-xw)*r.z;
-        v.z = (xz-yw) * r.x + (yz+xw) * r.y + (1-xx-yy)*r.z;
+           The result v of rotating a position r by the quaternion this->rot is
+               v = this->rot * r * (this->rot)^-1.
+           After simplufying the above, we get
+               v = r + 2*s*cross(u, r) + 2*cross(u, cross(u, r))
+                 = r + 2*cross(u, cross(u, r) + s*r).
+                 = r + cross(u, 2*(cross(u, r) + s*r)).
+         */
+        T c0 = 2*(rot.z*r.z - rot.w*r.y + rot.x*r.x);
+        T c1 = 2*(rot.w*r.x - rot.y*r.z + rot.x*r.y);
+        T c2 = 2*(rot.y*r.y - rot.z*r.x + rot.x*r.z);
+        RaveVector<T> v = r;
+        v.x += rot.z*c2 - rot.w*c1;
+        v.y += rot.w*c0 - rot.y*c2;
+        v.z += rot.y*c1 - rot.z*c0;
         return v;
     }
 
@@ -1205,23 +1209,16 @@ inline RaveVector<T> dQSlerp(const RaveVector<T>& quat0, const RaveVector<T>& qu
 /// \brief transform a vector by a quaternion
 ///
 /// \ingroup affine_math
-/// \param
 template <typename T>
 RaveVector<T> quatRotate(const RaveVector<T>& q, const RaveVector<T>& t)
 {
-    T xx = 2 * q.y * q.y;
-    T xy = 2 * q.y * q.z;
-    T xz = 2 * q.y * q.w;
-    T xw = 2 * q.y * q.x;
-    T yy = 2 * q.z * q.z;
-    T yz = 2 * q.z * q.w;
-    T yw = 2 * q.z * q.x;
-    T zz = 2 * q.w * q.w;
-    T zw = 2 * q.w * q.x;
-    RaveVector<T> v;
-    v.x = (1-yy-zz) * t.x + (xy-zw) * t.y + (xz+yw)*t.z;
-    v.y = (xy+zw) * t.x + (1-xx-zz) * t.y + (yz-xw)*t.z;
-    v.z = (xz-yw) * t.x + (yz+xw) * t.y + (1-xx-yy)*t.z;
+    T c0 = 2*(q.z*t.z - q.w*t.y + q.x*t.x);
+    T c1 = 2*(q.w*t.x - q.y*t.z + q.x*t.y);
+    T c2 = 2*(q.y*t.y - q.z*t.x + q.x*t.z);
+    RaveVector<T> v = t;
+    v.x += q.z*c2 - q.w*c1;
+    v.y += q.w*c0 - q.y*c2;
+    v.z += q.y*c1 - q.z*c0;
     return v;
 }
 
