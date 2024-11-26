@@ -619,7 +619,7 @@ ViewerManager& ViewerManager::GetInstance()
     return *_singleton;
 }
 
-void ViewerManager::AddViewer(EnvironmentBasePtr penv, const string &strviewer, bool bShowViewer, bool bDoNotAddIfExists)
+void ViewerManager::AddViewer(EnvironmentBasePtr penv, const std::string &strviewer, bool bShowViewer, bool bDoNotAddIfExists)
 {
     ViewerBasePtr pviewer;
     if( strviewer.size() > 0 ) {
@@ -969,17 +969,17 @@ object PyInterfaceBase::GetUserData(const std::string& key) const {
     return openravepy::GetUserData(_pbase->GetUserData(key));
 }
 
-bool PyInterfaceBase::SupportsCommand(const string& cmd)
+bool PyInterfaceBase::SupportsCommand(const std::string& cmd)
 {
     return _pbase->SupportsCommand(cmd);
 }
 
-bool PyInterfaceBase::SupportsJSONCommand(const string& cmd)
+bool PyInterfaceBase::SupportsJSONCommand(const std::string& cmd)
 {
     return _pbase->SupportsJSONCommand(cmd);
 }
 
-object PyInterfaceBase::SendCommand(const string& in, bool releasegil, bool lockenv)
+object PyInterfaceBase::SendCommand(const std::string& in, bool releasegil, bool lockenv)
 {
     std::stringstream sin(in);
     std::stringstream sout;
@@ -1007,7 +1007,7 @@ object PyInterfaceBase::SendCommand(const string& in, bool releasegil, bool lock
     return py::to_object(sout.str());
 }
 
-object PyInterfaceBase::SendJSONCommand(const string& cmd, object input, bool releasegil, bool lockenv)
+object PyInterfaceBase::SendJSONCommand(const std::string& cmd, object input, bool releasegil, bool lockenv)
 {
     rapidjson::Document in, out;
     toRapidJSONValue(input, in, in.GetAllocator());
@@ -1994,7 +1994,7 @@ object PyEnvironmentBase::WriteToMemory(const std::string &filetype, const int o
     }
 }
 
-object PyEnvironmentBase::ReadRobotURI(const string &filename)
+object PyEnvironmentBase::ReadRobotURI(const std::string &filename)
 {
     RobotBasePtr probot;
     {
@@ -2004,7 +2004,7 @@ object PyEnvironmentBase::ReadRobotURI(const string &filename)
     return py::to_object(openravepy::toPyRobot(probot,shared_from_this()));
 }
 
-object PyEnvironmentBase::ReadRobotURI(const string &filename, object odictatts)
+object PyEnvironmentBase::ReadRobotURI(const std::string &filename, object odictatts)
 {
     AttributesList dictatts = toAttributesList(odictatts);
     RobotBasePtr probot;
@@ -2015,7 +2015,7 @@ object PyEnvironmentBase::ReadRobotURI(const string &filename, object odictatts)
     return py::to_object(openravepy::toPyRobot(probot,shared_from_this()));
 }
 
-object PyEnvironmentBase::ReadRobotData(const string &data, object odictatts, const std::string& uri)
+object PyEnvironmentBase::ReadRobotData(const std::string &data, object odictatts, const std::string& uri)
 {
     AttributesList dictatts;
     if( !IS_PYTHONOBJECT_NONE(odictatts) ) {
@@ -2029,7 +2029,7 @@ object PyEnvironmentBase::ReadRobotData(const string &data, object odictatts, co
     return py::to_object(openravepy::toPyRobot(probot,shared_from_this()));
 }
 
-object PyEnvironmentBase::ReadRobotJSON(py::object oEnvInfo, object odictatts, const string& uri)
+object PyEnvironmentBase::ReadRobotJSON(py::object oEnvInfo, object odictatts, const std::string& uri)
 {
     AttributesList dictatts = toAttributesList(odictatts);
     rapidjson::Document rEnvInfo;
@@ -2042,7 +2042,7 @@ object PyEnvironmentBase::ReadRobotJSON(py::object oEnvInfo, object odictatts, c
     return py::to_object(openravepy::toPyRobot(probot, shared_from_this()));
 }
 
-object PyEnvironmentBase::ReadKinBodyURI(const string &filename)
+object PyEnvironmentBase::ReadKinBodyURI(const std::string &filename)
 {
     KinBodyPtr pbody;
     {
@@ -2052,7 +2052,7 @@ object PyEnvironmentBase::ReadKinBodyURI(const string &filename)
     return py::to_object(openravepy::toPyKinBody(pbody, shared_from_this()));
 }
 
-object PyEnvironmentBase::ReadKinBodyURI(const string &filename, object odictatts)
+object PyEnvironmentBase::ReadKinBodyURI(const std::string &filename, object odictatts)
 {
     AttributesList dictatts = toAttributesList(odictatts);
     KinBodyPtr pbody;
@@ -2062,7 +2062,7 @@ object PyEnvironmentBase::ReadKinBodyURI(const string &filename, object odictatt
     }
     return py::to_object(openravepy::toPyKinBody(pbody, shared_from_this()));
 }
-object PyEnvironmentBase::ReadKinBodyData(const string &data)
+object PyEnvironmentBase::ReadKinBodyData(const std::string &data)
 {
     KinBodyPtr pbody;
     {
@@ -2072,7 +2072,7 @@ object PyEnvironmentBase::ReadKinBodyData(const string &data)
     return py::to_object(openravepy::toPyKinBody(pbody,shared_from_this()));
 }
 
-object PyEnvironmentBase::ReadKinBodyData(const string &data, object odictatts)
+object PyEnvironmentBase::ReadKinBodyData(const std::string &data, object odictatts)
 {
     AttributesList dictatts = toAttributesList(odictatts);
     KinBodyPtr pbody;
@@ -2083,7 +2083,7 @@ object PyEnvironmentBase::ReadKinBodyData(const string &data, object odictatts)
     return py::to_object(openravepy::toPyKinBody(pbody,shared_from_this()));
 }
 
-object PyEnvironmentBase::ReadKinBodyJSON(py::object oEnvInfo, object odictatts, const string& uri)
+object PyEnvironmentBase::ReadKinBodyJSON(py::object oEnvInfo, object odictatts, const std::string& uri)
 {
     AttributesList dictatts = toAttributesList(odictatts);
     rapidjson::Document rEnvInfo;
@@ -2209,7 +2209,7 @@ bool PyEnvironmentBase::RemoveKinBodyByName(const std::string& name) {
     return _penv->RemoveKinBodyByName(name);
 }
 
-object PyEnvironmentBase::GetKinBody(const string &name)
+object PyEnvironmentBase::GetKinBody(const std::string &name)
 {
     KinBodyPtr pbody = _penv->GetKinBody(name);
     if( !pbody ) {
@@ -2222,11 +2222,11 @@ object PyEnvironmentBase::GetKinBody(const string &name)
         return py::to_object(openravepy::toPyKinBody(pbody,shared_from_this()));
     }
 }
-object PyEnvironmentBase::GetRobot(const string &name)
+object PyEnvironmentBase::GetRobot(const std::string &name)
 {
     return py::to_object(openravepy::toPyRobot(_penv->GetRobot(name), shared_from_this()));
 }
-object PyEnvironmentBase::GetSensor(const string &name)
+object PyEnvironmentBase::GetSensor(const std::string &name)
 {
     return py::to_object(openravepy::toPySensor(_penv->GetSensor(name),shared_from_this()));
 }
@@ -2269,7 +2269,7 @@ int PyEnvironmentBase::GetMaxEnvironmentBodyIndex()
     return _penv->GetMaxEnvironmentBodyIndex();
 }
 
-int PyEnvironmentBase::AddModule(PyModuleBasePtr prob, const string &PY_ARGS) {
+int PyEnvironmentBase::AddModule(PyModuleBasePtr prob, const std::string &PY_ARGS) {
     CHECK_POINTER(prob);
     return _penv->AddModule(openravepy::GetModule(prob),PY_ARGS);
 }
@@ -2470,7 +2470,7 @@ void PyEnvironmentBase::__exit__(object type, object value, object traceback)
     Unlock();
 }
 
-bool PyEnvironmentBase::SetViewer(const string &viewername, bool showviewer)
+bool PyEnvironmentBase::SetViewer(const std::string &viewername, bool showviewer)
 {
     ViewerManager::GetInstance().AddViewer(_penv, viewername, showviewer, true);
     return !viewername.empty();
@@ -2619,13 +2619,13 @@ std::pair<size_t,size_t> PyEnvironmentBase::_getGraphPointsColors(object opoints
     if(( numcolors > 1) &&( numpoints != numcolors) ) {
         throw OpenRAVEException(boost::str(boost::format(_("number of points (%d) need to match number of colors (%d)"))%numpoints%numcolors));
     }
-    return make_pair(numpoints,numcolors);
+    return std::make_pair(numpoints,numcolors);
 }
 
 object PyEnvironmentBase::plot3(object opoints,float pointsize,object ocolors, int drawstyle)
 {
     std::vector<float> vpoints, vcolors;
-    pair<size_t,size_t> sizes = _getGraphPointsColors(opoints,ocolors,vpoints,vcolors);
+    std::pair<size_t,size_t> sizes = _getGraphPointsColors(opoints,ocolors,vpoints,vcolors);
     bool bhasalpha = vcolors.size() == 4*sizes.second;
     if( sizes.first == sizes.second ) {
         GraphHandlePtr phandle;
@@ -2651,7 +2651,7 @@ object PyEnvironmentBase::plot3(object opoints,float pointsize,object ocolors, i
 object PyEnvironmentBase::drawlinestrip(object opoints,float linewidth,object ocolors, int drawstyle)
 {
     std::vector<float> vpoints, vcolors;
-    pair<size_t,size_t> sizes = _getGraphPointsColors(opoints,ocolors,vpoints,vcolors);
+    std::pair<size_t,size_t> sizes = _getGraphPointsColors(opoints,ocolors,vpoints,vcolors);
     //bool bhasalpha = vcolors.size() == 4*sizes.second;
     if( sizes.first == sizes.second ) {
         return toPyGraphHandle(_penv->drawlinestrip(vpoints.data(),sizes.first,sizeof(float)*3,linewidth,vcolors.data()));
@@ -2667,7 +2667,7 @@ object PyEnvironmentBase::drawlinestrip(object opoints,float linewidth,object oc
 object PyEnvironmentBase::drawlinelist(object opoints,float linewidth,object ocolors, int drawstyle)
 {
     std::vector<float> vpoints, vcolors;
-    pair<size_t,size_t> sizes = _getGraphPointsColors(opoints,ocolors,vpoints,vcolors);
+    std::pair<size_t,size_t> sizes = _getGraphPointsColors(opoints,ocolors,vpoints,vcolors);
     //bool bhasalpha = vcolors.size() == 4*sizes.second;
     if( sizes.first == sizes.second ) {
         return toPyGraphHandle(_penv->drawlinelist(vpoints.data(),sizes.first,sizeof(float)*3,linewidth,vcolors.data()));
@@ -2953,7 +2953,7 @@ object PyEnvironmentBase::GetPublishedBodyJointValues(const std::string &name, u
     return toPyArray(jointValues);
 }
 
-object PyEnvironmentBase::GetPublishedBodyTransformsMatchingPrefix(const string &prefix, uint64_t timeout) {
+object PyEnvironmentBase::GetPublishedBodyTransformsMatchingPrefix(const std::string &prefix, uint64_t timeout) {
     std::vector< std::pair<std::string, Transform> > nameTransfPairs;
     _penv->GetPublishedBodyTransformsMatchingPrefix(prefix, nameTransfPairs, timeout);
 
