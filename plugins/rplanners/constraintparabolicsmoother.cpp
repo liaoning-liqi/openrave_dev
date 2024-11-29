@@ -43,6 +43,14 @@ class ConstraintParabolicSmoother : public PlannerBase, public ParabolicRamp::Fe
         bool binitialized=false;
         AABB ab;
         FOREACHC(itlink,linklist) {
+            if( !(*itlink)->IsEnabled() ) {
+                // Links being disabled mean they are intentionally ignored. These links should not affect tool speed/accel computation.
+                continue;
+            }
+            if( (*itlink)->GetGeometries().empty() ) {
+                // Virtual links should also not be considered.
+                continue;
+            }
             ab = (*itlink)->ComputeAABB(); // AABB of the link in the global coordinates
             if((ab.extents.x == 0)&&(ab.extents.y == 0)&&(ab.extents.z == 0)) {
                 continue;
@@ -105,22 +113,22 @@ public:
         //OPENRAVE_ASSERT_FORMAT0(!!_distancechecker, "need pqp distance checker", ORE_Assert);
     }
 
-    virtual bool InitPlan(RobotBasePtr pbase, PlannerParametersConstPtr params)
+    virtual PlannerStatus InitPlan(RobotBasePtr pbase, PlannerParametersConstPtr params) override
     {
         EnvironmentLock lock(GetEnv()->GetMutex());
         _parameters.reset(new ConstraintTrajectoryTimingParameters());
         _parameters->copy(params);
         _probot = pbase;
-        return _InitPlan();
+        return _InitPlan() ? PlannerStatus(PS_HasSolution) : PlannerStatus(PS_Failed);
     }
 
-    virtual bool InitPlan(RobotBasePtr pbase, std::istream& isParameters)
+    virtual PlannerStatus InitPlan(RobotBasePtr pbase, std::istream& isParameters) override
     {
         EnvironmentLock lock(GetEnv()->GetMutex());
         _parameters.reset(new ConstraintTrajectoryTimingParameters());
         isParameters >> *_parameters;
         _probot = pbase;
-        return _InitPlan();
+        return _InitPlan() ? PlannerStatus(PS_HasSolution) : PlannerStatus(PS_Failed);
     }
 
     bool _InitPlan()

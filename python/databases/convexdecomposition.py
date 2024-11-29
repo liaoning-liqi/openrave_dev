@@ -55,7 +55,7 @@ Approximates each of the links with a set of convex hulls using John Ratcliff's 
 Command-line
 ------------
 
-.. shell-block:: openrave.py --database convexdecomposition --help
+.. shell-block:: python3 -m openravepy --database convexdecomposition --help
 
 Class Definitions
 -----------------
@@ -66,12 +66,10 @@ __author__ = 'Rosen Diankov'
 __copyright__ = 'Copyright (C) 2009-2012 Rosen Diankov <rosen.diankov@gmail.com>'
 __license__ = 'Apache License, Version 2.0'
 
-if not __openravepy_build_doc__:
-    from numpy import *
 
-from numpy import reshape, array, float64, int32, zeros, isnan, newaxis, empty, arange, repeat, where, isclose
+import numpy
+from numpy import reshape, array, float64, int32, zeros, isnan, newaxis, empty, arange, repeat, where, isclose, e, mean, flatnonzero, cross, logical_and, r_, c_, sqrt, ones, transpose, tile, dot, eye, mod, linalg, mod, sum, abs, all, any
 from numpy.linalg import norm
-from numpy.core.umath_tests import inner1d
 
 from ..misc import ComputeGeodesicSphereMesh, ComputeBoxMesh, ComputeCylinderYMesh
 from ..openravepy_int import KinBody, RaveFindDatabaseFile, RaveDestroy, Environment, TriMesh, RaveCreateModule, GeometryType, RaveGetDefaultViewerType
@@ -83,6 +81,11 @@ import time
 import os.path
 from os import makedirs
 from optparse import OptionParser
+import six
+
+def inner1d(arr1, arr2):
+    # https://github.com/numpy/numpy/issues/10815#issuecomment-376847774
+    return (arr1 * arr2).sum(axis=1)
 
 try:
     from itertools import izip
@@ -105,13 +108,12 @@ try:
 except Exception as e:
     print('failed to import convexdecompositionpy %r'%e)
 
+@six.python_2_unicode_compatible
 class ConvexDecompositionError(Exception):
     def __init__(self,msg=u''):
         self.msg = msg
-    def __unicode__(self):
-        return u'Convex Decomposition Error: %s'%self.msg
     def __str__(self):
-        return unicode(self).encode('utf-8')
+        return u'Convex Decomposition Error: %s'%self.msg
 
 class ConvexDecompositionModel(DatabaseGenerator):
     """Computes the convex decomposition of all of the robot's links"""
@@ -134,7 +136,7 @@ class ConvexDecompositionModel(DatabaseGenerator):
         return self.linkgeometry is not None and len(self.linkgeometry)==len(self.robot.GetLinks())
     
     def getversion(self):
-        return 4
+        return 5
     
     def save(self):
         try:
@@ -285,19 +287,19 @@ class ConvexDecompositionModel(DatabaseGenerator):
         self.linkgeometry = []
         with self.env:
             links = self.robot.GetLinks()
-            for il,link in enumerate(links):
+            for il, link in enumerate(links):
                 geomhulls = []
                 geometries = link.GetGeometries()
-                for ig,geom in enumerate(geometries):
+                for ig, geom in enumerate(geometries):
                     trimesh = geom.GetCollisionMesh()
                     if len(trimesh.indices) == 0:
                         geom.InitCollisionMesh()
                         trimesh = geom.GetCollisionMesh()
                     if link.GetName() in convexHullLinks or (minTriangleConvexHullThresh is not None and len(trimesh.indices) > minTriangleConvexHullThresh):
-                        log.info(u'computing hull for link %d/%d geom %d/%d: vertices=%d, indices=%d',il,len(links), ig, len(geometries), len(trimesh.vertices), len(trimesh.indices))
+                        log.info(u'computing hull for link %d/%d geom %d/%d (%s:%s): vertices=%d, indices=%d', il, len(links), ig, len(geometries), link.GetName(), geom.GetName(), len(trimesh.vertices), len(trimesh.indices))
                         orghulls = [self.ComputePaddedConvexHullFromTriMesh(trimesh,padding)]
                     else:
-                        log.info(u'computing decomposition for link %d/%d geom %d/%d type %s',il,len(links), ig, len(geometries), geom.GetType())
+                        log.info(u'computing decomposition for link %d/%d geom %d/%d (%s:%s): type %s', il, len(links), ig, len(geometries), link.GetName(), geom.GetName(), geom.GetType())
                         orghulls = self.ComputePaddedConvexDecompositionFromTriMesh(trimesh,padding)
                     cdhulls = []
                     for hull in orghulls:
@@ -312,6 +314,9 @@ class ConvexDecompositionModel(DatabaseGenerator):
     def ComputePaddedConvexDecompositionFromTriMesh(self, trimesh, padding=0.0):
         if len(trimesh.indices) > 0:
             orghulls = convexdecompositionpy.computeConvexDecomposition(trimesh.vertices,trimesh.indices,**self.convexparams)
+            if not self._ValidateConvexDecomposition(orghulls, trimesh):
+                log.warn('Some original vertices are not inside the convex decomposition. Using ConvexHull instead.')
+                return [self.ComputePaddedConvexHullFromTriMesh(trimesh, padding)]
         else:
             orghulls = []
         if len(orghulls) > 0:
@@ -457,6 +462,34 @@ class ConvexDecompositionModel(DatabaseGenerator):
         for i in range(len(normalizedplanes)-1):
             uniqueplanes[i+1:] &= dot(normalizedplanes[i+1:,:],normalizedplanes[i])<thresh
         return planes[uniqueplanes]
+
+    def _ValidateConvexDecomposition(self, hullList, trimesh, tol=5e-4):
+        """Checks if the convex hulls specified in hullList cover all the vertices in the given trimesh.
+        
+        Args:
+            hullList (list of (vertices, indices)): list of tuples (vertices, indices), where each tuple contains vertices and indices for one convex hull.
+            trimesh (OpenRAVE.TriMesh):
+            tol (float): tolerance for when checking whether a point is inside a convex hull or not.
+        
+        Return:
+            allInside (bool): whether all the original vertices (in trimesh) are fully contained in the given hulls.
+        
+        """
+        inside = zeros(len(trimesh.vertices), bool)
+        leftIndices = arange(len(trimesh.vertices))
+        leftPoints = array(trimesh.vertices) # make a copy
+        for ihull, hull in enumerate(hullList):
+            hullPlanes = self.ComputeHullPlanes(hull)
+            insideIndices = numpy.all(dot(leftPoints, transpose(hullPlanes[:, 0:3])) + tile(hullPlanes[:, 3], (len(leftPoints), 1)) <= tol, axis=1)
+            inside[leftIndices[flatnonzero(insideIndices)]] = True
+            outsideIndices = flatnonzero(insideIndices == 0)
+            leftPoints = leftPoints[outsideIndices]
+            leftIndices = leftIndices[outsideIndices]
+            if len(leftIndices) == 0:
+                break
+        if len(leftIndices) > 0:
+            log.info('There are %d vertices not inside the given hulls', len(leftIndices))
+        return len(leftIndices) == 0
     
     def testPointsInside(self,points):
         """tests if a point is inside the convex mesh of the robot.
@@ -491,7 +524,7 @@ class ConvexDecompositionModel(DatabaseGenerator):
                     elif geom.GetType() == KinBody.Link.GeomType.Sphere:
                         insideinds = numpy.less_equal(sum(localpoints**2,1), geom.GetSphereRadius()**2)
                     elif geom.GetType() == KinBody.Link.GeomType.Cylinder:
-                        insideinds = numpy.less_equal(abs(localpoints[:,1]), 0.5*geom.GetCylinderHeight()) and numpy.less_equal(localpoint[:,0]**2+localpoint[:2]**2, geom.GetCylinderRadius()**2)
+                        insideinds = numpy.less_equal(abs(localpoints[:,1]), 0.5*geom.GetCylinderHeight()) and numpy.less_equal(localpoints[:,0]**2+localpoints[:2]**2, geom.GetCylinderRadius()**2)
                     else:
                         continue
                     inside[leftinds[flatnonzero(insideinds)]] = True
@@ -592,7 +625,7 @@ class ConvexDecompositionModel(DatabaseGenerator):
                             hulls.append(self.transformHull(geom.GetTransform(),ComputeCylinderYMesh(radius=geom.GetCylinderRadius(),height=geom.GetCylinderHeight())))
                     handles += [self.env.drawtrimesh(points=transformPoints(link.GetTransform(),hull[0]),indices=hull[1],colors=volumecolors[mod(colorindex+i,len(volumecolors))]) for i,hull in enumerate(hulls)]
                     colorindex+=len(hulls)
-            raw_input('Press any key to exit: ')
+            input('Press any key to exit: ')
         finally:
             # close all graphs
             handles = None
@@ -617,13 +650,13 @@ class ConvexDecompositionModel(DatabaseGenerator):
         try:
             if not progressive:
                 handles = [self.env.drawtrimesh(points=transformPoints(link.GetTransform(),hull[0]),indices=hull[1],colors=volumecolors[mod(i,len(volumecolors))]) for i,hull in enumerate(hulls)]
-                raw_input('Press any key to exit: ')
+                input('Press any key to exit: ')
             else:
                 ihull = 0
                 while ihull < len(hulls):
                     hull = hulls[ihull]
                     handles = [self.env.drawtrimesh(points=transformPoints(link.GetTransform(),hull[0]),indices=hull[1],colors=volumecolors[mod(ihull,len(volumecolors))])]
-                    cmd = raw_input(str(ihull))
+                    cmd = input(str(ihull))
                     if cmd == 'p':
                         ihull -= 1
                     else:

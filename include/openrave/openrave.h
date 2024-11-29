@@ -1,5 +1,5 @@
 // -*- coding: utf-8 -*-
-// Copyright (C) 2006-2012 Rosen Diankov <rosen.diankov@gmail.com>
+// Copyright (C) 2006-2023
 //
 // This file is part of OpenRAVE.
 // OpenRAVE is free software: you can redistribute it and/or modify
@@ -55,6 +55,19 @@
 #include <set>
 #include <string>
 
+#if  __cplusplus >= 201703L
+#include <string_view>
+#else
+#include <boost/utility/string_view.hpp>
+namespace std{
+    // make boost::string_view handlable by std::unordered_set/map
+    template<typename CharT,typename Traits>
+    class hash<boost::basic_string_view<CharT,Traits>>: public boost::hash<boost::basic_string_view<CharT,Traits>>
+    {
+    };
+};
+#endif
+
 #include <iomanip>
 #include <fstream>
 #include <sstream>
@@ -89,6 +102,7 @@
 
 #include <openrave/smart_ptr.h>
 #include <openrave/openraveexception.h>
+#include <openrave/units.h>
 
 /// The entire %OpenRAVE library
 namespace OpenRAVE {
@@ -103,6 +117,12 @@ namespace OpenRAVE {
 #include <openrave/logging.h>
 
 namespace OpenRAVE {
+
+#if  __cplusplus >= 201703L
+using string_view = std::string_view;
+#else
+using string_view = ::boost::string_view;
+#endif
 
 #if OPENRAVE_PRECISION // 1 if double precision
 typedef double dReal;
@@ -225,6 +245,7 @@ enum InterfaceType
 };
 
 class CollisionReport;
+class ReadablesContainer;
 class InterfaceBase;
 class IkSolverBase;
 class TrajectoryBase;
@@ -243,10 +264,14 @@ class SpaceSamplerBase;
 class IkParameterization;
 class ConfigurationSpecification;
 class IkReturn;
+class IkFailureInfo;
+class IkFailureAccumulatorBase;
 class Readable;
 
 typedef boost::shared_ptr<CollisionReport> CollisionReportPtr;
 typedef boost::shared_ptr<CollisionReport const> CollisionReportConstPtr;
+typedef boost::shared_ptr<ReadablesContainer> ReadablesContainerPtr;
+typedef boost::shared_ptr<ReadablesContainer const> ReadablesContainerConstPtr;
 typedef boost::shared_ptr<InterfaceBase> InterfaceBasePtr;
 typedef boost::shared_ptr<InterfaceBase const> InterfaceBaseConstPtr;
 typedef boost::weak_ptr<InterfaceBase> InterfaceBaseWeakPtr;
@@ -298,6 +323,8 @@ typedef boost::weak_ptr<Readable> ReadableWeakPtr;
 typedef boost::shared_ptr<IkReturn> IkReturnPtr;
 typedef boost::shared_ptr<IkReturn const> IkReturnConstPtr;
 typedef boost::weak_ptr<IkReturn> IkReturnWeakPtr;
+typedef boost::shared_ptr<IkFailureInfo> IkFailureInfoPtr;
+typedef boost::shared_ptr<IkFailureAccumulatorBase> IkFailureAccumulatorBasePtr;
 
 class BaseXMLReader;
 typedef boost::shared_ptr<BaseXMLReader> BaseXMLReaderPtr;
@@ -417,9 +444,9 @@ class OPENRAVE_API DummyXMLReader : public BaseXMLReader
 {
 public:
     DummyXMLReader(const std::string& fieldname, const std::string& parentname, boost::shared_ptr<std::ostream> osrecord = boost::shared_ptr<std::ostream>());
-    virtual ProcessElement startElement(const std::string& name, const AttributesList& atts);
-    virtual bool endElement(const std::string& name);
-    virtual void characters(const std::string& ch);
+    virtual ProcessElement startElement(const std::string& name, const AttributesList& atts) override;
+    virtual bool endElement(const std::string& name) override;
+    virtual void characters(const std::string& ch) override;
     const std::string& GetFieldName() const {
         return _fieldname;
     }
@@ -610,10 +637,14 @@ class OPENRAVE_API StringReadable : public Readable
 {
 public:
     StringReadable(const std::string& id, const std::string& data);
+    StringReadable(const std::string& id, std::string&& data);
+    StringReadable(const std::string& id, const char* data, size_t dataLength);
     virtual ~StringReadable();
 
     /// \brief sets new string data
     void SetData(const std::string& newdata);
+    void SetData(std::string&& newdata);
+    void SetData(const char* data, size_t dataLength);
 
     /// \brief gets a reference to the saved data;
     const std::string& GetData() const;
@@ -640,6 +671,47 @@ private:
     std::string _data;
 };
 typedef boost::shared_ptr<StringReadable> StringReadablePtr;
+
+class OPENRAVE_API JSONReadable : public Readable
+{
+public:
+    JSONReadable(const std::string& id);
+    JSONReadable(const std::string& id, const rapidjson::Value& rValue);
+    virtual ~JSONReadable();
+
+    /// \brief sets new json value
+    void SetValue(const rapidjson::Value& rValue);
+
+    /// \brief gets a reference to the saved json value
+    rapidjson::Value& GetValue();
+    const rapidjson::Value& GetValue() const;
+
+    rapidjson::Document::AllocatorType& GetAllocator();
+
+    bool SerializeXML(BaseXMLWriterPtr wirter, int options=0) const override;
+    bool SerializeJSON(rapidjson::Value& value, rapidjson::Document::AllocatorType& allocator, dReal fUnitScale=1.0, int options=0) const override;
+    bool DeserializeJSON(const rapidjson::Value& value, dReal fUnitScale=1.0) override;
+    bool operator==(const Readable& other) const override {
+        if (GetXMLId() != other.GetXMLId()) {
+            return false;
+        }
+        const JSONReadable* pOther = dynamic_cast<const JSONReadable*>(&other);
+        if (!pOther) {
+            return false;
+        }
+        return _rValue == pOther->_rValue;
+    }
+
+    ReadablePtr CloneSelf() const override {
+        return ReadablePtr(new JSONReadable(GetXMLId(), _rValue));
+    }
+
+private:
+    std::vector<uint8_t> _vAllocBuffer; ///< buffer used for rapidjson allocator
+    rapidjson::MemoryPoolAllocator<> _rAlloc; ///< rapidjson allocator
+    rapidjson::Value _rValue;
+};
+typedef boost::shared_ptr<JSONReadable> JSONReadablePtr;
 
 /// \brief returns a string of the ik parameterization type names
 ///
@@ -723,9 +795,9 @@ public:
     {
 public:
         Reader(ConfigurationSpecification& spec);
-        virtual ProcessElement startElement(const std::string& name, const AttributesList& atts);
-        virtual bool endElement(const std::string& name);
-        virtual void characters(const std::string& ch);
+        virtual ProcessElement startElement(const std::string& name, const AttributesList& atts) override;
+        virtual bool endElement(const std::string& name) override;
+        virtual void characters(const std::string& ch) override;
 protected:
         ConfigurationSpecification& _spec;
         std::stringstream _ss;
@@ -1166,6 +1238,14 @@ public:
         }
     }
 
+    void Reset() {
+        _transform.identity();
+        _type = IKP_None;
+        _id.clear();
+        _name.clear();
+        _mapCustomData.clear();
+    }
+
     inline IkParameterizationType GetType() const {
         return _type;
     }
@@ -1601,7 +1681,8 @@ public:
     /// The container the iterator points to needs to have \ref GetNumberOfValues() available.
     /// Does not support custom data
     /// Don't normalize quaternions since it could hold velocity data.
-    inline void GetValues(std::vector<dReal>::iterator itvalues) const
+    template<typename OutputIterator>
+    inline void GetValues(OutputIterator itvalues) const
     {
         switch(_type & ~IKP_VelocityDataBit) {
         case IKP_Transform6D:
@@ -1686,7 +1767,8 @@ public:
     /// \brief sets a serialized set of values for the IkParameterization
     ///
     /// Function does not handle custom data. Don't normalize quaternions since it could hold velocity data.
-    inline void SetValues(std::vector<dReal>::const_iterator itvalues, IkParameterizationType iktype)
+    template<typename InputIterator>
+    inline void SetValues(InputIterator itvalues, IkParameterizationType iktype)
     {
         _type = iktype;
         const bool isVelocity = _type & IKP_VelocityDataBit;
@@ -1782,7 +1864,8 @@ public:
         }
     }
 
-    inline void Set(std::vector<dReal>::const_iterator itvalues, IkParameterizationType iktype) {
+    template<typename InputIterator>
+    inline void Set(InputIterator itvalues, IkParameterizationType iktype) {
         SetValues(itvalues,iktype);
     }
 
@@ -2474,6 +2557,8 @@ public:
     AABB ComputeAABB() const;
     void serialize(std::ostream& o, int options=0) const;
 
+    void SerializeJSON(rapidjson::Value& rTriMesh, rapidjson::Document::AllocatorType& allocator, dReal fUnitScale, int options=0) const;
+
     friend OPENRAVE_API std::ostream& operator<<(std::ostream& O, const TriMesh &trimesh);
     friend OPENRAVE_API std::istream& operator>>(std::istream& I, TriMesh& trimesh);
 
@@ -2505,10 +2590,6 @@ enum DOFAffine
     DOF_RotationMask=(DOF_RotationAxis|DOF_Rotation3D|DOF_RotationQuat), ///< mask for all bits representing 3D rotations
     DOF_Transform = (DOF_XYZ|DOF_RotationQuat), ///< translate and rotate freely in 3D space
 };
-
-/** \brief returns a string representation of the error code
- */
-OPENRAVE_API const char* RaveGetErrorCodeString(OpenRAVEErrorCode error);
 
 /** \brief Given a mask of affine dofs and a dof inside that mask, returns the index where the value could be found.
 

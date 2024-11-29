@@ -4,7 +4,7 @@ set( CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS TRUE )
 
 # Define here the needed parameters
 set (OPENRAVE_VERSION_MAJOR 0)
-set (OPENRAVE_VERSION_MINOR 116)
+set (OPENRAVE_VERSION_MINOR 158)
 set (OPENRAVE_VERSION_PATCH 0)
 set (OPENRAVE_VERSION ${OPENRAVE_VERSION_MAJOR}.${OPENRAVE_VERSION_MINOR}.${OPENRAVE_VERSION_PATCH})
 set (OPENRAVE_SOVERSION ${OPENRAVE_VERSION_MAJOR}.${OPENRAVE_VERSION_MINOR})
@@ -61,6 +61,7 @@ option(OPT_EXTRA_ROBOTS "If ON, then install extra robots as part of 3D model da
 option(OPT_ENVIRONMENT_RECURSIVE_LOCK "Use recursive mutex for the Environment. Defaults to ON." ON)
 option(OPT_STATIC_PLUGINS "Statically compile in plugins" OFF)
 option(OPT_PIC "Build position independent code" ON)
+option(OPT_ENCRYPTION "Robot and KinBody encryption backed by GPG." ON)
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ${OPT_PIC})
 
@@ -168,6 +169,9 @@ if( CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX )
   add_definitions("-Werror=return-local-addr")
 elseif( COMPILER_IS_CLANG )
   add_definitions("-Werror=return-stack-address")
+  # prevents CLANG from "error: integer value -1 is outside the valid range of values [0, 3]
+  # for the enumeration type 'sign_mixture_enum' [-Wenum-constexpr-conversion]"
+  add_definitions("-Wno-error=enum-constexpr-conversion")
 endif()
 
 set(OPENRAVE_EXPORT_CXXFLAGS)
@@ -242,7 +246,7 @@ if( MSVC )
     install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/msvc_include/stdint.h DESTINATION include/openrave-${OPENRAVE_VERSION_MAJOR}.${OPENRAVE_VERSION_MINOR} COMPONENT ${COMPONENT_PREFIX}dev)
     include_directories(${CMAKE_CURRENT_SOURCE_DIR}/msvc_include)
   endif()
-  
+
   # have to install dlls manually
   if( MSVC70 OR MSVC71 )
     set(MSVC_PREFIX "vc70")
@@ -254,7 +258,7 @@ if( MSVC )
     set(MSVC_PREFIX "vc100")
   endif()
   set(OPENRAVE_LIBRARY_SUFFIX "${OPENRAVE_SOVERSION}-${MSVC_PREFIX}-mt" CACHE STRING "Suffix to append to library names")
-  
+
   # force multi-threaded DLL boost
   set(Boost_USE_MULTITHREAD ON)
   set(Boost_USE_STATIC_LIBS OFF)
@@ -393,15 +397,33 @@ else()
   message(FATAL_ERROR "rapidjson library not found")
 endif()
 
-set(OPENRAVE_MSGPACK 0)
-if( OPT_MSGPACK )
-pkg_check_modules(msgpack msgpack)
-if( msgpack_FOUND )
-  set(OPENRAVE_MSGPACK 1)
+add_library(openrave-msgpack INTERFACE IMPORTED)
+find_package(msgpack-cxx 6.0.0)
+if (NOT msgpack-cxx_FOUND)
+  pkg_check_modules(msgpack msgpack)
+  target_link_libraries(openrave-msgpack INTERFACE ${msgpack_LIBRARIES})
+else()
+  message(STATUS "msgpack-cxx ${msgpack-cxx_VERSION}")
+  target_link_libraries(openrave-msgpack INTERFACE msgpack-cxx)
 endif()
+if (msgpack-cxx_FOUND OR msgpack_FOUND)
+  set(OPENRAVE_MSGPACK 1)
+else()
+  if (OPT_MSGPACK)
+    message(FATAL_ERROR "msgpack feature was requested but msgpack libraries could not be found.")
+  else()
+    set(OPENRAVE_MSGPACK 0)
+  endif()
 endif()
 
 find_package(LibXml2 REQUIRED)
+
+add_library(openrave_gpgme IMPORTED INTERFACE)
+if (OPT_ENCRYPTION)
+  find_package(Gpgmepp 1.13 REQUIRED)
+  target_link_libraries(openrave_gpgme INTERFACE Gpgmepp)
+  target_compile_definitions(openrave_gpgme INTERFACE "OPENRAVE_ENCRYPTION=1")
+endif()
 
 # for qtcoin plugin.
 # it is necessary to check here since we would like the qt version stored in the openrave-config file
@@ -681,6 +703,7 @@ if (OPT_PYTHON)
   set(OPENRAVE_PYTHON_INSTALL_DIR ${OPENRAVE_PYTHON2_INSTALL_DIR})
   set(OPENRAVEPY_INSTALL_DIR      ${OPENRAVEPY2_INSTALL_DIR})
   set(OPENRAVEPY_VER_INSTALL_DIR  ${OPENRAVEPY2_VER_INSTALL_DIR})
+  set(PYTHON_EXECUTABLE           ${Python2_EXECUTABLE})
 
   # get the sympy version
   execute_process(
@@ -736,7 +759,7 @@ if (OPT_PYTHON)
     target_compile_options(openravepy2_meta INTERFACE "-fvisibility=hidden") # pybind11 requires less visibility
     target_compile_definitions(openravepy2_meta INTERFACE "OPENRAVE_CORE_DLL=1" "USE_PYBIND11_PYTHON_BINDINGS=1")
     set(USE_PYBIND11_PYTHON_BINDINGS ON)
-  elseif()
+  else()
     find_package(Boost REQUIRED COMPONENTS python thread)
     target_link_libraries(openravepy2_meta INTERFACE rt Python2::Module Python2::NumPy Boost::python Boost::thread libopenrave libopenrave-core)
     target_compile_definitions(openravepy2_meta INTERFACE "OPENRAVE_CORE_DLL=1")
@@ -762,6 +785,7 @@ if (OPT_PYTHON3)
     set(OPENRAVE_PYTHON_INSTALL_DIR ${OPENRAVE_PYTHON3_INSTALL_DIR})
     set(OPENRAVEPY_INSTALL_DIR      ${OPENRAVEPY3_INSTALL_DIR})
     set(OPENRAVEPY_VER_INSTALL_DIR  ${OPENRAVEPY3_VER_INSTALL_DIR})
+    set(PYTHON_EXECUTABLE           ${Python3_EXECUTABLE})
   endif()
 
   add_library(openravepy3_meta INTERFACE)

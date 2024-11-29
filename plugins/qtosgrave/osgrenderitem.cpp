@@ -442,7 +442,21 @@ void KinBodyItem::Load()
                     pgeometrydata->addChild(geode.get());
                     break;
                 }
+                case GT_Capsule: {
+                    // make SoCylinder point towards z, not y
+                    osg::Capsule* cy = new osg::Capsule();
+                    cy->setRadius(orgeom->GetCapsuleRadius());
+                    cy->setHeight(orgeom->GetCapsuleHeight());
+                    osg::ref_ptr<osg::Geode> geode = new osg::Geode;
+                    osg::ref_ptr<osg::ShapeDrawable> sd = new osg::ShapeDrawable(cy);
+                    geode->addDrawable(sd.get());
+                    pgeometrydata->addChild(geode.get());
+                    break;
+                }
                 //  Extract geometry from collision Mesh
+                case GT_Prism:
+                case GT_ConicalFrustum:
+                case GT_Axial:
                 case GT_Cage:
                 case GT_Container:
                 case GT_TriMesh: {
@@ -467,20 +481,31 @@ void KinBodyItem::Load()
                     }
                     geom->addPrimitiveSet(geom_prim);
 
+                    // Enable VBOs for performance
+                    geom->setUseVertexBufferObjects(true);
+
                     osgUtil::SmoothingVisitor::smooth(*geom); // compute vertex normals
                     osg::ref_ptr<osg::Geode> geode = new osg::Geode;
                     geode->addDrawable(geom);
                     pgeometrydata->addChild(geode);
 
-                    if(orgeom->GetType() == GT_TriMesh){
+                    if(orgeom->GetType() == GT_TriMesh || orgeom->GetType() == GT_Axial || orgeom->GetType() == GT_ConicalFrustum){
                         // CropContainerMargins and CropContainerEmptyMargins only exists in GT_Cage and GT_Container
                         break;
                     }
 
+                    float zOffset = 0;
+                    // For container and cage, compute the height of the base as zOffset
+                    if (orgeom->GetType() == GT_Container) {
+                        zOffset = orgeom->GetContainerOuterExtents().z - orgeom->GetContainerInnerExtents().z;
+                    } else if (orgeom->GetType() == GT_Cage) {
+                        zOffset = orgeom->GetCageBaseExtents().z * 2;
+                    }
                     std::pair<std::string, std::string> linkGeometryNames(porlink->GetName(), orgeom->GetName());
                     if (_visibleCropContainerMargins.count(linkGeometryNames) != 0) {
                         DrawCropContainerMargins(
                             pgeometrydata,
+                            zOffset,
                             orgeom->GetContainerInnerExtents(),
                             orgeom->GetNegativeCropContainerMargins(),
                             orgeom->GetPositiveCropContainerMargins(),
@@ -493,7 +518,7 @@ void KinBodyItem::Load()
                             RaveVector<float>(
                                 (orgeom->GetContainerInnerExtents().x - orgeom->GetNegativeCropContainerMargins().x - orgeom->GetPositiveCropContainerMargins().x) * 0.5,
                                 (orgeom->GetContainerInnerExtents().y - orgeom->GetNegativeCropContainerMargins().y - orgeom->GetPositiveCropContainerMargins().y) * 0.5,
-                                orgeom->GetContainerInnerExtents().z - orgeom->GetNegativeCropContainerMargins().z - orgeom->GetPositiveCropContainerMargins().z
+                                orgeom->GetContainerInnerExtents().z - orgeom->GetNegativeCropContainerMargins().z - orgeom->GetPositiveCropContainerMargins().z + zOffset
                             ) +
                             // adjust for length of the label
                             RaveVector<float>(-0.025, -0.28, 0),
@@ -505,6 +530,7 @@ void KinBodyItem::Load()
                     if (_visibleCropContainerEmptyMargins.count(linkGeometryNames) != 0) {
                         DrawCropContainerMargins(
                             pgeometrydata,
+                            zOffset,
                             orgeom->GetContainerInnerExtents(),
                             orgeom->GetNegativeCropContainerEmptyMargins(),
                             orgeom->GetPositiveCropContainerEmptyMargins(),
@@ -517,7 +543,7 @@ void KinBodyItem::Load()
                             RaveVector<float>(
                                 -(orgeom->GetContainerInnerExtents().x - orgeom->GetNegativeCropContainerEmptyMargins().x - orgeom->GetPositiveCropContainerEmptyMargins().x) * 0.5,
                                 -(orgeom->GetContainerInnerExtents().y - orgeom->GetNegativeCropContainerEmptyMargins().y - orgeom->GetPositiveCropContainerEmptyMargins().y) * 0.5,
-                                orgeom->GetContainerInnerExtents().z - orgeom->GetNegativeCropContainerEmptyMargins().z - orgeom->GetPositiveCropContainerEmptyMargins().z
+                                orgeom->GetContainerInnerExtents().z - orgeom->GetNegativeCropContainerEmptyMargins().z - orgeom->GetPositiveCropContainerEmptyMargins().z + zOffset
                             ) +
                             // adjust for length of the label
                             RaveVector<float>(0.025, 0.35, 0),
@@ -899,6 +925,7 @@ void KinBodyItem::SetCropContainerMarginsVisible(const std::string& linkName, co
             _visibleCropContainerMargins.insert(linkGeometryNames);
         } else {
             _visibleCropContainerMargins.erase(linkGeometryNames);
+            _cropContainerMarginsLabel = nullptr;
         }
         Load();
     }
@@ -907,6 +934,7 @@ void KinBodyItem::SetCropContainerMarginsVisible(const std::string& linkName, co
             _visibleCropContainerEmptyMargins.insert(linkGeometryNames);
         } else {
             _visibleCropContainerEmptyMargins.erase(linkGeometryNames);
+            _cropContainerEmptyMarginsLabel = nullptr;
         }
         Load();
     }
@@ -1143,7 +1171,7 @@ bool RobotItem::UpdateFromModel(const vector<dReal>& vjointvalues, const vector<
     return true;
 }
 
-void DrawCropContainerMargins(OSGGroupPtr pgeometrydata, const Vector& extents, const Vector& negativeCropContainerMargins, const Vector& positiveCropContainerMargins, const RaveVector<float>& color, float transparency){
+void DrawCropContainerMargins(OSGGroupPtr pgeometrydata, const float zOffset, const Vector& innerExtents, const Vector& negativeCropContainerMargins, const Vector& positiveCropContainerMargins, const RaveVector<float>& color, float transparency){
     if(negativeCropContainerMargins == Vector(0, 0, 0) && positiveCropContainerMargins == Vector(0, 0, 0)){
         // do nothing if CropContainerMargins are all zeros
         return;
@@ -1153,12 +1181,15 @@ void DrawCropContainerMargins(OSGGroupPtr pgeometrydata, const Vector& extents, 
     box->setCenter(osg::Vec3f(
         (negativeCropContainerMargins.x - positiveCropContainerMargins.x) * 0.5,
         (negativeCropContainerMargins.y - positiveCropContainerMargins.y) * 0.5,
-        (extents.z + negativeCropContainerMargins.z - positiveCropContainerMargins.z) * 0.5
+        // The z = 0 plane sits at the bottom of the outer extent.
+        // First, move up by zOffset to reach the bottom of inner extent.
+        // Then move up by (innerExtents.z / 2) to reach the center of the box.
+        (negativeCropContainerMargins.z - positiveCropContainerMargins.z) * 0.5 + innerExtents.z * 0.5 + zOffset
     ));
     box->setHalfLengths(osg::Vec3f(
-        (extents.x - negativeCropContainerMargins.x - positiveCropContainerMargins.x) * 0.5,
-        (extents.y - negativeCropContainerMargins.y - positiveCropContainerMargins.y) * 0.5,
-        (extents.z - negativeCropContainerMargins.z - positiveCropContainerMargins.z) * 0.5
+        (innerExtents.x - negativeCropContainerMargins.x - positiveCropContainerMargins.x) * 0.5,
+        (innerExtents.y - negativeCropContainerMargins.y - positiveCropContainerMargins.y) * 0.5,
+        (innerExtents.z - negativeCropContainerMargins.z - positiveCropContainerMargins.z) * 0.5
     ));
 
     osg::Geode *boxGeode = new osg::Geode;

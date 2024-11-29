@@ -58,9 +58,12 @@ public:
     virtual bool SimulationStep(dReal fElapsedTime) {
         return false;
     }
-    
+
+    /// \brief sets the ik failure accumulator to use when running functions
+    virtual void SetIkFailureAccumulator(IkFailureAccumulatorBasePtr& pIkFailureAccumulator);
+
 private:
-    virtual const char* GetHash() const {
+    virtual const char* GetHash() const override {
         return OPENRAVE_MODULE_HASH;
     }
 };

@@ -4,19 +4,6 @@
 
 namespace fclrave {
 
-bool CompareGeometryPairContact(const CollisionReport::GeometryPairContact& pairContact1, const CollisionReport::GeometryPairContact& pairContact2)
-{
-    if( pairContact1.pgeom1.get() < pairContact2.pgeom1.get() ) {
-        return true;
-    }
-    else if( pairContact1.pgeom1.get() > pairContact2.pgeom1.get() ) {
-        return false;
-    }
-
-    // compare pgeom2 since pgeom1 is equal
-    return pairContact1.pgeom2.get() < pairContact2.pgeom2.get();
-}
-
 // TODO : This is becoming really stupid, I should just add optional additional data for DynamicAABBTree
 boost::shared_ptr<fcl::BroadPhaseCollisionManager> CreateManagerFromBroadphaseAlgorithm(std::string const &algorithm)
 {
@@ -121,6 +108,7 @@ FCLCollisionChecker::FCLCollisionChecker(OpenRAVE::EnvironmentBasePtr penv, std:
     // TODO : Consider removing these which could be more harmful than anything else
     RegisterCommand("SetBroadphaseAlgorithm", boost::bind(&FCLCollisionChecker::SetBroadphaseAlgorithmCommand, this, _1, _2), "sets the broadphase algorithm (Naive, SaP, SSaP, IntervalTree, DynamicAABBTree, DynamicAABBTree_Array)");
     RegisterCommand("SetBVHRepresentation", boost::bind(&FCLCollisionChecker::_SetBVHRepresentation, this, _1, _2), "sets the Bouding Volume Hierarchy representation for meshes (AABB, OBB, OBBRSS, RSS, kIDS)");
+    RegisterCommand("GetEnvBodiesInfoFromFCLSpace", boost::bind(&FCLCollisionChecker::_GetEnvBodiesInfoFromFCLSpace, this, _1, _2), "get information from fcl space GetEnvBodies.");
 
     RAVELOG_VERBOSE_FORMAT("FCLCollisionChecker %s created in env %d", _userdatakey%penv->GetId());
 
@@ -257,7 +245,7 @@ void FCLCollisionChecker::RemoveKinBody(OpenRAVE::KinBodyPtr pbody)
     _bodymanagers.erase(std::make_pair(pbody.get(), (int)0));
     _bodymanagers.erase(std::make_pair(pbody.get(), (int)1));
     for (BODYMANAGERSMAP::iterator it = _bodymanagers.begin();
-            it != _bodymanagers.end(); ++it) {
+         it != _bodymanagers.end(); ++it) {
         it->second->RemoveBody(body);
     }
 
@@ -267,7 +255,7 @@ void FCLCollisionChecker::RemoveKinBody(OpenRAVE::KinBodyPtr pbody)
     while (it != _envmanagers.end()) {
         const vector<int>& excludedBodyIndices = it->first;
         const vector<int>::const_iterator itExcluded = lower_bound(excludedBodyIndices.begin(), excludedBodyIndices.end(), envBodyIndex);
-        
+
         const bool bFound = itExcluded != excludedBodyIndices.end() && *itExcluded == envBodyIndex;
         if (bFound) {
             numErased++;
@@ -968,12 +956,11 @@ bool FCLCollisionChecker::CheckNarrowPhaseGeomCollision(fcl::CollisionObject *o1
     if( numContacts > 0 ) {
         if( !!pcb->_report ) {
             std::pair<FCLSpace::FCLKinBodyInfo::LinkInfo*, LinkConstPtr> o1info = GetCollisionLink(*o1), o2info = GetCollisionLink(*o2);
-            std::pair<FCLSpace::FCLKinBodyInfo::FCLGeometryInfo*, GeometryConstPtr> o1geominfo = GetCollisionGeometry(*o1), o2geominfo = GetCollisionGeometry(*o2);
+            FCLSpace::FCLKinBodyInfo::FCLGeometryInfo* o1geominfo = GetCollisionGeometry(*o1);
+            FCLSpace::FCLKinBodyInfo::FCLGeometryInfo* o2geominfo = GetCollisionGeometry(*o2);
 
             LinkConstPtr& plink1 = o1info.second;
             LinkConstPtr& plink2 = o2info.second;
-            GeometryConstPtr& pgeom1 = o1geominfo.second;
-            GeometryConstPtr& pgeom2 = o2geominfo.second;
 
             // plink1 or plink2 can be None if object is standalone (ie coming from trimesh)
 
@@ -986,60 +973,33 @@ bool FCLCollisionChecker::CheckNarrowPhaseGeomCollision(fcl::CollisionObject *o1
                 BOOST_ASSERT( pcb->bselfCollision || !plink1->GetParent()->IsAttached(*plink2->GetParent()));
             }
 
+            bool bSwapped = false;
+//            if( plink1.get() > plink2.get() || (plink1.get() == plink2.get() && pgeom1.get() > pgeom2.get()) ) {
+//                std::swap(plink1, plink2);
+//                std::swap(pgeom1, pgeom2);
+//                bSwapped = true;
+//            }
+
             _reportcache.Reset(_options);
-            _reportcache.plink1 = plink1;
-            _reportcache.plink2 = plink2;
-            _reportcache.pgeom1 = pgeom1;
-            _reportcache.pgeom2 = pgeom2;
+            int icollision = _reportcache.AddLinkGeomCollision(plink1, (!!o1geominfo ? o1geominfo->geomname : std::string()), plink2, (!!o2geominfo ? o2geominfo->geomname : std::string()));
+            OpenRAVE::CollisionPairInfo& cpinfo = _reportcache.vCollisionInfos[icollision];
 
             // TODO : eliminate the contacts points (insertion sort (std::lower) + binary_search ?) duplicated
             // How comes that there are duplicated contacts points ?
             if( _options & (OpenRAVE::CO_Contacts | OpenRAVE::CO_AllGeometryContacts) ) {
-                _reportcache.contacts.resize(numContacts);
+                cpinfo.contacts.resize(numContacts);
                 for(size_t i = 0; i < numContacts; ++i) {
                     fcl::Contact const &c = pcb->_result.getContact(i);
-                    _reportcache.contacts[i] = CollisionReport::CONTACT(ConvertVectorFromFCL(c.pos), ConvertVectorFromFCL(c.normal), c.penetration_depth);
-                }
-            }
-
-            // uses _reportcache.contacts
-            if( _options & (OpenRAVE::CO_AllGeometryContacts | OpenRAVE::CO_AllGeometryCollisions) ) {
-                // We maintain vGeometryContacts ordered
-                CollisionReport::GeometryPairContact pairContact;
-                if( pgeom1.get() < pgeom2.get() ) {
-                    pairContact.pgeom1 = pgeom1;
-                    pairContact.pgeom2 = pgeom2;
-                }
-                else {
-                    pairContact.pgeom1 = pgeom2;
-                    pairContact.pgeom2 = pgeom1;
-                }
-                typedef std::vector<CollisionReport::GeometryPairContact>::iterator PairIterator;
-                PairIterator end = pcb->_report->vGeometryContacts.end(), first = std::lower_bound(pcb->_report->vGeometryContacts.begin(), end, pairContact, CompareGeometryPairContact);
-                if( first == end  ) {
-                    PairIterator itnewentry = pcb->_report->vGeometryContacts.insert(first, pairContact);
-                    if( _options & OpenRAVE::CO_AllGeometryContacts ) {
-                        itnewentry->contacts = _reportcache.contacts; // do contacts at the end
-                    }
-                }
-                else {
-                    // check if same geometries
-                    if( first->pgeom1 == pairContact.pgeom1 && first->pgeom2 == pairContact.pgeom2 ) {
-                        if( _options & OpenRAVE::CO_AllGeometryContacts ) {
-                            // append the contacts
-                            first->contacts.insert(first->contacts.end(), _reportcache.contacts.begin(), _reportcache.contacts.end());
-                        }
+                    if( bSwapped ) {
+                        cpinfo.contacts[i] = OpenRAVE::CONTACT(ConvertVectorFromFCL(c.pos), -ConvertVectorFromFCL(c.normal), -c.penetration_depth);
                     }
                     else {
-                        PairIterator itnewentry = pcb->_report->vGeometryContacts.insert(first, pairContact);
-                        if( _options & OpenRAVE::CO_AllGeometryContacts ) {
-                            itnewentry->contacts = _reportcache.contacts; // do contacts at the end
-                        }
+                        cpinfo.contacts[i] = OpenRAVE::CONTACT(ConvertVectorFromFCL(c.pos), ConvertVectorFromFCL(c.normal), c.penetration_depth);
                     }
                 }
             }
 
-            if( pcb->_bHasCallbacks ) {
+            if( !(_options & OpenRAVE::CO_IgnoreCallbacks) && pcb->_bHasCallbacks ) {
                 OpenRAVE::CollisionAction action = OpenRAVE::CA_DefaultAction;
                 CollisionReportPtr preport(&_reportcache, OpenRAVE::utils::null_deleter());
                 FOREACH(callback, pcb->GetCallbacks()) {
@@ -1050,24 +1010,25 @@ bool FCLCollisionChecker::CheckNarrowPhaseGeomCollision(fcl::CollisionObject *o1
                 }
             }
 
-            pcb->_report->plink1 = _reportcache.plink1;
-            pcb->_report->plink2 = _reportcache.plink2;
-            pcb->_report->pgeom1 = _reportcache.pgeom1;
-            pcb->_report->pgeom2 = _reportcache.pgeom2;
-            if( pcb->_report->contacts.size() == 0) {
-                pcb->_report->contacts.swap(_reportcache.contacts);
-            } else {
-                pcb->_report->contacts.reserve(pcb->_report->contacts.size() + numContacts);
-                copy(_reportcache.contacts.begin(),_reportcache.contacts.end(), back_inserter(pcb->_report->contacts));
-            }
-
+            int inewcollision;
             if( _options & OpenRAVE::CO_AllLinkCollisions ) {
-                // We maintain vLinkColliding ordered
-                LinkPair linkPair = MakeLinkPair(plink1, plink2);
-                typedef std::vector< std::pair< LinkConstPtr, LinkConstPtr > >::iterator PairIterator;
-                PairIterator end = pcb->_report->vLinkColliding.end(), first = std::lower_bound(pcb->_report->vLinkColliding.begin(), end, linkPair);
-                if( first == end || *first != linkPair ) {
-                    pcb->_report->vLinkColliding.insert(first, linkPair);
+                inewcollision = pcb->_report->AddLinkGeomCollision(plink1, (!!o1geominfo ? o1geominfo->geomname : std::string()), plink2, (!!o2geominfo ? o2geominfo->geomname : std::string()));
+            }
+            else {
+                inewcollision = pcb->_report->SetLinkGeomCollision(plink1, (!!o1geominfo ? o1geominfo->geomname : std::string()), plink2, (!!o2geominfo ? o2geominfo->geomname : std::string()));
+            }
+            
+            OpenRAVE::CollisionPairInfo& newcpinfo = pcb->_report->vCollisionInfos[inewcollision];
+            if( _options & (OpenRAVE::CO_Contacts | OpenRAVE::CO_AllGeometryContacts) ) {
+                newcpinfo.contacts.reserve(newcpinfo.contacts.size() + numContacts);
+                for(size_t i = 0; i < numContacts; ++i) {
+                    fcl::Contact const &c = pcb->_result.getContact(i);
+                    if( bSwapped ) {
+                        newcpinfo.contacts.emplace_back(ConvertVectorFromFCL(c.pos), -ConvertVectorFromFCL(c.normal), -c.penetration_depth);
+                    }
+                    else {
+                        newcpinfo.contacts.emplace_back(ConvertVectorFromFCL(c.pos), ConvertVectorFromFCL(c.normal), c.penetration_depth);
+                    }
                 }
             }
 
@@ -1191,15 +1152,6 @@ CollisionPair FCLCollisionChecker::MakeCollisionPair(fcl::CollisionObject* o1, f
 }
 #endif
 
-LinkPair FCLCollisionChecker::MakeLinkPair(LinkConstPtr plink1, LinkConstPtr plink2)
-{
-    if( plink1.get() < plink2.get() ) {
-        return make_pair(plink1, plink2);
-    } else {
-        return make_pair(plink2, plink1);
-    }
-}
-
 std::pair<FCLSpace::FCLKinBodyInfo::LinkInfo*, LinkConstPtr> FCLCollisionChecker::GetCollisionLink(const fcl::CollisionObject &collObj)
 {
     FCLSpace::FCLKinBodyInfo::LinkInfo* link_raw = static_cast<FCLSpace::FCLKinBodyInfo::LinkInfo *>(collObj.getUserData());
@@ -1217,20 +1169,10 @@ std::pair<FCLSpace::FCLKinBodyInfo::LinkInfo*, LinkConstPtr> FCLCollisionChecker
     return std::make_pair(link_raw, LinkConstPtr());
 }
 
-std::pair<FCLSpace::FCLKinBodyInfo::FCLGeometryInfo*, GeometryConstPtr> FCLCollisionChecker::GetCollisionGeometry(const fcl::CollisionObject &collObj)
+FCLSpace::FCLKinBodyInfo::FCLGeometryInfo* FCLCollisionChecker::GetCollisionGeometry(const fcl::CollisionObject &collObj)
 {
     const std::shared_ptr<const fcl::CollisionGeometry>& collgeom = collObj.collisionGeometry();
-    FCLSpace::FCLKinBodyInfo::FCLGeometryInfo* geom_raw = static_cast<FCLSpace::FCLKinBodyInfo::FCLGeometryInfo *>(collgeom->getUserData());
-    if( !!geom_raw ) {
-        const GeometryConstPtr pgeom = geom_raw->GetGeometry();
-        if( !pgeom ) {
-            if( geom_raw->bFromKinBodyGeometry ) {
-                RAVELOG_WARN_FORMAT("env=%s, The geom %s was lost from fclspace (userdatakey %s)", GetEnv()->GetNameId()%geom_raw->bodylinkgeomname%_userdatakey);
-            }
-        }
-        return std::make_pair(geom_raw, pgeom);
-    }
-    return std::make_pair(geom_raw, GeometryConstPtr());
+    return static_cast<FCLSpace::FCLKinBodyInfo::FCLGeometryInfo *>(collgeom->getUserData());
 }
 
 BroadPhaseCollisionManagerPtr FCLCollisionChecker::_CreateManager() {
@@ -1241,11 +1183,16 @@ FCLCollisionManagerInstance& FCLCollisionChecker::_GetBodyManager(KinBodyConstPt
 {
     _bParentlessCollisionObject = false;
     BODYMANAGERSMAP::iterator it = _bodymanagers.find(std::make_pair(pbody.get(), (int)bactiveDOFs));
+    if( it != _bodymanagers.end() && !it->second->IsValid() ) {
+        RAVELOG_WARN_FORMAT("env=%s, body manager cache is invalid. Perhaps, corresponding body has been removed. (self=%d)", GetEnv()->GetNameId()%_bIsSelfCollisionChecker);
+        _bodymanagers.erase(it);
+        it = _bodymanagers.end();
+    }
     if( it == _bodymanagers.end() ) {
         FCLCollisionManagerInstancePtr p(new FCLCollisionManagerInstance(*_fclspace, _CreateManager()));
         p->InitBodyManager(pbody, bactiveDOFs);
         it = _bodymanagers.insert(BODYMANAGERSMAP::value_type(std::make_pair(pbody.get(), (int)bactiveDOFs), p)).first;
-        
+
         if ((int) _bodymanagers.size() > _maxNumBodyManagers) {
             RAVELOG_VERBOSE_FORMAT("env=%s, exceeded previous max number of body managers, now %d.", GetEnv()->GetNameId()%_bodymanagers.size());
             _maxNumBodyManagers = _bodymanagers.size();
@@ -1350,6 +1297,57 @@ void FCLCollisionChecker::_PrintCollisionManagerInstanceLE(const KinBody::Link& 
         RAVELOG_WARN_FORMAT("env=%s, self=%d, link %s:%s (enabled=%d) ", GetEnv()->GetNameId()%_bIsSelfCollisionChecker%link.GetParent()->GetName()%link.GetName()%link.IsEnabled());
         _bParentlessCollisionObject = false;
     }
+}
+
+bool FCLCollisionChecker::_GetEnvBodiesInfoFromFCLSpace(ostream& sout, istream& sinput)
+{
+    rapidjson::Document docInfo;
+    rapidjson::Value rBodies(rapidjson::kArrayType);
+    for (const KinBodyConstPtr& pbody : _fclspace->GetEnvBodies()) {
+        if( !pbody ) {
+            continue;
+        }
+        const FCLKinBodyInfoPtr pinfo = _fclspace->GetInfo(*pbody);
+        if ( !pinfo ) {
+            continue;
+        }
+        rapidjson::Value rBody(rapidjson::kObjectType);
+        OpenRAVE::orjson::SetJsonValueByKey(rBody, "name", pbody->GetName(), docInfo.GetAllocator());
+        OpenRAVE::orjson::SetJsonValueByKey(rBody, "geometrygroup", pinfo->_geometrygroup, docInfo.GetAllocator());
+        rapidjson::Value rLinks(rapidjson::kArrayType);
+        for(const boost::shared_ptr<FCLSpace::FCLKinBodyInfo::LinkInfo>& linkinfo : pinfo->vlinks ) {
+            if( !linkinfo ) {
+                continue;
+            }
+            const LinkConstPtr plink = linkinfo->GetLink();
+            if( !plink ) {
+                continue;
+            }
+            rapidjson::Value rLink(rapidjson::kObjectType);
+            OpenRAVE::orjson::SetJsonValueByKey(rLink, "name", plink->GetName(), docInfo.GetAllocator());
+            OpenRAVE::orjson::SetJsonValueByKey(rLink, "fromExtraGeometries", linkinfo->bFromExtraGeometries, docInfo.GetAllocator());
+            rapidjson::Value rGeometries(rapidjson::kArrayType);
+            for( const TransformCollisionPair& geom : linkinfo->vgeoms) {
+                if ( !geom.second ) {
+                    continue;
+                }
+                FCLSpace::FCLKinBodyInfo::FCLGeometryInfo* ogeominfo = GetCollisionGeometry(*(geom.second));
+                if( !ogeominfo ) {
+                    continue;
+                }
+                rapidjson::Value rGeometry(rapidjson::kObjectType);
+                OpenRAVE::orjson::SetJsonValueByKey(rGeometry, "name", ogeominfo->geomname, docInfo.GetAllocator());
+                rGeometries.PushBack(rGeometry, docInfo.GetAllocator());
+            }
+            OpenRAVE::orjson::SetJsonValueByKey(rLink, "geometries", rGeometries, docInfo.GetAllocator());
+            rLinks.PushBack(rLink, docInfo.GetAllocator());
+        }
+        OpenRAVE::orjson::SetJsonValueByKey(rBody, "links", rLinks, docInfo.GetAllocator());
+        rBodies.PushBack(rBody, docInfo.GetAllocator());
+    }
+    OpenRAVE::orjson::SetJsonValueByKey(docInfo, "bodies", rBodies, docInfo.GetAllocator());
+    sout << OpenRAVE::orjson::DumpJson(docInfo);
+    return true;
 }
 
 } // namespace fclrave
