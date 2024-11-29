@@ -20,6 +20,9 @@
 #ifndef OPENRAVE_LOGGING_H
 #define OPENRAVE_LOGGING_H
 
+#include <string>
+#include <vector>
+
 #if OPENRAVE_LOG4CXX
 #include <log4cxx/logger.h>
 #endif
@@ -161,7 +164,12 @@ OPENRAVE_API log4cxx::LevelPtr RaveGetVerboseLogLevel();
 #ifdef LOG4CXX_LOCATION
 #undef LOG4CXX_LOCATION
 #endif
+
+#if LOG4CXX_VERSION >= 0x000D0000
+#define LOG4CXX_LOCATION ::log4cxx::spi::LocationInfo(OpenRAVE::RaveGetSourceFilename(__FILE__), OpenRAVE::RaveGetSourceFilename(__FILE__), __LOG4CXX_FUNC__, __LINE__)
+#else
 #define LOG4CXX_LOCATION ::log4cxx::spi::LocationInfo(OpenRAVE::RaveGetSourceFilename(__FILE__), __LOG4CXX_FUNC__, __LINE__)
+#endif
 
 #define OPENRAVE_LOG4CXX_FATALLEVEL(logger, message, location) {if (!!logger && logger->isFatalEnabled()) { logger->forcedLog(::log4cxx::Level::getFatal(), message, location); }}
 #define OPENRAVE_LOG4CXX_ERRORLEVEL(logger, message, location) {if (!!logger && logger->isErrorEnabled()) { logger->forcedLog(::log4cxx::Level::getError(), message, location); }}
@@ -192,7 +200,14 @@ OPENRAVE_API log4cxx::LevelPtr RaveGetVerboseLogLevel();
             } \
             /* vswprintf does not tell us how much space is needed, so we need to grow until it is satisfied */ \
             wslen *= 2; \
-            wsallocated = (wchar_t*)realloc(wsallocated, wslen*sizeof(wchar_t)); \
+            wchar_t* wsnext = (wchar_t*)realloc(wsallocated, wslen*sizeof(wchar_t)); \
+            /* realloc() can return NULL, need to remember previous allocation to avoid memory leaks */ \
+            if (wsnext != NULL) {  \
+                wsallocated = wsnext;  \
+            } else {     \
+                wr = -1; \
+                break;   \
+            } \
             ws = wsallocated; \
         } \
         if (wr >= 0) { \

@@ -11,9 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from common_test_openrave import *
+from common_test_openrave import EnvironmentSetup, expected_failure 
+from openravepy import Environment, RaveCreateModule, IkParameterizationType
 
 class TestDatabases(EnvironmentSetup):
+
+    @expected_failure  # newer sympy is not compatible with katana iksolver generation
     def test_ikmodulegeneration(self):
         env=self.env
         for robotname,manipname,iktype in [('robots/neuronics-katana.zae','arm',IkParameterizationType.TranslationDirection5D),('robots/pr2-beta-static.zae','rightarm',IkParameterizationType.Transform6D)]:

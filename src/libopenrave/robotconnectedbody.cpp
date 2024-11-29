@@ -1008,6 +1008,8 @@ void RobotBase::_ComputeConnectedBodiesInformation()
                 RecursivePrefixMatchingField(connectedBody._nameprefix, boost::bind(MatchFieldsCaseInsensitive, _1, std::string("toolnames")), newGripperInfoDoc, newGripperInfoDoc.GetAllocator(), false);
                 RecursivePrefixMatchingField(connectedBody._nameprefix, boost::bind(MatchFieldsCaseInsensitive, _1, std::string("jointname")), newGripperInfoDoc, newGripperInfoDoc.GetAllocator(), false);
                 RecursivePrefixMatchingField(connectedBody._nameprefix, boost::bind(MatchFieldsCaseInsensitive, _1, std::string("jointnames")), newGripperInfoDoc, newGripperInfoDoc.GetAllocator(), false);
+                RecursivePrefixMatchingField(connectedBody._nameprefix, boost::bind(MatchFieldsCaseInsensitive, _1, std::string("grippername")), newGripperInfoDoc, newGripperInfoDoc.GetAllocator(), false);
+                RecursivePrefixMatchingField(connectedBody._nameprefix, boost::bind(MatchFieldsCaseInsensitive, _1, std::string("grippernames")), newGripperInfoDoc, newGripperInfoDoc.GetAllocator(), false);
                 pnewgripperInfo->_docGripperInfo.Swap(newGripperInfoDoc);
             }
             else {
@@ -1148,6 +1150,9 @@ bool RobotBase::SetConnectedBodyActiveStates(const std::vector<int8_t>& activest
     bool bChanged = false;
     for(size_t iconnectedbody = 0; iconnectedbody < _vecConnectedBodies.size(); ++iconnectedbody) {
         bChanged |= _vecConnectedBodies[iconnectedbody]->SetActive(activestates[iconnectedbody]);
+    }
+    if (bChanged) {
+        __hashKinematicsGeometryDynamics.resize(0);
     }
     return bChanged;
 }

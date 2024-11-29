@@ -12,7 +12,8 @@ typedef KinBody::LinkConstPtr LinkConstPtr;
 typedef std::pair<LinkConstPtr, LinkConstPtr> LinkPair;
 typedef boost::weak_ptr<const KinBody> KinBodyConstWeakPtr;
 typedef KinBody::GeometryConstPtr GeometryConstPtr;
-typedef boost::weak_ptr<KinBody::Geometry> GeometryWeakPtr;
+typedef std::pair<GeometryConstPtr, GeometryConstPtr> GeomPair;
+typedef std::pair<LinkPair, GeomPair> LinkGeomPairs;
 using OpenRAVE::ORE_Assert;
 
 // Warning : this is the only place where we use std::shared_ptr (for compatibility with fcl)
@@ -77,18 +78,11 @@ public:
         {
 public:
             FCLGeometryInfo();
-            FCLGeometryInfo(KinBody::GeometryPtr pgeom);
 
             virtual ~FCLGeometryInfo() {
             }
 
-            inline KinBody::GeometryPtr GetGeometry() {
-                return _pgeom.lock();
-            }
-
-            GeometryWeakPtr _pgeom;
-            std::string bodylinkgeomname; // for debugging purposes
-            bool bFromKinBodyGeometry; ///< if true, then from kinbodygeometry. Otherwise from standalone object that does not have any KinBody associations
+            std::string geomname; // for debugging purposes
         };
 
         class LinkInfo
@@ -135,9 +129,10 @@ public:
             std::vector<TransformCollisionPair> vgeoms; ///< vector of transformations and collision object; one per geometries
             std::string bodylinkname; // for debugging purposes
             bool bFromKinBodyLink; ///< if true, then from kinbodylink. Otherwise from standalone object that does not have any KinBody associations
+            bool bFromExtraGeometries = false; ///< if true, geometries come from extraGeometries. otherwise, KinBody::Link::GetGeometries.
         };
 
-        FCLKinBodyInfo();
+        FCLKinBodyInfo() {}
 
         virtual ~FCLKinBodyInfo() {
             Reset();
@@ -151,11 +146,12 @@ public:
         }
 
         KinBodyWeakPtr _pbody;
-        int nLastStamp;  ///< KinBody::GetUpdateStamp() when last synchronized ("is transform up to date")
-        int nLinkUpdateStamp; ///< update stamp for link enable state (increases every time link enables change)
-        int nGeometryUpdateStamp; ///< update stamp for geometry update state (increases every time geometry enables change)
-        int nAttachedBodiesUpdateStamp; ///< update stamp for when attached bodies change of this body
-        int nActiveDOFUpdateStamp; ///< update stamp for when active dofs change of this body
+        int nLastStamp = 0; ///< KinBody::GetUpdateStamp() when last synchronized ("is transform up to date")
+        int nLastLinkReloadStamp = 0; ///< KinBody::GetUpdateStamp() when we last ran ReloadKinBodyLinks
+        int nLinkUpdateStamp = 0; ///< update stamp for link enable state (increases every time link enables change)
+        int nGeometryUpdateStamp = 0; ///< update stamp for geometry update state (increases every time geometry enables change)
+        int nAttachedBodiesUpdateStamp = 0; ///< update stamp for when attached bodies change of this body
+        int nActiveDOFUpdateStamp = 0; ///< update stamp for when active dofs change of this body
 
         vector< boost::shared_ptr<LinkInfo> > vlinks; ///< info for every link of the kinbody
 
@@ -187,6 +183,7 @@ public:
     void DestroyEnvironment();
 
     FCLKinBodyInfoPtr InitKinBody(KinBodyConstPtr pbody, FCLKinBodyInfoPtr pinfo = FCLKinBodyInfoPtr(), bool bSetToCurrentPInfo=true);
+    void ReloadKinBodyLinks(KinBodyConstPtr pbody, FCLKinBodyInfoPtr pinfo);
 
     bool HasNamedGeometry(const KinBody &body, const std::string& groupname);
 
