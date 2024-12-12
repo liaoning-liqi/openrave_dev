@@ -19,7 +19,7 @@ cmake_policy(SET CMP0003 NEW)
 cmake_policy(SET CMP0067 NEW)
 
 if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 14) # C++14 for std::shared_timed_mutex
+  set(CMAKE_CXX_STANDARD 17) # C++14 for std::shared_timed_mutex
 endif()
 # Use, i.e. don't skip the full RPATH for the build tree
 set(CMAKE_SKIP_BUILD_RPATH  FALSE)
