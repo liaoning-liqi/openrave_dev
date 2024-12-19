@@ -113,12 +113,33 @@ static void _CreateSaverForGrabbedAndGrabber(KinBody::KinBodyStateSaverPtr& pSav
     }
 }
 
+/// \brief check if Grabbed::ComputeListNonCollidingLinks is rigid body.
+/// \parma[in] pGrabbingLink : grabbing link of grabber.
+/// \param[in] vAttachedToGrabbingLink : vector of attached links to the grabber's grabbing link.
+/// \return true if grabber is rigid body.
+static bool _IsGrabberRigidBody(const KinBody::LinkPtr& pGrabbingLink, const std::vector<KinBody::LinkPtr>& vAttachedToGrabbingLink)
+{
+    KinBodyPtr pGrabber(pGrabbingLink->GetParent());
+    return pGrabber->GetLinks().size() == vAttachedToGrabbingLink.size(); // if all links are rigidly attached each other.
+}
+
 Grabbed::Grabbed(KinBodyPtr pGrabbedBody, KinBody::LinkPtr pGrabbingLink)
 {
     _pGrabbedBody = pGrabbedBody;
     _pGrabbingLink = pGrabbingLink;
     _pGrabbingLink->GetRigidlyAttachedLinks(_vAttachedToGrabbingLink);
+
+    // Grabbed::ComputeListNonCollidingLinks computes two results : _listNonCollidingGrabbedGrabberLinkPairsWhenGrabbed and _mapListNonCollidingInterGrabbedLinkPairsWhenGrabbed.
+    // For both results, the link, which is included in vAttachedToGrabbingLink, is excluded.
+    // If grabber is equivalent to rigid body, the results from Grabbed::ComputeListNonCollidingLinks should be empty.
+    // Here, we skip computing of _pGrabbedSaver and _pGrabberSaver, since computing them are expensive.
+    if ( _IsGrabberRigidBody(pGrabbingLink, _vAttachedToGrabbingLink) ) {
+        _listNonCollidingIsValid = true; // considered as Grabbed::ComputeListNonCollidingLinks has finished.
+        return;
+    }
+
     _listNonCollidingIsValid = false;
+
     const bool bDisableRestoreOnDestructor = true; // This is very important! These saver are used only in ComputeListNonCollidingLinks and we don't want to restore on destructor.
     _CreateSaverForGrabbedAndGrabber(_pGrabbedSaver,
                                      pGrabbedBody,
