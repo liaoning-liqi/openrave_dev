@@ -299,6 +299,11 @@ KinBody::KinBodyStateSaver::KinBodyStateSaver(KinBodyPtr pbody, int options) : _
 
 KinBody::KinBodyStateSaver::KinBodyStateSaver(KinBodyPtr pbody, const KinBodyStateSaver& reference) : _pbody(pbody), _options(reference._options), _bRestoreOnDestructor(reference._bRestoreOnDestructor)
 {
+    if( pbody->GetKinematicsGeometryHash() != reference.GetBody()->GetKinematicsGeometryHash() ) {
+        throw OPENRAVE_EXCEPTION_FORMAT(_("env=%s, KinBodyStateSaver for body '%s' cannot be constructed from other saver since the hash is different. bodyHash=%s;referenceBodyHash=%s. (options=%d)"),
+                                        pbody->GetEnv()->GetNameId() % pbody->GetName() % pbody->GetKinematicsGeometryHash() % reference.GetBody()->GetKinematicsGeometryHash() % _options,
+                                        ORE_InvalidArguments);
+    }
     if( _options & Save_LinkTransformation ) {
         _vLinkTransforms = reference._vLinkTransforms;
         _vdoflastsetvalues = reference._vdoflastsetvalues;
