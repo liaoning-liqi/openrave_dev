@@ -3761,16 +3761,24 @@ protected:
     /// \brief Extract the first body's environmentBodyIndex from environment body indices pair.
     static int _GetSecondEnvironmentBodyIndexFromPair(const uint64_t pair);
 
-    /// \brief Check self collision between grabber and grabbed, and between two grabbed bodies.
+    /// \brief Check self collision between grabber and grabbed, and between two grabbed bodies (inter-grabbed collision).
     /// \param collisionchecker : collision checker to use
     /// \param[out] report : resultant report
-    /// \param[in] pGrabbingLinkToCheck : link ptr of grabbing link to check. if nullptr, no filtering, e.g. check all possible grabbed bodies with grabbing links. if specified, check self collision by the grabbed bodies which grabbingLink matches to this pGrabbingLinkToCheck, and check self collision of this link with other grabbed bodies.
+    /// \param[in] pGrabberLinkToCheck : link ptr of grabber's grabbing link to check.
+    ///                                   if nullptr, check all possible grabbed bodies.
+    ///                                   if valid ptr is specified,
+    ///                                      - grabber vs grabbed collision : check collision between grabber link and the grabbed body which grabbingLink is pGrabberLinkToCheck
+    ///                                      - inter-grabbed collision : check collision with the the grabbed body which grabbingLink is pGrabberLinkToCheck.
     /// \param[in] bAllLinkCollisions : true if all link should be checked.
-    /// \param[in] updateGrabbedBodyTransformWithSaverFn : callback function to update the Transform of grabbed bodies, which is grabbed by pGrabbingLinkToCheck. If the function is nullptr, do nothing. This is only used when pGrabbingLinkToCheck gives valid pointer. This function returns KinBodyStateSaverPtr to restore the original Transform after all.
-    /// \param[in] vInclusiveTargetLinks : Vector of target links to check. This is only used when non-empty vetor is specified. If empty, do not filter, e.g. check the all possible link pairs. So far, this is only supported when pGrabbingLinkToCheck is specified. In this function, link pair is collision-checked. One link in the pair should be grabbed body attached to pGrabbingLinkToCheck, or pGrabbingLinkToCheck itself. Another link in the pair should be included in this vector.
+    /// \param[in] updateGrabbedBodyTransformWithSaverFn : callback function to update the Transform of grabbed bodies, which is grabbed by pGrabberLinkToCheck. If the function is nullptr, do nothing. This is only used when pGrabberLinkToCheck gives valid pointer. This function returns KinBodyStateSaverPtr to restore the original Transform after all.
+    /// \param[in] vInclusiveTargetLinks : Vector of grabber links to check. This is only supported when pGrabberLinkToCheck is specified.
+    ///                                    If empty, check the all possible grabber links.
+    ///                                    If non-empty, link pair is collision-checked.
+    ///                                      - grabber vs grabbed collision : the grabber link is in vInclusiveTargetLinks and grabbed body's grabbing link is pGrabberLinkToCheck. or, the grabber link is pGrabberLinkToCheck and grabbed body's grabbing link is in vInclusiveTargetLinks.
+    ///                                      - inter-grabbed collision : one grabbed body's grabbing link is in vInclusiveTargetLinks. other grabbed body's grabbing link is pGrabberLinkToCheck.
     bool _CheckGrabbedBodiesSelfCollision(CollisionCheckerBasePtr& collisionchecker,
                                           CollisionReportPtr& report,
-                                          const LinkPtr& pGrabbingLinkToCheck,
+                                          const LinkPtr& pGrabberLinkToCheck,
                                           const bool bAllLinkCollisions,
                                           const std::function<KinBody::KinBodyStateSaverPtr(KinBodyPtr&, const Transform&)>& updateGrabbedBodyTransformWithSaverFn,
                                           const std::vector<KinBody::LinkConstPtr>& vInclusiveTargetLinks = std::vector<KinBody::LinkConstPtr>()) const;

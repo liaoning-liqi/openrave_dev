@@ -101,14 +101,14 @@ bool KinBody::CheckSelfCollision(CollisionReportPtr report, CollisionCheckerBase
 
 bool KinBody::_CheckGrabbedBodiesSelfCollision(CollisionCheckerBasePtr& collisionchecker,
                                                CollisionReportPtr& report,
-                                               const KinBody::LinkPtr& pGrabbingLinkToCheck,
+                                               const KinBody::LinkPtr& pGrabberLinkToCheck,
                                                const bool bAllLinkCollisions,
                                                const std::function<KinBody::KinBodyStateSaverPtr(KinBodyPtr&, const Transform&)>& updateGrabbedBodyTransformWithSaverFn,
                                                const std::vector<KinBody::LinkConstPtr>& vInclusiveTargetLinks) const
 {
-    const bool bCheckSpecificGrabbingLinkOnly = !!pGrabbingLinkToCheck;
+    const bool bCheckSpecificGrabbingLinkOnly = !!pGrabberLinkToCheck;
     if( vInclusiveTargetLinks.size() > 0 ) {
-        OPENRAVE_ASSERT_FORMAT(bCheckSpecificGrabbingLinkOnly, "env=%s, vInclusiveTargetLinks is specified, but pGrabbingLinkToCheck is not specified. for body '%s'", GetEnv()->GetNameId()%GetName(), ORE_InvalidArguments);
+        OPENRAVE_ASSERT_FORMAT(bCheckSpecificGrabbingLinkOnly, "env=%s, vInclusiveTargetLinks is specified, but pGrabberLinkToCheck is not specified. for body '%s'", GetEnv()->GetNameId()%GetName(), ORE_InvalidArguments);
     }
 
     bool bCollision = false;
@@ -152,8 +152,8 @@ bool KinBody::_CheckGrabbedBodiesSelfCollision(CollisionCheckerBasePtr& collisio
         Grabbed* pGrabbed = vGrabbedBodies[indexGrabbed1];
         pGrabbed->ComputeListNonCollidingLinks();
         const ListNonCollidingLinkPairs& nonCollidingLinkPairs = pGrabbed->_listNonCollidingGrabbedGrabberLinkPairsWhenGrabbed;
-        const bool bGrabbingLinkToCheck = bCheckSpecificGrabbingLinkOnly ? pGrabbed->_pGrabbingLink == pGrabbingLinkToCheck : true; // true if this grabbedbody's grabbinglink should be checked.
-        if( bCheckSpecificGrabbingLinkOnly && bGrabbingLinkToCheck ) {
+        const bool bIsGrabbedBodyAttachedToGrabbingLinkToCheck = bCheckSpecificGrabbingLinkOnly ? pGrabbed->_pGrabbingLink == pGrabberLinkToCheck : true; // true if this grabbedbody's grabbinglink should be checked.
+        if( bCheckSpecificGrabbingLinkOnly && bIsGrabbedBodyAttachedToGrabbingLinkToCheck ) {
             vGrabbedBodiesWithGivenGrabbingLink.push_back(vLockedGrabbedBodiesCache[indexGrabbed1].get());
             if( !!updateGrabbedBodyTransformWithSaverFn ) {
                 vGrabbedBodyStateSaversWithGivenGrabbingLink.emplace_back(updateGrabbedBodyTransformWithSaverFn(vLockedGrabbedBodiesCache[indexGrabbed1], pGrabbed->_tRelative));
@@ -169,11 +169,11 @@ bool KinBody::_CheckGrabbedBodiesSelfCollision(CollisionCheckerBasePtr& collisio
                 RAVELOG_WARN_FORMAT("env=%s, _listNonCollidingLinks has invalid link %s:%d", GetEnv()->GetNameId()%robotlinkFromNonColliding.GetName()%robotlinkFromNonColliding.GetIndex());
             }
             const KinBody::LinkConstPtr& probotlink = (!!pLinkParent) ? probotlinkFromNonColliding : _veclinks.at(robotlinkFromNonColliding.GetIndex());
-            if( !bGrabbingLinkToCheck && probotlink != pGrabbingLinkToCheck ) { // if this grabbed body is not attached to the grabbinglink to check, and if the target link is not same pGrabbingLinkToCheck, no need to check.
+            if( !bIsGrabbedBodyAttachedToGrabbingLinkToCheck && probotlink != pGrabberLinkToCheck ) { // if this grabbed body is not attached to the grabbinglink to check, and if the target link is not same pGrabberLinkToCheck, no need to check.
                 continue;
             }
             if( vInclusiveTargetLinks.size() > 0 ) {
-                const KinBody::LinkConstPtr& pLinkToCheck = bGrabbingLinkToCheck ? probotlink : pGrabbed->_pGrabbingLink;
+                const KinBody::LinkConstPtr& pLinkToCheck = bIsGrabbedBodyAttachedToGrabbingLinkToCheck ? probotlink : pGrabbed->_pGrabbingLink;
                 if( std::find(vInclusiveTargetLinks.begin(), vInclusiveTargetLinks.end(), pLinkToCheck) == vInclusiveTargetLinks.end() ) {
                     continue;
                 }
