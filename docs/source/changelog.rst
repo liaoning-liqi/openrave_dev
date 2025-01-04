@@ -3,10 +3,16 @@
 ChangeLog
 #########
 
-Version 0.161.0
+Version 0.162.0
 ===============
 
 - Copy the internal states of `_pGrabbedSaver` and `_pGrabberSaver` of `Grabbed` instances when cloning or restoring, to avoid incorrect computation of the non colliding list cache.
+
+Version 0.161.0
+===============
+
+- Remove the code for back electromotive force from torque limit calculation APIs.
+- Add common utility function for torque limit calculation.
 
 Version 0.160.0
 ===============
