@@ -2500,7 +2500,7 @@ public:
         virtual void SetRestoreOnDestructor(bool restore);
 protected:
         /// \brief Throw exception due to the wrong usage of constructor call with wrong options.
-        virtual void _ThrowOnInvalidCopyFromOtherSaver(const char* envNameId, const char* className, const SaveParameters param, const int options);
+        static void _ThrowOnInvalidCopyFromOtherSaver(const char* envNameId, const char* className, const SaveParameters param, const int options);
 
         KinBodyPtr _pbody;
         int _options;         ///< saved options
