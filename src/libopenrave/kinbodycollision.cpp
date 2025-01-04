@@ -147,6 +147,16 @@ bool KinBody::_CheckGrabbedBodiesSelfCollision(CollisionCheckerBasePtr& collisio
     if( bCheckSpecificGrabbingLinkOnly ) {
         vGrabbedBodiesWithGivenGrabbingLink.reserve(numGrabbed);
     }
+    std::vector<KinBody*> vGrabbedBodiesInInclusiveLinks;
+    if( bCheckSpecificGrabbingLinkOnly && vInclusiveTargetLinks.size() > 0 ) {
+        vGrabbedBodiesWithGivenGrabbingLink.reserve(numGrabbed);
+        for (size_t indexGrabbed1 = 0; indexGrabbed1 < numGrabbed; indexGrabbed1++) {
+            Grabbed* pGrabbed = vGrabbedBodies[indexGrabbed1];
+            if ( std::find(vInclusiveTargetLinks.begin(), vInclusiveTargetLinks.end(), pGrabbed->_pGrabbingLink) != vInclusiveTargetLinks.end() ) {
+                vGrabbedBodiesInInclusiveLinks.emplace_back(vLockedGrabbedBodiesCache[indexGrabbed1].get());
+            }
+        }
+    }
     std::vector<KinBody::KinBodyStateSaverPtr> vGrabbedBodyStateSaversWithGivenGrabbingLink;
     for (size_t indexGrabbed1 = 0; indexGrabbed1 < numGrabbed; indexGrabbed1++) {
         Grabbed* pGrabbed = vGrabbedBodies[indexGrabbed1];
@@ -218,25 +228,23 @@ bool KinBody::_CheckGrabbedBodiesSelfCollision(CollisionCheckerBasePtr& collisio
             RAVELOG_WARN_FORMAT("env=%s, _listNonCollidingLinks has invalid link %s, %s", GetEnv()->GetNameId() % pairs.front().first->GetName() % pairs.front().second->GetName());
             continue;
         }
-        bool bIsFirstGrabbingLink = false;
         if( bCheckSpecificGrabbingLinkOnly ) {
+            bool bCompute = false;
             if( std::find(vGrabbedBodiesWithGivenGrabbingLink.begin(), vGrabbedBodiesWithGivenGrabbingLink.end(), pLink1.get()) != vGrabbedBodiesWithGivenGrabbingLink.end() ) {
-                bIsFirstGrabbingLink = true;
+                if ( vInclusiveTargetLinks.empty() || std::find(vGrabbedBodiesInInclusiveLinks.begin(), vGrabbedBodiesInInclusiveLinks.end(), pLink2.get()) != vGrabbedBodiesInInclusiveLinks.end() ) {
+                    bCompute = true;
+                }
             }
-            else if( std::find(vGrabbedBodiesWithGivenGrabbingLink.begin(), vGrabbedBodiesWithGivenGrabbingLink.end(), pLink2.get()) != vGrabbedBodiesWithGivenGrabbingLink.end() ) {
-                bIsFirstGrabbingLink = false;
+            else if (std::find(vGrabbedBodiesWithGivenGrabbingLink.begin(), vGrabbedBodiesWithGivenGrabbingLink.end(), pLink2.get()) != vGrabbedBodiesWithGivenGrabbingLink.end() ) {
+                if ( vInclusiveTargetLinks.empty() || std::find(vGrabbedBodiesInInclusiveLinks.begin(), vGrabbedBodiesInInclusiveLinks.end(), pLink1.get()) != vGrabbedBodiesInInclusiveLinks.end() ) {
+                    bCompute = true;
+                }
             }
-            else {
+            if ( !bCompute ) {
                 continue;
             }
         }
         FOREACHC(itLinks, pairs) {
-            if( vInclusiveTargetLinks.size() > 0 ) {
-                const KinBody::LinkConstPtr& pLinkToCheck = bIsFirstGrabbingLink ? (*itLinks).second : (*itLinks).first;
-                if( std::find(vInclusiveTargetLinks.begin(), vInclusiveTargetLinks.end(), pLinkToCheck) == vInclusiveTargetLinks.end() ) {
-                    continue;
-                }
-            }
             if( collisionchecker->CheckCollision((*itLinks).first, (*itLinks).second, pusereport) ) {
                 if( !bAllLinkCollisions ) { // if checking all collisions, have to continue
                     _PostProcessOnCheckSelfCollision(report, pusereport, *this);
