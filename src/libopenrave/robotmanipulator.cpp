@@ -45,14 +45,6 @@ void _GetIndependentLinks(std::vector<LinkPtrT>& vlinks, const RobotBasePtr& pro
     }
 }
 
-/// \brief update grabbedBody1 transform and return saver.
-static KinBody::KinBodyStateSaverPtr _UpdateGrabbedBodyTransformWithSaver(KinBodyPtr& pGrabbedBody, const Transform& tRelative, const Transform& tLinkTrans)
-{
-    KinBody::KinBodyStateSaverPtr saver(new KinBody::KinBodyStateSaver(pGrabbedBody, KinBody::Save_LinkTransformation));
-    pGrabbedBody->SetTransform(tLinkTrans * tRelative);
-    return saver;
-}
-
 void RobotBase::ManipulatorInfo::Reset()
 {
     _id.clear();
