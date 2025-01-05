@@ -1086,33 +1086,11 @@ bool RobotBase::Manipulator::CheckEndEffectorSelfCollision(CollisionReportPtr re
         // 1. links that are rigidly attached to the end effector
         // 2. links that are controlled by joints other than arm joints
         // 3. links that are connected with passive but non-static joints
-        if( bIgnoreManipulatorLinks ) {
-            FOREACHC(itindependentlink,vindependentinks) {
-                if( *itlink != *itindependentlink && (*itindependentlink)->IsEnabled() ) {
-                    if( pselfchecker->CheckCollision(*itlink, *itindependentlink,report) ) {
-                        if( !bAllLinkCollisions ) { // if checking all collisions, have to continue
-                            RAVELOG_VERBOSE_FORMAT("gripper link self collision with link %s", (*itlink)->GetName());
-                            return true;
-                        }
-                        bincollision = true;
-                    }
-                }
+        if( probot->CheckLinkSelfCollision(ilink, bIgnoreManipulatorLinks ? vindependentinks : std::vector<KinBody::LinkConstPtr>(), report) ) {
+            if( !bAllLinkCollisions ) { // if checking all collisions, have to continue
+                return true;
             }
-            if( probot->_CheckGrabbedBodiesSelfCollision(pselfchecker, report, *itlink, bAllLinkCollisions, nullptr, vindependentinks) ) {
-                if( !bAllLinkCollisions ) { // if checking all collisions, have to continue
-                    //RAVELOG_VERBOSE_FORMAT("gripper link self collision with link %s", (*itlink)->GetName());
-                    return true;
-                }
-                bincollision = true;
-            }
-        }
-        else {
-            if( probot->CheckLinkSelfCollision(ilink,report) ) {
-                if( !bAllLinkCollisions ) { // if checking all collisions, have to continue
-                    return true;
-                }
-                bincollision = true;
-            }
+            bincollision = true;
         }
     }
     return bincollision;
@@ -1163,37 +1141,11 @@ bool RobotBase::Manipulator::CheckEndEffectorSelfCollision(const Transform& tEE,
         // 1. links that are rigidly attached to the end effector
         // 2. links that are controlled by joints other than arm joints
         // 3. links that are connected with passive but non-static joints
-        if( bIgnoreManipulatorLinks ) {
-            boost::shared_ptr<TransformSaver<LinkPtr> > linksaver(new TransformSaver<LinkPtr>(*itlink)); // gcc optimization bug when linksaver is on stack?
-            const Transform tlinktrans = tdelta*(*itlink)->GetTransform();
-            (*itlink)->SetTransform(tlinktrans);
-
-            FOREACHC(itindependentlink,vindependentinks) {
-                if( *itlink != *itindependentlink && (*itindependentlink)->IsEnabled() ) {
-                    if( pselfchecker->CheckCollision(*itlink, *itindependentlink,report) ) {
-                        if( !bAllLinkCollisions ) { // if checking all collisions, have to continue
-                            RAVELOG_VERBOSE_FORMAT("gripper link self collision with link %s", (*itlink)->GetName());
-                            return true;
-                        }
-                        bincollision = true;
-                    }
-                }
+        if( probot->CheckLinkSelfCollision(ilink, bIgnoreManipulatorLinks ? vindependentinks : std::vector<KinBody::LinkConstPtr>(), tdelta*(*itlink)->GetTransform(),report) ) {
+            if( !bAllLinkCollisions ) { // if checking all collisions, have to continue
+                return true;
             }
-            if( probot->_CheckGrabbedBodiesSelfCollision(pselfchecker, report, *itlink, bAllLinkCollisions, std::bind(_UpdateGrabbedBodyTransformWithSaver, std::placeholders::_1, std::placeholders::_2, std::cref(tlinktrans)), vindependentinks) ) {
-                if( !bAllLinkCollisions ) { // if checking all collisions, have to continue
-                    //RAVELOG_VERBOSE_FORMAT("gripper link self collision with link %s", (*itlink)->GetName());
-                    return true;
-                }
-                bincollision = true;
-            }
-        }
-        else {
-            if( probot->CheckLinkSelfCollision(ilink,tdelta*(*itlink)->GetTransform(),report) ) {
-                if( !bAllLinkCollisions ) { // if checking all collisions, have to continue
-                    return true;
-                }
-                bincollision = true;
-            }
+            bincollision = true;
         }
     }
     return bincollision;

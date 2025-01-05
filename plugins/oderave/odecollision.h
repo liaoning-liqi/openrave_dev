@@ -781,7 +781,7 @@ public:
         return bCollision;
     }
 
-    virtual bool CheckStandaloneSelfCollision(KinBody::LinkConstPtr plink, CollisionReportPtr report)
+    virtual bool CheckStandaloneSelfCollision(KinBody::LinkConstPtr plink, const std::vector<KinBody::LinkConstPtr>& vIncludedLinks = std::vector<KinBody::LinkConstPtr>(), CollisionReportPtr report = CollisionReportPtr())
     {
         if( _options & OpenRAVE::CO_Distance ) {
             RAVELOG_WARN("ode doesn't support CO_Distance\n");
@@ -814,7 +814,20 @@ public:
         bool bCollision = false;
         FOREACHC(itset, nonadjacent) {
             KinBody::LinkConstPtr plink1(pbody->GetLinks().at(*itset&0xffff)), plink2(pbody->GetLinks().at(*itset>>16));
-            if( plink == plink1 || plink == plink2 ) {
+            if( plink == plink1 ) {
+                if( vIncludedLinks.size() > 0 && std::find(vIncludedLinks.begin(), vIncludedLinks.end(), plink2) == vIncludedLinks.end() ) {
+                    continue;
+                }
+            }
+            else if( plink == plink2 ) {
+                if( vIncludedLinks.size() > 0 && std::find(vIncludedLinks.begin(), vIncludedLinks.end(), plink1) == vIncludedLinks.end() ) {
+                    continue;
+                }
+            }
+            else {
+                continue;
+            }
+            {
                 if( _CheckCollision(plink1,plink2, report) ) {
                     if( IS_DEBUGLEVEL(OpenRAVE::Level_Verbose) ) {
                         RAVELOG_VERBOSE(str(boost::format("selfcol %s, Links %s %s are colliding\n")%pbody->GetName()%plink1->GetName()%plink2->GetName()));

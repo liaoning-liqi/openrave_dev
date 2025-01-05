@@ -2219,15 +2219,25 @@ bool PyRobotBase::Grab(PyKinBodyPtr pbody, object pylink, object linkstoignore, 
     return _pbody->Grab(pbody->GetBody(), GetKinBodyLink(pylink), setlinkstoignoreInt, rGrabbedUserData);
 }
 
-bool PyRobotBase::CheckLinkSelfCollision(int ilinkindex, object olinktrans, PyCollisionReportPtr pyreport)
+bool PyRobotBase::CheckLinkSelfCollision(int ilinkindex, object oincludedlinks, object olinktrans, PyCollisionReportPtr pyreport)
 {
     CollisionReport report;
     CollisionReportPtr preport;
     if( !!pyreport ) {
         preport = CollisionReportPtr(&report,utils::null_deleter());
     }
+    std::vector<KinBody::LinkConstPtr> vIncludedLinks;
+    for(size_t iLink = 0; iLink < (size_t)len(oincludedlinks); ++iLink) {
+        KinBody::LinkConstPtr pLink = openravepy::GetKinBodyLinkConst(oincludedlinks[py::to_object(iLink)]);
+        if( !!pLink ) {
+            vIncludedLinks.push_back(pLink);
+        }
+        else {
+            RAVELOG_ERROR("failed to get included links\n");
+        }
+    }
 
-    bool bCollision = _probot->CheckLinkSelfCollision(ilinkindex, ExtractTransform(olinktrans), preport);
+    bool bCollision = _probot->CheckLinkSelfCollision(ilinkindex, vIncludedLinks, ExtractTransform(olinktrans), preport);
     if( !!pyreport ) {
         pyreport->Init(report);
     }
@@ -2816,12 +2826,13 @@ void init_openravepy_robot()
 #ifdef USE_PYBIND11_PYTHON_BINDINGS
                        .def("CheckLinkSelfCollision", &PyRobotBase::CheckLinkSelfCollision,
                             "linkindex"_a,
+                            "includedlinks"_a,
                             "linktrans"_a,
                             "report"_a = py::none_(), // PyCollisionReportPtr(),
                             DOXY_FN(RobotBase,CheckLinkSelfCollision)
                             )
 #else
-                       .def("CheckLinkSelfCollision", &PyRobotBase::CheckLinkSelfCollision, CheckLinkSelfCollision_overloads(PY_ARGS("linkindex", "linktrans", "report") DOXY_FN(RobotBase,CheckLinkSelfCollision)))
+                       .def("CheckLinkSelfCollision", &PyRobotBase::CheckLinkSelfCollision, CheckLinkSelfCollision_overloads(PY_ARGS("linkindex", "includedlinks", "linktrans", "report") DOXY_FN(RobotBase,CheckLinkSelfCollision)))
 #endif
                        .def("WaitForController",&PyRobotBase::WaitForController,PY_ARGS("timeout") "Wait until the robot controller is done")
                        .def("GetRobotStructureHash",&PyRobotBase::GetRobotStructureHash, DOXY_FN(RobotBase,GetRobotStructureHash))

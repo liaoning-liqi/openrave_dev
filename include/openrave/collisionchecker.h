@@ -321,8 +321,9 @@ public:
     /// \brief Checks self collision of the link with the rest of the links with its parent
     ///
     /// Only checks KinBody::GetNonAdjacentLinks(), Links that are joined together are ignored.
+    /// \param[in] plink, vIncludedLinks : The pointer of target link and vector of included links. Among the link pairs in GetNonAdjacentLinks, this API only checks the collisions with the pairs so that one of the link of the pair is plink, and the other link of the pair is included in vIncludedLinks. If vIncludedLinks is empty, it's specially treated as no limitation for the included links, e.g. this API checks all possible pairs if one link of the pair is plink.
     /// \param[out] report [optional] collision report to be filled with data about the collision.
-    virtual bool CheckStandaloneSelfCollision(KinBody::LinkConstPtr plink, CollisionReportPtr report = CollisionReportPtr()) = 0;
+    virtual bool CheckStandaloneSelfCollision(KinBody::LinkConstPtr plink, const std::vector<KinBody::LinkConstPtr>& vIncludedLinks = std::vector<KinBody::LinkConstPtr>(), CollisionReportPtr report = CollisionReportPtr()) = 0;
 
     /// \deprecated (13/04/09)
     virtual bool CheckSelfCollision(KinBodyConstPtr pbody, CollisionReportPtr report = CollisionReportPtr()) RAVE_DEPRECATED
@@ -335,7 +336,7 @@ public:
     virtual bool CheckSelfCollision(KinBody::LinkConstPtr plink, CollisionReportPtr report = CollisionReportPtr()) RAVE_DEPRECATED
     {
         //RAVELOG_WARN("CollisionCheckerBase::CheckSelfCollision has been deprecated, please use CollisionCheckerBase::CheckStandaloneSelfCollision\n");
-        return CheckStandaloneSelfCollision(plink,report);
+        return CheckStandaloneSelfCollision(plink, std::vector<KinBody::LinkConstPtr>(), report);
     }
 
 protected:
