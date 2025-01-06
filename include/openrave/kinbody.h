@@ -3768,24 +3768,24 @@ protected:
     /// \brief Check self collision between grabber and grabbed, and between two grabbed bodies (inter-grabbed collision).
     /// \param collisionchecker : collision checker to use
     /// \param[out] report : resultant report
+    /// \param[in] bAllLinkCollisions : true if all link should be checked.
     /// \param[in] pGrabberLinkToCheck : link ptr of grabber's grabbing link to check.
     ///                                   if nullptr, check all possible grabbed bodies.
     ///                                   if valid ptr is specified,
     ///                                      - grabber vs grabbed collision : check collision between grabber link and the grabbed body which grabbingLink is pGrabberLinkToCheck
     ///                                      - inter-grabbed collision : check collision with the the grabbed body which grabbingLink is pGrabberLinkToCheck.
-    /// \param[in] bAllLinkCollisions : true if all link should be checked.
-    /// \param[in] updateGrabbedBodyTransformWithSaverFn : callback function to update the Transform of grabbed bodies, which is grabbed by pGrabberLinkToCheck. If the function is nullptr, do nothing. This is only used when pGrabberLinkToCheck gives valid pointer. This function returns KinBodyStateSaverPtr to restore the original Transform after all.
     /// \param[in] vInclusiveTargetLinks : Vector of grabber links to check. This is only supported when pGrabberLinkToCheck is specified.
     ///                                    If empty, check the all possible grabber links.
     ///                                    If non-empty, link pair is collision-checked.
     ///                                      - grabber vs grabbed collision : the grabber link is in vInclusiveTargetLinks and grabbed body's grabbing link is pGrabberLinkToCheck. or, the grabber link is pGrabberLinkToCheck and grabbed body's grabbing link is in vInclusiveTargetLinks.
     ///                                      - inter-grabbed collision : one grabbed body's grabbing link is in vInclusiveTargetLinks. other grabbed body's grabbing link is pGrabberLinkToCheck.
+    /// \param[in] updateGrabbedBodyTransformWithSaverFn : callback function to update the Transform of grabbed bodies, which is grabbed by pGrabberLinkToCheck. If the function is nullptr, do nothing. This is only used when pGrabberLinkToCheck gives valid pointer. This function returns KinBodyStateSaverPtr to restore the original Transform after all.
     bool _CheckGrabbedBodiesSelfCollision(CollisionCheckerBasePtr& collisionchecker,
                                           CollisionReportPtr& report,
-                                          const LinkPtr& pGrabberLinkToCheck,
                                           const bool bAllLinkCollisions,
-                                          const std::function<KinBody::KinBodyStateSaverPtr(KinBodyPtr&, const Transform&)>& updateGrabbedBodyTransformWithSaverFn,
-                                          const std::vector<KinBody::LinkConstPtr>& vInclusiveTargetLinks = std::vector<KinBody::LinkConstPtr>()) const;
+                                          const LinkPtr& pGrabberLinkToCheck,
+                                          const std::vector<KinBody::LinkConstPtr>& vInclusiveTargetLinks,
+                                          const std::function<KinBody::KinBodyStateSaverPtr(KinBodyPtr&, const Transform&)>& updateGrabbedBodyTransformWithSaverFn) const;
 
     std::string _name; ///< name of body
 

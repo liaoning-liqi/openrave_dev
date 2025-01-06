@@ -138,7 +138,7 @@ bool KinBody::CheckSelfCollision(CollisionReportPtr report, CollisionCheckerBase
         bCollision = true;
     }
 
-    if( _CheckGrabbedBodiesSelfCollision(collisionchecker, report, LinkPtr(), bAllLinkCollisions, nullptr) ) {
+    if( _CheckGrabbedBodiesSelfCollision(collisionchecker, report, bAllLinkCollisions, LinkPtr(), std::vector<KinBody::LinkConstPtr>(), nullptr) ) {
         if( !bAllLinkCollisions ) { // if checking all collisions, have to continue
             return true;
         }
@@ -153,14 +153,17 @@ bool KinBody::CheckSelfCollision(CollisionReportPtr report, CollisionCheckerBase
 
 bool KinBody::_CheckGrabbedBodiesSelfCollision(CollisionCheckerBasePtr& collisionchecker,
                                                CollisionReportPtr& report,
-                                               const KinBody::LinkPtr& pGrabberLinkToCheck,
                                                const bool bAllLinkCollisions,
-                                               const std::function<KinBody::KinBodyStateSaverPtr(KinBodyPtr&, const Transform&)>& updateGrabbedBodyTransformWithSaverFn,
-                                               const std::vector<KinBody::LinkConstPtr>& vInclusiveTargetLinks) const
+                                               const KinBody::LinkPtr& pGrabberLinkToCheck,
+                                               const std::vector<KinBody::LinkConstPtr>& vInclusiveTargetLinks,
+                                               const std::function<KinBody::KinBodyStateSaverPtr(KinBodyPtr&, const Transform&)>& updateGrabbedBodyTransformWithSaverFn) const
 {
     const bool bCheckSpecificGrabbingLinkOnly = !!pGrabberLinkToCheck;
     if( vInclusiveTargetLinks.size() > 0 ) {
         OPENRAVE_ASSERT_FORMAT(bCheckSpecificGrabbingLinkOnly, "env=%s, vInclusiveTargetLinks is specified, but pGrabberLinkToCheck is not specified. for body '%s'", GetEnv()->GetNameId()%GetName(), ORE_InvalidArguments);
+    }
+    if( !!updateGrabbedBodyTransformWithSaverFn ) {
+        OPENRAVE_ASSERT_FORMAT(bCheckSpecificGrabbingLinkOnly, "env=%s, updateGrabbedBodyTransformWithSaverFn is specified, but pGrabberLinkToCheck is not specified. for body '%s'", GetEnv()->GetNameId()%GetName(), ORE_InvalidArguments);
     }
 
     bool bCollision = false;
@@ -511,7 +514,7 @@ bool KinBody::CheckLinkSelfCollision(int ilinkindex, const std::vector<KinBody::
 
     // check if any grabbed bodies are attached to this link, and if so check their collisions with the environment
     // it is important to make sure to add all other attached bodies in the ignored list!
-    if( _CheckGrabbedBodiesSelfCollision(pchecker, report, plink, bAllLinkCollisions, nullptr, vIncludedLinks) ) {
+    if( _CheckGrabbedBodiesSelfCollision(pchecker, report, bAllLinkCollisions, plink, vIncludedLinks, nullptr) ) {
         bincollision = true;
     }
     return bincollision;
@@ -542,7 +545,7 @@ bool KinBody::CheckLinkSelfCollision(int ilinkindex, const std::vector<KinBody::
 
     // check if any grabbed bodies are attached to this link, and if so check their collisions with the environment
     // it is important to make sure to add all other attached bodies in the ignored list!
-    if( _CheckGrabbedBodiesSelfCollision(pchecker, report, plink, bAllLinkCollisions, std::bind(_UpdateGrabbedBodyTransformWithSaver, std::placeholders::_1, std::placeholders::_2, std::cref(tlinktrans)), vIncludedLinks) ) {
+    if( _CheckGrabbedBodiesSelfCollision(pchecker, report, bAllLinkCollisions, plink, vIncludedLinks, std::bind(_UpdateGrabbedBodyTransformWithSaver, std::placeholders::_1, std::placeholders::_2, std::cref(tlinktrans))) ) {
         bincollision = true;
     }
     return bincollision;
