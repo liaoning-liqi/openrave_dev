@@ -205,9 +205,9 @@ bool KinBody::_CheckGrabbedBodiesSelfCollision(CollisionCheckerBasePtr& collisio
         const bool bIsGrabbedBodyAttachedToGrabbingLinkToCheck = pGrabbed->_pGrabbingLink == pGrabberLinkToCheck; // true if this grabbedbody's grabbinglink should be checked.
         if( bCheckSpecificGrabbingLinkOnly ) {
             if( bIsGrabbedBodyAttachedToGrabbingLinkToCheck ) {
-                vGrabbedBodiesWithGrabberLinkToCheck.emplace_back(vLockedGrabbedBodiesCache[indexGrabbed1].get());
+                KinBodyPtr& pGrabbedBody = vLockedGrabbedBodiesCache[indexGrabbed1];
+                vGrabbedBodiesWithGrabberLinkToCheck.emplace_back(pGrabbedBody.get());
                 if( !!pLinkTransformForGrabberLinkToCheck ) {
-                    KinBodyPtr& pGrabbedBody = vLockedGrabbedBodiesCache[indexGrabbed1];
                     vGrabbedBodyStateSaversWithGivenGrabbingLink.push_back(KinBodyStateSaverPtr(new KinBodyStateSaver(pGrabbedBody, KinBody::Save_LinkTransformation)));
                     pGrabbedBody->SetTransform((*pLinkTransformForGrabberLinkToCheck) * pGrabbed->_tRelative);
                 }
