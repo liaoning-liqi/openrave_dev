@@ -8,6 +8,16 @@ Version 0.162.0
 
 - Copy the internal states of `_pGrabbedSaver` and `_pGrabberSaver` of `Grabbed` instances when cloning or restoring, to avoid incorrect computation of the non colliding list cache.
 
+Version 0.161.2
+===============
+
+- Handle missing URIs when using CURL for loading JSON scenes.
+
+Version 0.161.1
+===============
+
+- Expose toAttributeList from openravepy library.
+
 Version 0.161.0
 ===============
 
