@@ -3243,19 +3243,10 @@ private:
         \param[in] ilinkindex the index of the link to check
         \param[in] vIncludedLinks vector of included links.
                    Among the link pairs in GetNonAdjacentLinks, this API only checks the collisions with the pairs so that one of the link of the pair has ilinkindex, and the other link of the pair is included in vIncludedLinks. If vIncludedLinks is empty, it's specially treated as no limitation for the included links, e.g. this API checks all possible pairs if one link of the pair has ilinkindex.
+        \param[in] pLinkTransform The pointer of the transform of the link to check. If nullptr, do nothing about link transform. If valid pointer is specified, update the link transform and grabbed bodies transforms according to the pLinkTransform.
         \param[out] report [optional] collision report
      */
-    virtual bool CheckLinkSelfCollision(int ilinkindex, const std::vector<KinBody::LinkConstPtr>& vIncludedLinks, CollisionReportPtr report = CollisionReportPtr());
-
-    /** \brief checks self-collision of a robot link with the other robot links. Attached/Grabbed bodies to this link are also checked for self-collision. Rigidly attached links to the specified link are not checked for self-collision.
-
-        \param[in] ilinkindex the index of the link to check
-        \param[in] vIncludedLinks vector of included links.
-                   Among the link pairs in GetNonAdjacentLinks, this API only checks the collisions with the pairs so that one of the link of the pair has ilinkindex, and the other link of the pair is included in vIncludedLinks. If vIncludedLinks is empty, it's specially treated as no limitation for the included links, e.g. this API checks all possible pairs if one link of the pair has ilinkindex.
-        \param[in] tlinktrans The transform of the link to check
-        \param[out] report [optional] collision report
-     */
-    virtual bool CheckLinkSelfCollision(int ilinkindex, const std::vector<KinBody::LinkConstPtr>& vIncludedLinks, const Transform& tlinktrans, CollisionReportPtr report = CollisionReportPtr());
+    virtual bool CheckLinkSelfCollision(int ilinkindex, const std::vector<KinBody::LinkConstPtr>& vIncludedLinks, const TransformConstPtr& pLinkTransform, CollisionReportPtr report = CollisionReportPtr());
 
     //@}
 

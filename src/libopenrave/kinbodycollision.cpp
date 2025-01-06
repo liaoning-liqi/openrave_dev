@@ -486,35 +486,7 @@ bool KinBody::CheckLinkCollision(int ilinkindex, CollisionReportPtr report)
     return bincollision;
 }
 
-bool KinBody::CheckLinkSelfCollision(int ilinkindex, const std::vector<KinBody::LinkConstPtr>& vIncludedLinks, CollisionReportPtr report)
-{
-    CollisionCheckerBasePtr pchecker = !!_selfcollisionchecker ? _selfcollisionchecker : GetEnv()->GetCollisionChecker();
-    bool bAllLinkCollisions = !!(pchecker->GetCollisionOptions()&CO_AllLinkCollisions);
-    CollisionReportKeepSaver reportsaver(report);
-    if( !!report && bAllLinkCollisions && report->nKeepPrevious == 0 ) {
-        report->Reset();
-        report->nKeepPrevious = 1; // have to keep the previous since aggregating results
-    }
-    bool bincollision = false;
-    LinkPtr plink = _veclinks.at(ilinkindex);
-    if( plink->IsEnabled() ) {
-        if( pchecker->CheckStandaloneSelfCollision(LinkConstPtr(plink), vIncludedLinks, report) ) {
-            if( !bAllLinkCollisions ) { // if checking all collisions, have to continue
-                return true;
-            }
-            bincollision = true;
-        }
-    }
-
-    // check if any grabbed bodies are attached to this link, and if so check their collisions with the environment
-    // it is important to make sure to add all other attached bodies in the ignored list!
-    if( _CheckGrabbedBodiesSelfCollision(pchecker, report, bAllLinkCollisions, plink, vIncludedLinks, nullptr) ) {
-        bincollision = true;
-    }
-    return bincollision;
-}
-
-bool KinBody::CheckLinkSelfCollision(int ilinkindex, const std::vector<KinBody::LinkConstPtr>& vIncludedLinks, const Transform& tlinktrans, CollisionReportPtr report)
+bool KinBody::CheckLinkSelfCollision(int ilinkindex, const std::vector<KinBody::LinkConstPtr>& vIncludedLinks, const TransformConstPtr& pLinkTransform, CollisionReportPtr report)
 {
     CollisionCheckerBasePtr pchecker = !!_selfcollisionchecker ? _selfcollisionchecker : GetEnv()->GetCollisionChecker();
     bool bAllLinkCollisions = !!(pchecker->GetCollisionOptions()&CO_AllLinkCollisions);
@@ -527,8 +499,10 @@ bool KinBody::CheckLinkSelfCollision(int ilinkindex, const std::vector<KinBody::
     LinkPtr plink = _veclinks.at(ilinkindex);
     boost::shared_ptr<TransformSaver<LinkPtr> > linksaver;
     if( plink->IsEnabled() ) {
-        linksaver = boost::shared_ptr<TransformSaver<LinkPtr> >(new TransformSaver<LinkPtr>(plink)); // gcc optimization bug when linksaver is on stack?
-        plink->SetTransform(tlinktrans);
+        if( !!pLinkTransform ) {
+            linksaver = boost::shared_ptr<TransformSaver<LinkPtr> >(new TransformSaver<LinkPtr>(plink)); // gcc optimization bug when linksaver is on stack?
+            plink->SetTransform(*pLinkTransform);
+        }
         if( pchecker->CheckStandaloneSelfCollision(LinkConstPtr(plink), vIncludedLinks, report) ) {
             if( !bAllLinkCollisions ) { // if checking all collisions, have to continue
                 return true;
@@ -539,8 +513,7 @@ bool KinBody::CheckLinkSelfCollision(int ilinkindex, const std::vector<KinBody::
 
     // check if any grabbed bodies are attached to this link, and if so check their collisions with the environment
     // it is important to make sure to add all other attached bodies in the ignored list!
-    const TransformConstPtr pTransform = boost::make_shared<Transform>(tlinktrans);
-    if( _CheckGrabbedBodiesSelfCollision(pchecker, report, bAllLinkCollisions, plink, vIncludedLinks, pTransform) ) {
+    if( _CheckGrabbedBodiesSelfCollision(pchecker, report, bAllLinkCollisions, plink, vIncludedLinks, pLinkTransform) ) {
         bincollision = true;
     }
     return bincollision;

@@ -2237,7 +2237,8 @@ bool PyRobotBase::CheckLinkSelfCollision(int ilinkindex, object oincludedlinks, 
         }
     }
 
-    bool bCollision = _probot->CheckLinkSelfCollision(ilinkindex, vIncludedLinks, ExtractTransform(olinktrans), preport);
+    const TransformConstPtr pTransform = boost::make_shared<Transform>(ExtractTransform(olinktrans));
+    bool bCollision = _probot->CheckLinkSelfCollision(ilinkindex, vIncludedLinks, pTransform, preport);
     if( !!pyreport ) {
         pyreport->Init(report);
     }

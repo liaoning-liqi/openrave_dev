@@ -1037,62 +1037,19 @@ bool RobotBase::Manipulator::_CheckEndEffectorCollision(const Transform& tEE, Ki
 
 bool RobotBase::Manipulator::CheckEndEffectorSelfCollision(CollisionReportPtr report, bool bIgnoreManipulatorLinks) const
 {
-    RobotBasePtr probot(__probot);
-
-    CollisionCheckerBasePtr pchecker = probot->GetEnv()->GetCollisionChecker();
-    bool bAllLinkCollisions = !!(pchecker->GetCollisionOptions()&CO_AllLinkCollisions);
-    CollisionReportKeepSaver reportsaver(report);
-    if( !!report && bAllLinkCollisions && report->nKeepPrevious == 0 ) {
-        report->Reset();
-        report->nKeepPrevious = 1; // have to keep the previous since aggregating results
-    }
-
-    bool bincollision = false;
-
-    // parameters used only when bIgnoreManipulatorLinks is true
-    CollisionCheckerBasePtr pselfchecker;
-    std::vector<LinkConstPtr> vIncludedLinks; // this becomes empty if bIgnoreManipulatorLinks=false.
-    if( bIgnoreManipulatorLinks ) {
-        _GetIndependentLinks<LinkConstPtr>(vIncludedLinks, probot, __varmdofindices, __vgripperdofindices);
-        pselfchecker = !!probot->GetSelfCollisionChecker() ? probot->GetSelfCollisionChecker() : probot->GetEnv()->GetCollisionChecker();
-    }
-
-    FOREACHC(itlink, probot->GetLinks()) {
-        int ilink = (*itlink)->GetIndex();
-        if( !(*itlink)->IsEnabled() ) {
-            continue;
-        }
-        // gripper needs to be affected by all joints
-        bool bGripperLink = true;
-        FOREACHC(itarmdof,__varmdofindices) {
-            if( !probot->DoesAffect(probot->GetJointFromDOFIndex(*itarmdof)->GetJointIndex(),ilink) ) {
-                bGripperLink = false;
-                break;
-            }
-        }
-        if( !bGripperLink ) {
-            continue;
-        }
-
-        // check all gripper links including
-        // 1. links that are rigidly attached to the end effector
-        // 2. links that are controlled by joints other than arm joints
-        // 3. links that are connected with passive but non-static joints
-        if( probot->CheckLinkSelfCollision(ilink, vIncludedLinks, report) ) {
-            if( !bAllLinkCollisions ) { // if checking all collisions, have to continue
-                return true;
-            }
-            bincollision = true;
-        }
-    }
-    return bincollision;
+    return _CheckEndEffectorSelfCollision(nullptr, report, bIgnoreManipulatorLinks);
 }
 
 bool RobotBase::Manipulator::CheckEndEffectorSelfCollision(const Transform& tEE, CollisionReportPtr report, bool bIgnoreManipulatorLinks) const
 {
-    RobotBasePtr probot(__probot);
     const Transform toldEE = GetTransform();
-    const Transform tdelta = tEE*toldEE.inverse();
+    const TransformConstPtr pTransformDelta = boost::make_shared<Transform>(tEE*toldEE.inverse());
+    return _CheckEndEffectorSelfCollision(pTransformDelta, report, bIgnoreManipulatorLinks);
+}
+
+bool RobotBase::Manipulator::_CheckEndEffectorSelfCollision(const TransformConstPtr& pTransformDelta, CollisionReportPtr report, bool bIgnoreManipulatorLinks) const
+{
+    RobotBasePtr probot(__probot);
 
     CollisionCheckerBasePtr pchecker = probot->GetEnv()->GetCollisionChecker();
     bool bAllLinkCollisions = !!(pchecker->GetCollisionOptions()&CO_AllLinkCollisions);
@@ -1133,7 +1090,15 @@ bool RobotBase::Manipulator::CheckEndEffectorSelfCollision(const Transform& tEE,
         // 1. links that are rigidly attached to the end effector
         // 2. links that are controlled by joints other than arm joints
         // 3. links that are connected with passive but non-static joints
-        if( probot->CheckLinkSelfCollision(ilink, vIncludedLinks, tdelta*(*itlink)->GetTransform(),report) ) {
+        bool bInLinkCollision;
+        if( !!pTransformDelta ) {
+            const TransformConstPtr pTransform = boost::make_shared<Transform>((*pTransformDelta)*(*itlink)->GetTransform());
+            bInLinkCollision = probot->CheckLinkSelfCollision(ilink, vIncludedLinks, pTransform, report);
+        }
+        else {
+            bInLinkCollision = probot->CheckLinkSelfCollision(ilink, vIncludedLinks, nullptr, report);
+        }
+        if( bInLinkCollision ) {
             if( !bAllLinkCollisions ) { // if checking all collisions, have to continue
                 return true;
             }
