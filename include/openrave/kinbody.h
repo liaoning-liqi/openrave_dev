@@ -3785,7 +3785,7 @@ protected:
                                           const bool bAllLinkCollisions,
                                           const LinkPtr& pGrabberLinkToCheck,
                                           const std::vector<KinBody::LinkConstPtr>& vInclusiveTargetLinks,
-                                          const std::function<KinBody::KinBodyStateSaverPtr(KinBodyPtr&, const Transform&)>& updateGrabbedBodyTransformWithSaverFn) const;
+                                          const TransformConstPtr& pLinkTransformForGrabberLinkToCheck) const;
 
     std::string _name; ///< name of body
 
