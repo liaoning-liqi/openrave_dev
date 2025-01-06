@@ -3,6 +3,35 @@
 ChangeLog
 #########
 
+Version 0.161.2
+===============
+
+- Handle missing URIs when using CURL for loading JSON scenes.
+
+Version 0.161.1
+===============
+
+- Expose toAttributeList from openravepy library.
+
+Version 0.161.0
+===============
+
+- Remove the code for back electromotive force from torque limit calculation APIs.
+- Add common utility function for torque limit calculation.
+
+Version 0.160.0
+===============
+
+- Add new functions for AddKinBody/AddRobot to specify an exact environmentBodyIndex.
+- Use std::unique_lock instead of std::scoped_lock. Remove boost recursive mutex.
+
+Version 0.159.1
+===============
+
+- Fix the problem that connected body resolved joint names that are empty are not skipped in `_UpdateConnectedBodyInfo`.
+- Fix the problem that `CompareTransform` does not consider the quaternions `quat` and `-quat` to be the same rotation.
+- Fix wrong ComputeInverseDynamics for Prismatic joint.
+
 Version 0.159.0
 ===============
 
