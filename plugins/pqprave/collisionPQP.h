@@ -402,18 +402,9 @@ public:
         const std::vector<int>& nonadjacent = pbody->GetNonAdjacentLinks(adjacentoptions);
         PQP_REAL R1[3][3], R2[3][3], T1[3], T2[3];
         FOREACHC(itset, nonadjacent) {
-            KinBody::LinkConstPtr plink1(pbody->GetLinks().at(*itset&0xffff)), plink2(pbody->GetLinks().at(*itset>>16));
-            if( plink == plink1 ) {
-                if( vIncludedLinks.size() > 0 && std::find(vIncludedLinks.begin(), vIncludedLinks.end(), plink2) == vIncludedLinks.end() ) {
-                    continue;
-                }
-            }
-            else if( plink == plink2 ) {
-                if( vIncludedLinks.size() > 0 && std::find(vIncludedLinks.begin(), vIncludedLinks.end(), plink1) == vIncludedLinks.end() ) {
-                    continue;
-                }
-            }
-            else {
+            const int index1 = *itset&0xffff, index2 = *itset>>16;
+            KinBody::LinkConstPtr plink1(pbody->GetLinks().at(index1)), plink2(pbody->GetLinks().at(index2));
+            if( _ShouldSkipStandaloneSelfCollisionCheckPair(*plink, index1, index2, pbody, vIncludedLinks) ) {
                 continue;
             }
             {

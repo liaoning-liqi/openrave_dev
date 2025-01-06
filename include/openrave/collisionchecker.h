@@ -352,6 +352,33 @@ protected:
         return boost::static_pointer_cast<CollisionCheckerBase const>(shared_from_this());
     }
 
+    /// \brief check if the caller should skip the given standalone self collision check pair.
+    /// \param[in] targetLink, vIncludedLinks : target link to check and vector of included links.
+    ///                                         - if index1 and index2 are not same as targetLink's index, should skip.
+    ///                                         - if vIncludedLinks is empty, no check for another link in the pair and the given pair should be checked with collision check.
+    ///                                         - if vIncludedLinks is not empty, if another link in the pair is not included in vIncludedLinks, such pair should be skipped with collision check.
+    /// \param[in] index1, index2 : link indices of the pair.
+    /// \param[in] pBody : kinbody to check self collision
+    /// \return false if the given pair (index1 and index2) should be checked with standalone self collision checking. true if it should be skipped.
+    static inline bool _ShouldSkipStandaloneSelfCollisionCheckPair(const KinBody::Link& taretLink, const size_t index1, const size_t index2, const KinBodyPtr& pBody, const std::vector<KinBody::LinkConstPtr>& vIncludedLinks)
+    {
+        const size_t targetLinkIndex = taretLink.GetIndex();
+        if( targetLinkIndex == index1 ) {
+            if( vIncludedLinks.size() > 0 && std::find(vIncludedLinks.begin(), vIncludedLinks.end(), pBody->GetLinks().at(index2)) == vIncludedLinks.end() ) {
+                return true;
+            }
+        }
+        else if( targetLinkIndex == index2 ) {
+            if( vIncludedLinks.size() > 0 && std::find(vIncludedLinks.begin(), vIncludedLinks.end(), pBody->GetLinks().at(index1)) == vIncludedLinks.end() ) {
+                return true;
+            }
+        }
+        else {
+            return true;
+        }
+        return false;
+    }
+
 private:
     virtual const char* GetHash() const override {
         return OPENRAVE_COLLISIONCHECKER_HASH;

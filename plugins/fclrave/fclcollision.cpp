@@ -779,17 +779,7 @@ bool FCLCollisionChecker::CheckStandaloneSelfCollision(LinkConstPtr plink, const
     FCLKinBodyInfoPtr pinfo = _fclspace->GetInfo(*pbody);
     FOREACH(itset, nonadjacent) {
         int index1 = *itset&0xffff, index2 = *itset>>16;
-        if( plink->GetIndex() == index1 ) {
-            if( vIncludedLinks.size() > 0 && std::find(vIncludedLinks.begin(), vIncludedLinks.end(), pbody->GetLinks().at(index2)) == vIncludedLinks.end() ) {
-                continue;
-            }
-        }
-        else if( plink->GetIndex() == index2 ) {
-            if( vIncludedLinks.size() > 0 && std::find(vIncludedLinks.begin(), vIncludedLinks.end(), pbody->GetLinks().at(index1)) == vIncludedLinks.end() ) {
-                continue;
-            }
-        }
-        else {
+        if( _ShouldSkipStandaloneSelfCollisionCheckPair(*plink, index1, index2, pbody, vIncludedLinks) ) {
             continue;
         }
         {
