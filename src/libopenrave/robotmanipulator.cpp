@@ -1062,11 +1062,9 @@ bool RobotBase::Manipulator::_CheckEndEffectorSelfCollision(const TransformConst
     bool bincollision = false;
 
     // parameters used only when bIgnoreManipulatorLinks is true
-    CollisionCheckerBasePtr pselfchecker;
     std::vector<LinkConstPtr> vIncludedLinks; // this becomes empty if bIgnoreManipulatorLinks=false.
     if( bIgnoreManipulatorLinks ) {
         _GetIndependentLinks<LinkConstPtr>(vIncludedLinks, probot, __varmdofindices, __vgripperdofindices);
-        pselfchecker = !!probot->GetSelfCollisionChecker() ? probot->GetSelfCollisionChecker() : probot->GetEnv()->GetCollisionChecker();
     }
 
     FOREACHC(itlink, probot->GetLinks()) {
