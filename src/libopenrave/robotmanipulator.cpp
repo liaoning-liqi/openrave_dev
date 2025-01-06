@@ -1051,9 +1051,9 @@ bool RobotBase::Manipulator::CheckEndEffectorSelfCollision(CollisionReportPtr re
 
     // parameters used only when bIgnoreManipulatorLinks is true
     CollisionCheckerBasePtr pselfchecker;
-    std::vector<LinkConstPtr> vindependentinks;
+    std::vector<LinkConstPtr> vIncludedLinks; // this becomes empty if bIgnoreManipulatorLinks=false.
     if( bIgnoreManipulatorLinks ) {
-        _GetIndependentLinks<LinkConstPtr>(vindependentinks, probot, __varmdofindices, __vgripperdofindices);
+        _GetIndependentLinks<LinkConstPtr>(vIncludedLinks, probot, __varmdofindices, __vgripperdofindices);
         pselfchecker = !!probot->GetSelfCollisionChecker() ? probot->GetSelfCollisionChecker() : probot->GetEnv()->GetCollisionChecker();
     }
 
@@ -1078,7 +1078,7 @@ bool RobotBase::Manipulator::CheckEndEffectorSelfCollision(CollisionReportPtr re
         // 1. links that are rigidly attached to the end effector
         // 2. links that are controlled by joints other than arm joints
         // 3. links that are connected with passive but non-static joints
-        if( probot->CheckLinkSelfCollision(ilink, bIgnoreManipulatorLinks ? vindependentinks : std::vector<KinBody::LinkConstPtr>(), report) ) {
+        if( probot->CheckLinkSelfCollision(ilink, vIncludedLinks, report) ) {
             if( !bAllLinkCollisions ) { // if checking all collisions, have to continue
                 return true;
             }
@@ -1106,9 +1106,9 @@ bool RobotBase::Manipulator::CheckEndEffectorSelfCollision(const Transform& tEE,
 
     // parameters used only when bIgnoreManipulatorLinks is true
     CollisionCheckerBasePtr pselfchecker;
-    std::vector<LinkConstPtr> vindependentinks;
+    std::vector<LinkConstPtr> vIncludedLinks; // this becomes empty if bIgnoreManipulatorLinks=false.
     if( bIgnoreManipulatorLinks ) {
-        _GetIndependentLinks<LinkConstPtr>(vindependentinks, probot, __varmdofindices, __vgripperdofindices);
+        _GetIndependentLinks<LinkConstPtr>(vIncludedLinks, probot, __varmdofindices, __vgripperdofindices);
         pselfchecker = !!probot->GetSelfCollisionChecker() ? probot->GetSelfCollisionChecker() : probot->GetEnv()->GetCollisionChecker();
     }
 
@@ -1133,7 +1133,7 @@ bool RobotBase::Manipulator::CheckEndEffectorSelfCollision(const Transform& tEE,
         // 1. links that are rigidly attached to the end effector
         // 2. links that are controlled by joints other than arm joints
         // 3. links that are connected with passive but non-static joints
-        if( probot->CheckLinkSelfCollision(ilink, bIgnoreManipulatorLinks ? vindependentinks : std::vector<KinBody::LinkConstPtr>(), tdelta*(*itlink)->GetTransform(),report) ) {
+        if( probot->CheckLinkSelfCollision(ilink, vIncludedLinks, tdelta*(*itlink)->GetTransform(),report) ) {
             if( !bAllLinkCollisions ) { // if checking all collisions, have to continue
                 return true;
             }
