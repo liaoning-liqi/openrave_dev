@@ -443,10 +443,10 @@ inline py::object toPyVector4(Vector v)
 }
 
 /// \brief converts dictionary of keyvalue pairs
-AttributesList toAttributesList(py::dict odict);
+OPENRAVEPY_API AttributesList toAttributesList(py::dict odict);
 /// \brief converts list of tuples [(key,value),(key,value)], it is possible for keys to repeat
-AttributesList toAttributesList(py::list olist);
-AttributesList toAttributesList(py::object oattributes);
+OPENRAVEPY_API AttributesList toAttributesList(py::list olist);
+OPENRAVEPY_API AttributesList toAttributesList(py::object oattributes);
 
 template <typename T>
 inline py::object ReturnTransform(const T& t)
@@ -640,6 +640,7 @@ public:
 
     virtual py::object GetReadableInterfaces();
     virtual py::object GetReadableInterface(const std::string& xmltag);
+    virtual bool HasReadableInterface(const std::string& xmltag);
 
     virtual void SetReadableInterface(const std::string& xmltag, py::object oreadable);
 };

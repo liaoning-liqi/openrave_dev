@@ -3,6 +3,58 @@
 ChangeLog
 #########
 
+Version 0.161.2
+===============
+
+- Handle missing URIs when using CURL for loading JSON scenes.
+
+Version 0.161.1
+===============
+
+- Expose toAttributeList from openravepy library.
+
+Version 0.161.0
+===============
+
+- Remove the code for back electromotive force from torque limit calculation APIs.
+- Add common utility function for torque limit calculation.
+
+Version 0.160.0
+===============
+
+- Add new functions for AddKinBody/AddRobot to specify an exact environmentBodyIndex.
+- Use std::unique_lock instead of std::scoped_lock. Remove boost recursive mutex.
+
+Version 0.159.1
+===============
+
+- Fix the problem that connected body resolved joint names that are empty are not skipped in `_UpdateConnectedBodyInfo`.
+- Fix the problem that `CompareTransform` does not consider the quaternions `quat` and `-quat` to be the same rotation.
+- Fix wrong ComputeInverseDynamics for Prismatic joint.
+
+Version 0.159.0
+===============
+
+- Add HasReadableInterface API to minimize copying when using python bindings
+- Make the connected body's joint properties (such as velocity/acceleration limits) persistent by always keeping the connected body's `_info` up to date.
+
+Version 0.158.1
+===============
+
+- Set OPENRAVE_STD_SCOPED_LOCK and OPENRAVE_STD_STRING_VIEW by config.h (avoid cplusplus in openrave.h)
+
+Version 0.158.0
+===============
+
+- Fix bug of `_listNonColidingLinksWhenGrabbed` asymmetricity which might cause false positive/negative self collision checking and might make it less deterministic.
+  - Store the link pair for grabbed-grabber collision in `Grabbed` class.
+  - Store the link pair for inter-grabbed collision in `KinBody` class.
+
+Version 0.157.2
+===============
+
+- Add an interface to allow users to set `NeighborStateOptions` for jitterers to supply to their `_neighstatefn` calls, which affects how neighbor configurations are computed.
+
 Version 0.157.1
 ===============
 
