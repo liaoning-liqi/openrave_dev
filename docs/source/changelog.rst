@@ -3,10 +3,20 @@
 ChangeLog
 #########
 
-Version 0.162.0
+Version 0.163.0
 ===============
 
 - Copy the internal states of `_pGrabbedSaver` and `_pGrabberSaver` of `Grabbed` instances when cloning or restoring, to avoid incorrect computation of the non colliding list cache.
+
+Version 0.162.0
+===============
+
+- Add combined SetTransformAndVelocity method to reduce _UpdateGrabbedBodies calls
+
+Version 0.161.3
+===============
+
+- Fix for not respecting mustresolveuri in the json reader for invalid URIs.
 
 Version 0.161.2
 ===============
