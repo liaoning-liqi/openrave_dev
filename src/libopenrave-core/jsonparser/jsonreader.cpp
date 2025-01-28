@@ -188,7 +188,7 @@ public:
             }
         }
         if (_vOpenRAVESchemeAliases.size() == 0) {
-            _vOpenRAVESchemeAliases.push_back("openrave");
+            _vOpenRAVESchemeAliases.push_back("mujin");
         }
 
         // set global scale when initalize jsonreader.

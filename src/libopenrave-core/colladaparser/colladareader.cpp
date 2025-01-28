@@ -411,7 +411,7 @@ public:
         }
 
         if( _vOpenRAVESchemeAliases.size() == 0 ) {
-            _vOpenRAVESchemeAliases.push_back("openrave");
+            _vOpenRAVESchemeAliases.push_back("mujin");
         }
         FOREACHC(itname,_vOpenRAVESchemeAliases) {
             _dae->getURIResolvers().list().prepend(new daeOpenRAVEURIResolver(*_dae,*itname,this));
