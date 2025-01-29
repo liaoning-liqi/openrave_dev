@@ -2852,9 +2852,9 @@ int DynamicsCollisionConstraint::Check(const std::vector<dReal>& q0, const std::
 
         // quadratic interpolation
         // given the nLargestStepIndex, determine the timestep for all joints
-        dReal fLargestStepAccel = _vtempaccelconfig.at(nLargestStepIndex);
-        dReal fLargestStepInitialVelocity = dq0.at(nLargestStepIndex);
-        dReal fLargestStep = dQ.at(nLargestStepIndex);
+        const dReal fLargestStepAccel = _vtempaccelconfig.at(nLargestStepIndex);
+        const dReal fLargestStepInitialVelocity = dq0.at(nLargestStepIndex);
+        const dReal fLargestStep = dQ.at(nLargestStepIndex);
         dReal fLargestInflectionTime = timeelapsed; // if >= 0 and <= timeelapsed, then the step increment changes signs
         dReal fLargestInflection = dQ.at(nLargestStepIndex); // the max/min
         dReal fLargestTraveledDistance = fLargestInflection;
