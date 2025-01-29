@@ -2983,20 +2983,6 @@ int DynamicsCollisionConstraint::Check(const std::vector<dReal>& q0, const std::
                 }
             }
 
-//            if( !!filterreturn && (options & CFO_FillCheckedConfiguration) ) {
-//                filterreturn->_configurations.insert(filterreturn->_configurations.end(), _vtempconfig.begin(), _vtempconfig.end());
-//                filterreturn->_configurationtimes.push_back(timestep);
-//            }
-            if( nstateret != 0 ) {
-                if( !!filterreturn ) {
-                    filterreturn->_returncode = nstateret;
-                    filterreturn->_invalidvalues = _vtempconfig;
-                    filterreturn->_invalidvelocities = _vtempvelconfig;
-                    filterreturn->_fTimeWhenInvalid = timestep;
-                }
-                return nstateret;
-            }
-
             _vprevtempconfig = _vtempconfig;
             _vprevtempvelconfig = _vtempvelconfig;
 
