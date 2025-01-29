@@ -2944,6 +2944,7 @@ int DynamicsCollisionConstraint::Check(const std::vector<dReal>& q0, const std::
                 dReal fNewStep = fBestNewStep;
                 bool bfound = false;
 
+                // Solves for t from fNewStep = vt + 0.5at^2. Find out the time the joint index nLargestStepIndex needed to travel to distance=fNewStep (measured from q0).
                 int numroots = mathextra::solvequad(fLargestStepAccel*0.5, fLargestStepInitialVelocity, -fNewStep, timesteproots[0], timesteproots[1]);
                 if( numroots == 0 ) {
                     if( RaveFabs(fNewStep-fLargestStep) < 1e-7 ) { // in order to avoid solvequat not returning any solutions
@@ -3142,7 +3143,7 @@ int DynamicsCollisionConstraint::Check(const std::vector<dReal>& q0, const std::
 
             bool bHasMoved = false; // true if _vtempconfig is different from the previous tempconfig  _vprevtempconfig) by a significant amount
             {
-                // the neighbor function could be a constraint function and might move _vtempconfig by more than the specified dQ! so double check the straight light distance between them justin case?
+                // the neighbor function could be a constraint function and might move _vtempconfig by more than the specified dQ! so double check the straight-line distance between them just in case?
                 // TODO check if acceleration limits are satisfied between _vtempconfig, _vprevtempconfig, and _vprevtempvelconfig
                 int numPostNeighSteps = 1;
                 for( int idof = 0; idof < (int)_vtempconfig.size(); ++idof) {
@@ -3197,12 +3198,12 @@ int DynamicsCollisionConstraint::Check(const std::vector<dReal>& q0, const std::
 
             //RAVELOG_VERBOSE_FORMAT("dqscale=%f fStep=%.15e, fLargestStep=%.15e, timestep=%.15e", dqscale%fBestNewStep%fLargestStep%timestep);
             if( !bHasMoved || (istep+1 < numSteps && numRepeating > 2) || dqscale >= 1 ) {//dqscale >= 1 ) {
-                // scaled! so have to change dQ and make sure not to increment istep/fStep
                 fStep = fBestNewStep;
                 bComputeNewStep = true;
                 ++istep;
             }
             else { // bHasMoved && (istep+1 >= numSteps || numRepeating <= 2) && dqscale < 1
+                // scaled! so have to change dQ and make sure not to increment istep/fStep
                 bComputeNewStep = false;
             }
             prevtimestep = timestep; // have to always update since it serves as the basis for the next timestep chosen
