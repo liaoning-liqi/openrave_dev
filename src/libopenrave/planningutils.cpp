@@ -2933,6 +2933,14 @@ int DynamicsCollisionConstraint::Check(const std::vector<dReal>& q0, const std::
                     }
                 }
             }
+            else {
+                // Even if we don't recompute fBestNewStep in this iteration, we need to make sure that the fMinNextTimeStep is at least the value used in the previous iteration
+                if( prevtimestep < fLargestInflectionTime ) {
+                    if( (fLargestStepDelta > 0 && fStep+fLargestStepDelta > fLargestInflection) || (fLargestStepDelta < 0 && fStep+fLargestStepDelta < fLargestInflection) ) {
+                        fMinNextTimeStep = fLargestInflectionTime-1e-7; // in order to force to choose a time after the inflection
+                    }
+                }
+            }
 
             if( RaveFabs(fLargestStepAccel) <= g_fEpsilonLinear ) {
                 OPENRAVE_ASSERT_OP_FORMAT(RaveFabs(fLargestStepInitialVelocity),>,g_fEpsilon, "axis %d does not move? %.15e->%.15e, numSteps=%d", nLargestStepIndex%q0[nLargestStepIndex]%q1[nLargestStepIndex]%numSteps, ORE_Assert);
