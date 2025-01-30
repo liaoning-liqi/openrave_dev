@@ -3,6 +3,11 @@
 ChangeLog
 #########
 
+Version 0.162.2
+===============
+
+- In `Check` function, correctly compute `fMinNextTimeStep` when `bComputeNewStep = false`.
+
 Version 0.162.1
 ===============
 
