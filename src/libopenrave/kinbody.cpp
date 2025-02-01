@@ -100,6 +100,22 @@ protected:
     boost::function<void()> _fn;
 };
 
+/// \brief check validity of mesh collision indices. if invalid, throw.
+/// \param[in] vertices, indices : coming from TriMesh
+/// \param[in] name, id, type : coming from GeometryInfo. used for exception message.
+/// \param[in] context : used for exception message.
+static void _CheckValidityOfMeshCollisionIndices(const std::vector<Vector>& vertices,
+                                                 const std::vector<int32_t>& indices,
+                                                 const std::string& name, const std::string& id, const GeometryType type, const char* context)
+{
+    for(const int32_t meshIndex : indices) {
+        if( (int)vertices.size() <= meshIndex || meshIndex < 0 ) {
+            throw OPENRAVE_EXCEPTION_FORMAT(_("geometry(name=\"%s\";id=\"%s\";type=%d) has incorrect mesh indices %d in \"%s\", which is out of range of vertices which size is %d."),
+                                            name%id%(int)type%context%meshIndex%vertices.size(), ORE_InvalidArguments);
+        }
+    }
+}
+
 typedef boost::shared_ptr<ChangeCallbackData> ChangeCallbackDataPtr;
 
 bool KinBody::KinBodyInfo::operator==(const KinBodyInfo& other) const {
@@ -714,6 +730,12 @@ void KinBody::SetLinkGeometriesFromGroup(const std::string& geomname, const bool
 void KinBody::SetLinkGroupGeometries(const std::string& geomname, const std::vector< std::vector<KinBody::GeometryInfoPtr> >& linkgeometries)
 {
     OPENRAVE_ASSERT_OP( linkgeometries.size(), ==, _veclinks.size() );
+    for(const std::vector<KinBody::GeometryInfoPtr>& vGeometries : linkgeometries) {
+        for(const KinBody::GeometryInfoPtr& pGeometry : vGeometries) {
+            const KinBody::GeometryInfo& geometry = *pGeometry;
+            _CheckValidityOfMeshCollisionIndices(geometry._meshcollision.vertices, geometry._meshcollision.indices, geometry._name, geometry._id, geometry._type, __FUNCTION__);
+        }
+    }
     FOREACH(itlink, _veclinks) {
         Link& link = **itlink;
         std::map< std::string, std::vector<KinBody::GeometryInfoPtr> >::iterator it = link._info._mapExtraGeometries.insert(make_pair(geomname,std::vector<KinBody::GeometryInfoPtr>())).first;
@@ -4807,7 +4829,7 @@ void KinBody::_ComputeInternalInformation()
             else {
                 // NOTE: possibly try to choose roots that do not involve mimic joints. ikfast might have problems
                 // dealing with very complex formulas
-                LinkPtr plink0 = joint.GetFirstAttached(), plink1 = joint.GetSecondAttached();
+                const LinkPtr& plink0 = joint.GetFirstAttached(), plink1 = joint.GetSecondAttached();
                 if( vlinkdepths[plink0->GetIndex()] < vlinkdepths[plink1->GetIndex()] ) {
                     parentlinkindex = plink0->GetIndex();
                 }
@@ -4929,7 +4951,7 @@ void KinBody::_ComputeInternalInformation()
                 stringstream ss;
                 ss << GetName() << " closedloop found: ";
                 FOREACH(itlinkindex,*itclosedloop) {
-                    LinkPtr plink = _veclinks.at(*itlinkindex);
+                    const LinkPtr& plink = _veclinks.at(*itlinkindex);
                     ss << plink->GetName() << "(" << plink->GetIndex() << ") ";
                 }
                 RAVELOG_VERBOSE(ss.str());
@@ -4974,7 +4996,7 @@ void KinBody::_ComputeInternalInformation()
 
         // breadth first search for rigid links
         for(size_t icurlink = 0; icurlink<vattachedlinks.size(); ++icurlink) {
-            LinkPtr plink=_veclinks.at(vattachedlinks[icurlink]);
+            const LinkPtr& plink = _veclinks.at(vattachedlinks[icurlink]);
             FOREACHC(itjoint, _vecjoints) {
                 if( (*itjoint)->IsStatic() ) {
                     if(((*itjoint)->GetFirstAttached() == plink)&& !!(*itjoint)->GetSecondAttached() &&(find(vattachedlinks.begin(),vattachedlinks.end(),(*itjoint)->GetSecondAttached()->GetIndex()) == vattachedlinks.end())) {
