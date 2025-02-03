@@ -593,6 +593,14 @@ void RobotBase::ConnectedBody::_UpdateConnectedBodyInfo()
                     for( JointInfoPtr& pJointInfo: _info._vJointInfos ) {
                         if( pJointInfo->_name == originalJointName ) {
                             pJointInfo->_vmaxvel = newJointInfo._vmaxvel;
+                            if(newJointInfo._vmaxaccel[0] < 1e-5) {
+                                if(pJointInfo->_vmaxaccel[0] < 1e-5) {
+                                    throw OPENRAVE_EXCEPTION_FORMAT(_("DEVWRAT: env=%s, Setting joint acceleration limit to = (%f, %f, %f) for joint %s. However original joint acceleration limit is already = (%f, %f, %f)"), pattachedrobot->GetEnv()->GetNameId()%newJointInfo._vmaxaccel[0]%newJointInfo._vmaxaccel[1]%newJointInfo._vmaxaccel[2]%pJoint->GetName()%pJointInfo->_vmaxaccel[0]%pJointInfo->_vmaxaccel[1]%pJointInfo->_vmaxaccel[2], ORE_InvalidState );
+                                }
+                                else {
+                                    throw OPENRAVE_EXCEPTION_FORMAT(_("DEVWRAT: env=%s, Newly setting joint acceleration limit to = (%f, %f, %f) for joint %s. Original joint acceleration limit is = (%f, %f, %f)"), pattachedrobot->GetEnv()->GetNameId()%newJointInfo._vmaxaccel[0]%newJointInfo._vmaxaccel[1]%newJointInfo._vmaxaccel[2]%pJoint->GetName()%pJointInfo->_vmaxaccel[0]%pJointInfo->_vmaxaccel[1]%pJointInfo->_vmaxaccel[2], ORE_InvalidState );
+                                }
+                            }
                             pJointInfo->_vmaxaccel = newJointInfo._vmaxaccel;
                             pJointInfo->_vmaxjerk = newJointInfo._vmaxjerk;
                             pJointInfo->_vmaxtorque = newJointInfo._vmaxtorque;
