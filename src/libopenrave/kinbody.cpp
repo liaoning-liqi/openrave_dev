@@ -1336,9 +1336,14 @@ void KinBody::SetDOFVelocityLimits(const std::vector<dReal>& v)
 void KinBody::SetDOFAccelerationLimits(const std::vector<dReal>& v)
 {
     std::vector<dReal>::const_iterator itv = v.begin();
+    int jointCounter = 0;
     FOREACHC(it, _vDOFOrderedJoints) {
         std::copy(itv,itv+(*it)->GetDOF(), (*it)->_info._vmaxaccel.begin());
+        if(RaveFabs(*itv) < 1e-5) {
+            RAVELOG_ERROR_FORMAT("env=%d, DEVWRAT: Trying to set acceleration limit of joint index %d to %f!", GetEnv()->GetId()%jointCounter%(*itv));
+        }
         itv += (*it)->GetDOF();
+        jointCounter++; 
     }
     _PostprocessChangedParameters(Prop_JointAccelerationVelocityTorqueLimits);
 }

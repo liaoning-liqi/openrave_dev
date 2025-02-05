@@ -1673,6 +1673,9 @@ void KinBody::Joint::SetAccelerationLimits(const std::vector<dReal>& vmax)
 {
     for(int i = 0; i < GetDOF(); ++i) {
         _info._vmaxaccel[i] = vmax.at(i);
+        if(vmax.at(i) < 1e-5) {
+            RAVELOG_ERROR_FORMAT("env=%d, DEVWRAT: Trying to set acceleration limit of joint %s to %f directly with joint api!", GetParent()->GetEnv()->GetId()%GetName()%vmax.at(i));
+        }
     }
     GetParent()->_PostprocessChangedParameters(Prop_JointAccelerationVelocityTorqueLimits);
 }
