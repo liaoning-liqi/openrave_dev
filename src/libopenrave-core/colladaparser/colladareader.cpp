@@ -2239,11 +2239,17 @@ public:
                         }
                         if (!!motion_axis_info->getAcceleration()) {
                             pjoint->_info._vmaxaccel[ic] = resolveFloat(motion_axis_info->getAcceleration(),motion_axis_info);
+                            if(pjoint->_info._vmaxaccel[ic] < 1e-5) {
+                                RAVELOG_ERROR_FORMAT("DEVWRAT: Got joint acceleration = %f for joint %s ", pjoint->_info._vmaxaccel[ic] % pjoint->GetName());
+                            }
                             if( !_bBackCompatValuesInRadians ) {
                                 pjoint->_info._vmaxaccel[ic] *= fjointmult;
                             }
+                            if(pjoint->_info._vmaxaccel[ic] < 1e-5) {
+                                RAVELOG_ERROR_FORMAT("DEVWRAT: Got joint acceleration = %f for joint %s ", pjoint->_info._vmaxaccel[ic] % pjoint->GetName());
+                            }
                             if ( pjoint->_info._vhardmaxaccel[ic] != 0.0 && pjoint->_info._vhardmaxaccel[ic] < pjoint->_info._vmaxaccel[ic] ) {
-                                RAVELOG_VERBOSE_FORMAT("... Joint Acceleration : Tried to set soft limit as %f but it exceeds hard limit. Therefore, reset to hard limit %f for consistency...\n", pjoint->_info._vmaxaccel[ic] % pjoint->_info._vhardmaxaccel[ic]);
+                                RAVELOG_DEBUG_FORMAT("DEVWRAT: ... Joint Acceleration : Tried to set soft limit as %f but it exceeds hard limit. Therefore, reset to hard limit %f for consistency...\n", pjoint->_info._vmaxaccel[ic] % pjoint->_info._vhardmaxaccel[ic]);
                                 pjoint->_info._vmaxaccel[ic] = pjoint->_info._vhardmaxaccel[ic];
                             }
                             RAVELOG_VERBOSE("... Joint Acceleration: %f...\n",pjoint->GetMaxAccel());

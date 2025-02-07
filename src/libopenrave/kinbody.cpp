@@ -6277,6 +6277,7 @@ void KinBody::_InitAndAddJoint(JointPtr pjoint)
         _vPassiveJoints.push_back(pjoint);
     }
     __hashKinematicsGeometryDynamics.resize(0);
+    std::vector<double> accelerationLimits;
 }
 
 void KinBody::ExtractInfo(KinBodyInfo& info, ExtractInfoOptions options)

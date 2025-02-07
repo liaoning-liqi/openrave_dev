@@ -286,6 +286,9 @@ void KinBody::JointInfo::SerializeJSON(rapidjson::Value& value, rapidjson::Docum
     orjson::SetJsonValueByKey(value, "resolutions", _vresolution, allocator, dof);
 
     boost::array<dReal, 3> newvmaxvel = _vmaxvel;
+    if(_vmaxvel[0] < 1e-5) {
+        RAVELOG_ERROR_FORMAT("DEVWRAT: For joint %s, got _vmaxaccel = (%f, %f, %f)", _name%_vmaxaccel[0]%_vmaxaccel[1]%_vmaxaccel[2]);
+    }
     boost::array<dReal, 3> newvmaxaccel = _vmaxaccel;
     boost::array<dReal, 3> newvlowerlimit = _vlowerlimit;
     boost::array<dReal, 3> newvupperlimit = _vupperlimit;
@@ -486,6 +489,9 @@ void KinBody::JointInfo::DeserializeJSON(const rapidjson::Value& value, dReal fU
         orjson::LoadJsonValueByKey(value, "maxAccel", _vmaxaccel);
         for(size_t ic = 0; ic < _vaxes.size(); ic++) {
             _vmaxaccel[ic] *= fjointmult;
+            if(_vmaxaccel[ic] < 1e-5) {
+                RAVELOG_ERROR_FORMAT("DEVWRAT: Setting accel limit %f for joint %s from maxAccel", _vmaxaccel[ic]%_name);
+            }
         }
     }
     orjson::LoadJsonValueByKey(value, "hardMaxAccel", _vhardmaxaccel);
@@ -2675,7 +2681,7 @@ UpdateFromInfoResult KinBody::Joint::UpdateFromInfo(const KinBody::JointInfo& in
     }
     // _vmaxaccel
     if (_info._vmaxaccel != info._vmaxaccel) {
-        RAVELOG_VERBOSE_FORMAT("joint %s max acceleration changed", _info._id);
+        RAVELOG_ERROR_FORMAT("DEVWRAT: env=%s, joint %s max acceleration changed old = (%f, %f, %f), new = (%f, %f, %f)", GetParent()->GetEnv()->GetNameId()%_info._id%_info._vmaxaccel[0]%_info._vmaxaccel[1]%_info._vmaxaccel[2]%info._vmaxaccel[0]%info._vmaxaccel[1]%info._vmaxaccel[2]);
         return UFIR_RequireReinitialize;
     }
 

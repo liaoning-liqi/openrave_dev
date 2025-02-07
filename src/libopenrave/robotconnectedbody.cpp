@@ -45,6 +45,9 @@ void RobotBase::ConnectedBodyInfo::InitInfoFromBody(RobotBase& robot)
 
     FOREACH(itjoint, robot._vecjoints) {
         _vJointInfos.push_back(boost::make_shared<KinBody::JointInfo>((*itjoint)->UpdateAndGetInfo()));
+        if(_vJointInfos.back()->_vmaxaccel[0] < 1e-5) {
+            RAVELOG_ERROR_FORMAT("DEVWRAT: env=%s, When initializing joint info for joint %s in connected body, joint acceleration limit is already = (%f, %f, %f)", robot.GetEnv()->GetNameId()%_vJointInfos.back()->GetName()%_vJointInfos.back()->_vmaxaccel[0]%_vJointInfos.back()->_vmaxaccel[1]%_vJointInfos.back()->_vmaxaccel[2]);
+        }
     }
     FOREACH(itjoint, robot._vPassiveJoints) {
         _vJointInfos.push_back(boost::make_shared<KinBody::JointInfo>((*itjoint)->UpdateAndGetInfo()));
@@ -181,6 +184,12 @@ void RobotBase::ConnectedBodyInfo::DeserializeJSON(const rapidjson::Value &value
         _vJointInfos.reserve(value["joints"].Size() + _vJointInfos.size());
         for (rapidjson::Value::ConstValueIterator it = value["joints"].Begin(); it != value["joints"].End(); ++it) {
             UpdateOrCreateInfoWithNameCheck(*it, _vJointInfos, "name", fUnitScale, options);
+        }
+
+        for( JointInfoPtr& pJointInfo: _vJointInfos ) {
+            if(pJointInfo->_vmaxaccel[0] < 1e-5) {
+                RAVELOG_ERROR_FORMAT("DEVWRAT: Got joint acceleration limit %f while deserializing joint info for %s", pJointInfo->_vmaxaccel[0]%pJointInfo->_name);
+            }
         }
     }
 
@@ -593,6 +602,14 @@ void RobotBase::ConnectedBody::_UpdateConnectedBodyInfo()
                     for( JointInfoPtr& pJointInfo: _info._vJointInfos ) {
                         if( pJointInfo->_name == originalJointName ) {
                             pJointInfo->_vmaxvel = newJointInfo._vmaxvel;
+                            if(newJointInfo._vmaxaccel[0] < 1e-5) {
+                                if(pJointInfo->_vmaxaccel[0] < 1e-5) {
+                                    RAVELOG_ERROR_FORMAT("DEVWRAT: env=%s, Setting joint acceleration limit to = (%f, %f, %f) for joint %s. However original joint acceleration limit is already = (%f, %f, %f)", pattachedrobot->GetEnv()->GetNameId()%newJointInfo._vmaxaccel[0]%newJointInfo._vmaxaccel[1]%newJointInfo._vmaxaccel[2]%pJoint->GetName()%pJointInfo->_vmaxaccel[0]%pJointInfo->_vmaxaccel[1]%pJointInfo->_vmaxaccel[2]);
+                                }
+                                else {
+                                    RAVELOG_ERROR_FORMAT("DEVWRAT: env=%s, Newly setting joint acceleration limit to = (%f, %f, %f) for joint %s. Original joint acceleration limit is = (%f, %f, %f)", pattachedrobot->GetEnv()->GetNameId()%newJointInfo._vmaxaccel[0]%newJointInfo._vmaxaccel[1]%newJointInfo._vmaxaccel[2]%pJoint->GetName()%pJointInfo->_vmaxaccel[0]%pJointInfo->_vmaxaccel[1]%pJointInfo->_vmaxaccel[2]);
+                                }
+                            }
                             pJointInfo->_vmaxaccel = newJointInfo._vmaxaccel;
                             pJointInfo->_vmaxjerk = newJointInfo._vmaxjerk;
                             pJointInfo->_vmaxtorque = newJointInfo._vmaxtorque;
@@ -834,6 +851,9 @@ void RobotBase::_ComputeConnectedBodiesInformation()
                 if (!!pjoint->_info._vmimic[iMimic]) {
                     pjoint->_info._vmimic[iMimic].reset(new MimicInfo(*(pjoint->_info._vmimic[iMimic])));
                 }
+            }
+            if(pjoint->_info._vmaxaccel[0] < 1e-5) {
+                RAVELOG_ERROR_FORMAT("DEVWRAT: env=%s Setting joint accel limit to %f for joint %s from connected body info", GetEnv()->GetNameId()%pjoint->_info._vmaxaccel[0]%pjoint->GetName());
             }
 
             // search for the correct resolved _linkname0 and _linkname1
@@ -1083,6 +1103,7 @@ void RobotBase::_ComputeConnectedBodiesInformation()
         dummyJointInfo._bIsActive = false;
         dummyJointInfo._type = KinBody::JointType::JointRevolute;
         dummyJointInfo._vmaxaccel[0] = 0.0;
+        RAVELOG_ERROR_FORMAT("DEVWRAT: Setting joint info _vmaxaccel  for %s to 0", connectedBody._dummyPassiveJointName);
         dummyJointInfo._vmaxvel[0] = 0.0;
         dummyJointInfo._vupperlimit[0] = 0;
 
