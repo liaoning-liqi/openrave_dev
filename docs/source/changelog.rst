@@ -8,6 +8,11 @@ Version 0.163.0
 
 - Copy the internal states of `_pGrabbedSaver` and `_pGrabberSaver` of `Grabbed` instances when cloning or restoring, to avoid incorrect computation of the non colliding list cache.
 
+Version 0.162.1
+===============
+
+- Apply ramp acceleration modification the same way as is done in `SegmentFeasible2` when initializing an input trajectory that is quadratic.
+
 Version 0.162.0
 ===============
 
