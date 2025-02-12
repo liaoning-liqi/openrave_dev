@@ -11,8 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from common_test_openrave import *
+from common_test_openrave import EnvironmentSetup, g_epsilon, transdist, locate
+from openravepy import databases, interfaces, misc
+from openravepy import Environment, RaveDestroy, RaveSetDataAccess, IkParameterization, CloningOptions, RaveCreateKinBody
+from numpy import array, eye, zeros
+
 from subprocess import Popen, PIPE
+import time
+import os
 import shutil
 import threading
 
@@ -87,20 +93,20 @@ class TestEnvironment(EnvironmentSetup):
             
     def test_unicode(self):
         env=self.env
-        name = 'テスト名前'.decode('utf-8')
+        name = u'テスト名前'
         body=RaveCreateKinBody(env,'')
         body.InitFromBoxes(array([[0,0,0,1,1,1]]),True)
         body.SetName(name)
         env.Add(body)
         assert(body.GetName()==name)
-        assert(unicode(body.GetName())==name)
 
-        openrave_config = Popen(['openrave-config','--share-dir'],stdout=PIPE)
-        share_dir = openrave_config.communicate()[0].strip()
-        srcfile = os.path.join(share_dir,'models','WAM','wam0.iv')
-        destfile = '新しいファイル.iv'.decode('utf-8')
-        robotname = 'ロボット名'.decode('utf-8')
-        linkname = 'テスト'.decode('utf-8')
+        # openrave_config = Popen(['openrave-config','--share-dir'],stdout=PIPE)
+        # share_dir = openrave_config.communicate()[0].decode('utf-8').strip()
+        # srcfile = os.path.join(share_dir,'models','WAM','wam0.iv')
+        srcfile = os.path.join('..', 'src','models','WAM','wam0.iv')
+        destfile = u'新しいファイル.iv'
+        robotname = u'ロボット名'
+        linkname = u'テスト'
         shutil.copyfile(srcfile,destfile)
         urobotxml = u"""<?xml version="1.0" encoding="utf-8"?>
 <robot name="%s">
@@ -117,12 +123,12 @@ class TestEnvironment(EnvironmentSetup):
         robot=self.LoadRobotData(robotxml)
         assert(robot.GetName() == robotname)
         assert(robot.GetLinks()[0].GetName() == linkname)
-        assert(unicode(robot.GetName()).encode('euc-jp') == robotname.encode('euc-jp'))
+        assert(robot.GetName().encode('euc-jp') == robotname.encode('euc-jp'))
         env.Remove(robot)
 
         robot=self.LoadRobotData(robotxml)
         assert(robot.GetName() == robotname)
-        assert(unicode(robot.GetName()).encode('euc-jp') == robotname.encode('euc-jp'))
+        assert(robot.GetName().encode('euc-jp') == robotname.encode('euc-jp'))
         assert(robot.GetLinks()[0].GetName() == linkname)
                     
     def test_cloneplan(self):

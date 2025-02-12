@@ -2399,7 +2399,7 @@ bool SensorBase::Force6DGeomData::SerializeJSON(rapidjson::Value& value, rapidjs
 {
     SensorBase::SensorGeometry::SerializeJSON(value, allocator, fUnitScale, options);
     orjson::SetJsonValueByKey(value, "polarity", polarity, allocator);
-    orjson::SetJsonValueByKey(value, "correctionMatrix", correction_matrix, allocator, correction_matrix.size());
+    orjson::SetJsonValueByKey(value, "correction_matrix", correction_matrix, allocator, correction_matrix.size());
     return true;
 }
 
@@ -2407,7 +2407,7 @@ bool SensorBase::Force6DGeomData::DeserializeJSON(const rapidjson::Value& value,
 {
     SensorBase::SensorGeometry::DeserializeJSON(value, fUnitScale);
     orjson::LoadJsonValueByKey(value, "polarity", polarity);
-    orjson::LoadJsonValueByKey(value, "correctionMatrix", correction_matrix);
+    orjson::LoadJsonValueByKey(value, "correction_matrix", correction_matrix);
     return true;
 }
 
@@ -2718,7 +2718,18 @@ void IkParameterization::ConvertUnitScale(dReal fUnitScale)
     // TODO have to scale _mapCustomData by fUnitScale
 }
 
-StringReadable::StringReadable(const std::string& id, const std::string& data) : Readable(id), _data(data)
+StringReadable::StringReadable(const std::string& id, const std::string& data)
+    : Readable(id), _data(data)
+{
+}
+
+StringReadable::StringReadable(const std::string& id, std::string&& data)
+    : Readable(id), _data(std::move(data))
+{
+}
+
+StringReadable::StringReadable(const std::string& id, const char* data, size_t dataLength)
+    : Readable(id), _data(data, dataLength)
 {
 }
 
@@ -2729,6 +2740,16 @@ StringReadable::~StringReadable()
 void StringReadable::SetData(const std::string& newdata)
 {
     _data = newdata;
+}
+
+void StringReadable::SetData(std::string&& newdata)
+{
+    _data = std::move(newdata);
+}
+
+void StringReadable::SetData(const char* data, size_t dataLength)
+{
+    _data.assign(data, dataLength);
 }
 
 const std::string& StringReadable::GetData() const
@@ -2753,13 +2774,65 @@ bool StringReadable::SerializeXML(BaseXMLWriterPtr writer, int options) const
 
 bool StringReadable::SerializeJSON(rapidjson::Value& value, rapidjson::Document::AllocatorType& allocator, dReal fUnitScale, int options) const
 {
-    value.SetString(_data.c_str(), allocator);
+    value.SetString(_data.c_str(), _data.size(), allocator);
     return true;
 }
 
 bool StringReadable::DeserializeJSON(const rapidjson::Value& value, dReal fUnitScale)
 {
-    _data = value.GetString();
+    _data.assign(value.GetString(), value.GetStringLength());
+    return true;
+}
+
+JSONReadable::JSONReadable(const std::string& id) : JSONReadable(id, rapidjson::Value())
+{
+}
+
+JSONReadable::JSONReadable(const std::string& id, const rapidjson::Value& rValue) : Readable(id), _vAllocBuffer(4*1024, 0), _rAlloc(&_vAllocBuffer[0], _vAllocBuffer.size())
+{
+    _rValue.CopyFrom(rValue, _rAlloc);
+}
+
+JSONReadable::~JSONReadable()
+{
+}
+
+void JSONReadable::SetValue(const rapidjson::Value& rValue)
+{
+    _rAlloc.Clear();
+    _rValue.CopyFrom(rValue, _rAlloc);
+}
+
+rapidjson::Value& JSONReadable::GetValue()
+{
+    return _rValue;
+}
+
+const rapidjson::Value& JSONReadable::GetValue() const
+{
+    return _rValue;
+}
+
+rapidjson::Document::AllocatorType& JSONReadable::GetAllocator()
+{
+    return _rAlloc;
+}
+
+bool JSONReadable::SerializeXML(BaseXMLWriterPtr writer, int options) const
+{
+    return false;
+}
+
+bool JSONReadable::SerializeJSON(rapidjson::Value& rValue, rapidjson::Document::AllocatorType& rAlloc, dReal fUnitScale, int options) const
+{
+    rValue.CopyFrom(_rValue, rAlloc);
+    return true;
+}
+
+bool JSONReadable::DeserializeJSON(const rapidjson::Value& rValue, dReal fUnitScale)
+{
+    _rAlloc.Clear();
+    _rValue.CopyFrom(rValue, _rAlloc);
     return true;
 }
 

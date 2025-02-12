@@ -11,7 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from common_test_openrave import *
+from common_test_openrave import EnvironmentSetup
+from openravepy import databases
+from openravepy import IkParameterization, IkParameterizationType, RaveCreateProblem
+import numpy
 
 class TestIkFast(EnvironmentSetup):
     freeincrot=0.1
@@ -94,7 +97,7 @@ class TestIkFast(EnvironmentSetup):
             chunksize = 100 # have to split into chunks because of timeouts
             cmd = 'DebugIK robot %s threshold %f '%(robot.GetName(), self.errorthreshold)
             for ichunk in range((numiktests+chunksize-1)//chunksize):
-                res = self.ikfastproblem.SendCommand(cmd+'numtests %d '%chunksize).split()
+                res = self.ikfastproblem.SendCommand(cmd+'numtests %d '%chunksize).decode('utf-8').split()
                 numtested += int(res[0])
                 numsuccessful += int(res[1])
                 index = 2

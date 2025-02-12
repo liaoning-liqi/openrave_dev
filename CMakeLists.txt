@@ -4,7 +4,7 @@ set( CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS TRUE )
 
 # Define here the needed parameters
 set (OPENRAVE_VERSION_MAJOR 0)
-set (OPENRAVE_VERSION_MINOR 142)
+set (OPENRAVE_VERSION_MINOR 163)
 set (OPENRAVE_VERSION_PATCH 0)
 set (OPENRAVE_VERSION ${OPENRAVE_VERSION_MAJOR}.${OPENRAVE_VERSION_MINOR}.${OPENRAVE_VERSION_PATCH})
 set (OPENRAVE_SOVERSION ${OPENRAVE_VERSION_MAJOR}.${OPENRAVE_VERSION_MINOR})
@@ -15,6 +15,8 @@ message(STATUS "Using cmake version ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION
 cmake_policy(SET CMP0002 NEW)
 # http://www.cmake.org/cmake/help/cmake-2.6.html#policy:CMP0003
 cmake_policy(SET CMP0003 NEW)
+# https://cmake.org/cmake/help/v3.8/policy/CMP0067.html
+cmake_policy(SET CMP0067 NEW)
 
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 14) # C++14 for std::shared_timed_mutex
@@ -112,6 +114,22 @@ include(GNUInstallDirs)
 
 find_package(PkgConfig) # pkg_check_modules
 
+check_cxx_source_compiles(" 
+#include <string_view> 
+int main() 
+{ 
+    std::string_view view;
+    return 0;
+}"
+OPENRAVE_STD_STRING_VIEW
+)
+# need to convert to int to set config.h
+if(OPENRAVE_STD_STRING_VIEW)
+  set(OPENRAVE_STD_STRING_VIEW 1)
+else()
+  set(OPENRAVE_STD_STRING_VIEW 0)
+endif()
+
 if( WIN32 )
   # does not support symlinks
   set(OPENRAVE_BIN_SUFFIX)
@@ -169,6 +187,9 @@ if( CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX )
   add_definitions("-Werror=return-local-addr")
 elseif( COMPILER_IS_CLANG )
   add_definitions("-Werror=return-stack-address")
+  # prevents CLANG from "error: integer value -1 is outside the valid range of values [0, 3]
+  # for the enumeration type 'sign_mixture_enum' [-Wenum-constexpr-conversion]"
+  add_definitions("-Wno-error=enum-constexpr-conversion")
 endif()
 
 set(OPENRAVE_EXPORT_CXXFLAGS)
@@ -243,7 +264,7 @@ if( MSVC )
     install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/msvc_include/stdint.h DESTINATION include/openrave-${OPENRAVE_VERSION_MAJOR}.${OPENRAVE_VERSION_MINOR} COMPONENT ${COMPONENT_PREFIX}dev)
     include_directories(${CMAKE_CURRENT_SOURCE_DIR}/msvc_include)
   endif()
-  
+
   # have to install dlls manually
   if( MSVC70 OR MSVC71 )
     set(MSVC_PREFIX "vc70")
@@ -255,7 +276,7 @@ if( MSVC )
     set(MSVC_PREFIX "vc100")
   endif()
   set(OPENRAVE_LIBRARY_SUFFIX "${OPENRAVE_SOVERSION}-${MSVC_PREFIX}-mt" CACHE STRING "Suffix to append to library names")
-  
+
   # force multi-threaded DLL boost
   set(Boost_USE_MULTITHREAD ON)
   set(Boost_USE_STATIC_LIBS OFF)
@@ -371,8 +392,8 @@ if( ASSIMP_FOUND )
   #include <assimp/Logger.h> 
   int main() 
   { 
-      Assimp::Logger::WARN; 
-      return 0; 
+      Assimp::Logger::WARN;
+      return 0;
   }" 
   IS_ASSIMP_PRE_R896 
   )
@@ -700,6 +721,7 @@ if (OPT_PYTHON)
   set(OPENRAVE_PYTHON_INSTALL_DIR ${OPENRAVE_PYTHON2_INSTALL_DIR})
   set(OPENRAVEPY_INSTALL_DIR      ${OPENRAVEPY2_INSTALL_DIR})
   set(OPENRAVEPY_VER_INSTALL_DIR  ${OPENRAVEPY2_VER_INSTALL_DIR})
+  set(PYTHON_EXECUTABLE           ${Python2_EXECUTABLE})
 
   # get the sympy version
   execute_process(
@@ -755,7 +777,7 @@ if (OPT_PYTHON)
     target_compile_options(openravepy2_meta INTERFACE "-fvisibility=hidden") # pybind11 requires less visibility
     target_compile_definitions(openravepy2_meta INTERFACE "OPENRAVE_CORE_DLL=1" "USE_PYBIND11_PYTHON_BINDINGS=1")
     set(USE_PYBIND11_PYTHON_BINDINGS ON)
-  elseif()
+  else()
     find_package(Boost REQUIRED COMPONENTS python thread)
     target_link_libraries(openravepy2_meta INTERFACE rt Python2::Module Python2::NumPy Boost::python Boost::thread libopenrave libopenrave-core)
     target_compile_definitions(openravepy2_meta INTERFACE "OPENRAVE_CORE_DLL=1")
@@ -781,6 +803,7 @@ if (OPT_PYTHON3)
     set(OPENRAVE_PYTHON_INSTALL_DIR ${OPENRAVE_PYTHON3_INSTALL_DIR})
     set(OPENRAVEPY_INSTALL_DIR      ${OPENRAVEPY3_INSTALL_DIR})
     set(OPENRAVEPY_VER_INSTALL_DIR  ${OPENRAVEPY3_VER_INSTALL_DIR})
+    set(PYTHON_EXECUTABLE           ${Python3_EXECUTABLE})
   endif()
 
   add_library(openravepy3_meta INTERFACE)

@@ -60,6 +60,8 @@ By default will sample the robot's active DOFs. Parameters part of the interface
                         "sets the _bResetIterationsOnSample: whether or not to reset _nNumIterations every time Sample is called.");
         RegisterCommand("SetNullSpaceSamplingProb",boost::bind(&WorkspaceConfigurationJitterer::SetNullSpaceSamplingProbCommand, this, _1, _2),
                         "sets the probability to add perturbations from the nullspace of the Jacobian.");
+        RegisterCommand("SetNeighStateOptions", boost::bind(&WorkspaceConfigurationJitterer::SetNeighStateOptionsCommand, this, _1, _2),
+                        "sets a flag to use with NeighStateFn");
         RegisterJSONCommand("GetFailuresCount", boost::bind(&WorkspaceConfigurationJitterer::GetFailuresCountCommand, this, _1, _2, _3),
                             "Gets the numbers of failing jittered configurations from the latest call categorized based on the failure reasons.");
         RegisterJSONCommand("GetCurrentParameters", boost::bind(&WorkspaceConfigurationJitterer::GetCurrentParametersCommand, this, _1, _2, _3),
@@ -79,8 +81,13 @@ By default will sample the robot's active DOFs. Parameters part of the interface
         _vActiveIndices = _probot->GetActiveDOFIndices();
         _nActiveAffineDOFs = _probot->GetAffineDOF();
         _vActiveAffineAxis = _probot->GetAffineRotationAxis();
+        _vLinks.reserve(_probot->GetLinks().size());
         if( _nActiveAffineDOFs == 0 ) {
             for (size_t ilink = 0; ilink < _probot->GetLinks().size(); ++ilink) {
+                if( _probot->GetLinks()[ilink]->GetGeometries().empty() ) {
+                    // Links that don't have geometries (virtual links) don't matter for jittering. Their AABBs can interfere with the results.
+                    continue;
+                }
                 for (int dofindex : _vActiveIndices) {
                     if( _probot->DoesAffect(_probot->GetJointFromDOFIndex(dofindex)->GetJointIndex(), ilink)) {
                         _vLinks.push_back(_probot->GetLinks()[ilink]);
@@ -90,7 +97,13 @@ By default will sample the robot's active DOFs. Parameters part of the interface
             }
         }
         else {
-            _vLinks = _probot->GetLinks();
+            for (const KinBody::LinkPtr& plink: _probot->GetLinks()) {
+                if( plink->GetGeometries().empty() ) {
+                    // Links that don't have geometries (virtual links) don't matter for jittering. Their AABBs can interfere with the results.
+                    continue;
+                }
+                _vLinks.push_back(plink);
+            }
         }
         _vLinkAABBs.resize(_vLinks.size());
         for(size_t i = 0; i < _vLinks.size(); ++i) {
@@ -143,6 +156,7 @@ By default will sample the robot's active DOFs. Parameters part of the interface
         _linkdistthresh = 0.02;
         _linkdistthresh2 = _linkdistthresh*_linkdistthresh;
         _neighdistthresh = 1;
+        _neighstateoptions = 0;
 
         _UpdateLimits();
         _limitscallback = _probot->RegisterChangeCallback(RobotBase::Prop_JointLimits, boost::bind(&WorkspaceConfigurationJitterer::_UpdateLimits, this));
@@ -400,6 +414,17 @@ By default will sample the robot's active DOFs. Parameters part of the interface
         _neighstatefn = neighstatefn;
     }
 
+    bool SetNeighStateOptionsCommand(std::ostream& sout, std::istream& sinput)
+    {
+        int neighstateoptions = 0;
+        sinput >> neighstateoptions;
+        if( neighstateoptions < 0 ) {
+            return false;
+        }
+        _neighstateoptions = neighstateoptions;
+        return true;
+    }
+
     virtual bool GetFailuresCountCommand(const rapidjson::Value& input, rapidjson::Value& output, rapidjson::Document::AllocatorType& alloc)
     {
         _counter.SaveToJson(output, alloc);
@@ -467,7 +492,7 @@ By default will sample the robot's active DOFs. Parameters part of the interface
 
         bool bCollision = false;
         bool bConstraintFailed = false;
-        bool bHasNeighStateFn = !!_neighstatefn;
+        const bool bHasNeighStateFn = !!_neighstatefn;
 
         std::vector<dReal> vPerturbations; // for testing with perturbed configurations
         if( _fPerturbation > 0 ) {
@@ -638,7 +663,7 @@ By default will sample the robot's active DOFs. Parameters part of the interface
                 }
                 vnewdof = _curdof;
                 _probot->SetActiveDOFValues(vnewdof); // need to set robot configuration before calling _neighstatefn
-                if( _neighstatefn(vnewdof, _deltadof, 0) == NSS_Failed) {
+                if( _neighstatefn(vnewdof, _deltadof, _neighstateoptions) == NSS_Failed) {
                     _counter.nNeighStateFailure++;
                     continue;
                 }
@@ -982,9 +1007,14 @@ protected:
         vector<KinBodyPtr> vgrabbedbodies;
         _probot->GetGrabbed(vgrabbedbodies);
         // robot itself might have changed?
+        _vLinks.resize(0);
+        _vLinks.reserve(_probot->GetLinks().size());
         if( _nActiveAffineDOFs == 0 ) {
-            _vLinks.clear();
             for (size_t ilink = 0; ilink < _probot->GetLinks().size(); ++ilink) {
+                if( _probot->GetLinks()[ilink]->GetGeometries().empty() ) {
+                    // Links that don't have geometries (virtual links) don't matter for jittering. Their AABBs can interfere with the results.
+                    continue;
+                }
                 for(int dofindex : _vActiveIndices) {
                     if( _probot->DoesAffect(_probot->GetJointFromDOFIndex(dofindex)->GetJointIndex(), ilink)) {
                         _vLinks.push_back(_probot->GetLinks()[ilink]);
@@ -994,7 +1024,13 @@ protected:
             }
         }
         else {
-            _vLinks = _probot->GetLinks();
+            for (const KinBody::LinkPtr& plink: _probot->GetLinks()) {
+                if( plink->GetGeometries().empty() ) {
+                    // Links that don't have geometries (virtual links) don't matter for jittering. Their AABBs can interfere with the results.
+                    continue;
+                }
+                _vLinks.push_back(plink);
+            }
         }
         FOREACHC(itgrabbed, vgrabbedbodies) {
             FOREACHC(itlink2, (*itgrabbed)->GetLinks()) {
@@ -1051,6 +1087,7 @@ protected:
 
     OpenRAVE::NeighStateFn _neighstatefn; ///< if initialized, then use this function to get nearest neighbor
     ///< Advantage of using neightstatefn is that user constraints can be met like maintaining a certain orientation of the gripper.
+    int _neighstateoptions; ///< a flag to supply to _neighstatefn indicating how the neighbor should be computed.
 
     UserDataPtr _limitscallback, _grabbedcallback; ///< limits,grabbed change handles
 

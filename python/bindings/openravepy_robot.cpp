@@ -482,6 +482,9 @@ std::vector<RobotBase::ManipulatorInfoPtr> ExtractManipulatorInfoArray(object py
     }
     catch(...) {
         RAVELOG_WARN("Cannot do ExtractArray for ManipulatorInfo");
+#ifdef USE_PYBIND11_PYTHON_BINDINGS
+        throw;
+#endif
     }
     return vManipulatorInfos;
 }
@@ -508,6 +511,9 @@ std::vector<RobotBase::AttachedSensorInfoPtr> ExtractAttachedSensorInfoArray(obj
     }
     catch(...) {
         RAVELOG_WARN("Cannot do ExtractArray for AttachedSensorInfo");
+#ifdef USE_PYBIND11_PYTHON_BINDINGS
+        throw;
+#endif
     }
     return vAttachedSensorInfos;
 }
@@ -534,6 +540,9 @@ std::vector<RobotBase::ConnectedBodyInfoPtr> ExtractConnectedBodyInfoArray(objec
     }
     catch(...) {
         RAVELOG_WARN("Cannot do ExtractArray for ConnectedBodyInfo");
+#ifdef USE_PYBIND11_PYTHON_BINDINGS
+        throw;
+#endif
     }
     return vConnectedBodyInfos;
 }
@@ -559,6 +568,9 @@ std::vector<RobotBase::GripperInfoPtr> ExtractGripperInfoArray(object pyGripperI
     }
     catch(...) {
         RAVELOG_WARN("Cannot do ExtractArray for GripperInfo");
+#ifdef USE_PYBIND11_PYTHON_BINDINGS
+        throw;
+#endif
     }
     return vGripperInfos;
 }
@@ -781,15 +793,6 @@ void PyRobotBase::PyManipulator::SetLocalToolTransform(object otrans) {
 }
 void PyRobotBase::PyManipulator::SetLocalToolDirection(object odirection) {
     _pmanip->SetLocalToolDirection(ExtractVector3(odirection));
-}
-void PyRobotBase::PyManipulator::SetClosingDirection(object oclosingdirection)
-{
-    RAVELOG_WARN("SetClosingDirection is deprecated, use SetChuckingDirection\n");
-    _pmanip->SetChuckingDirection(ExtractArray<int>(oclosingdirection));
-}
-void PyRobotBase::PyManipulator::SetChuckingDirection(object ochuckingdirection)
-{
-    _pmanip->SetChuckingDirection(ExtractArray<int>(ochuckingdirection));
 }
 py::array_int PyRobotBase::PyManipulator::GetGripperJoints() {
     RAVELOG_DEBUG("GetGripperJoints is deprecated, use GetGripperIndices\n");
@@ -2463,6 +2466,7 @@ void init_openravepy_robot()
                            .def_readwrite("_vManipulatorInfos",&PyRobotBase::PyRobotBaseInfo::_vManipulatorInfos)
                            .def_readwrite("_vAttachedSensorInfos",&PyRobotBase::PyRobotBaseInfo::_vAttachedSensorInfos)
                            .def_readwrite("_vConnectedBodyInfos",&PyRobotBase::PyRobotBaseInfo::_vConnectedBodyInfos)
+                           .def_readwrite("_vGripperInfos",&PyRobotBase::PyRobotBaseInfo::_vGripperInfos)
                            .def("__str__",&PyRobotBase::PyRobotBaseInfo::__str__)
                            .def("__unicode__",&PyRobotBase::PyRobotBaseInfo::__unicode__)
 #ifdef USE_PYBIND11_PYTHON_BINDINGS
@@ -2939,8 +2943,6 @@ void init_openravepy_robot()
         .def("GetLocalToolTransformPose",&PyRobotBase::PyManipulator::GetLocalToolTransformPose, DOXY_FN(RobotBase::Manipulator,GetLocalToolTransformPose))
         .def("SetLocalToolTransform",&PyRobotBase::PyManipulator::SetLocalToolTransform, PY_ARGS("transform") DOXY_FN(RobotBase::Manipulator,SetLocalToolTransform))
         .def("SetLocalToolDirection",&PyRobotBase::PyManipulator::SetLocalToolDirection, PY_ARGS("direction") DOXY_FN(RobotBase::Manipulator,SetLocalToolDirection))
-        .def("SetClosingDirection",&PyRobotBase::PyManipulator::SetClosingDirection, PY_ARGS("closingdirection") DOXY_FN(RobotBase::Manipulator,SetClosingDirection))
-        .def("SetChuckingDirection",&PyRobotBase::PyManipulator::SetChuckingDirection, PY_ARGS("chuckingdirection") DOXY_FN(RobotBase::Manipulator,SetChuckingDirection))
         .def("GetGripperJoints",&PyRobotBase::PyManipulator::GetGripperJoints, DOXY_FN(RobotBase::Manipulator,GetGripperIndices))
         .def("GetGripperIndices",&PyRobotBase::PyManipulator::GetGripperIndices, DOXY_FN(RobotBase::Manipulator,GetGripperIndices))
         .def("GetArmJoints",&PyRobotBase::PyManipulator::GetArmJoints, DOXY_FN(RobotBase::Manipulator,GetArmIndices))

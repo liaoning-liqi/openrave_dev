@@ -132,6 +132,7 @@ public:
         return _name;
     }
     virtual void SetUserText(const string& userText);
+    virtual void SetTextSize(double size);
 
     virtual bool LoadModel(const string& filename);
 
@@ -169,7 +170,7 @@ public:
 
     virtual GraphHandlePtr drawarrow(const RaveVector<float>& p1, const RaveVector<float>& p2, float fwidth, const RaveVector<float>& color);
     virtual GraphHandlePtr drawbox(const RaveVector<float>& vpos, const RaveVector<float>& vextents);
-    virtual GraphHandlePtr drawboxarray(const std::vector<RaveVector<float>>& vpos, const RaveVector<float>& vextents);
+    virtual GraphHandlePtr drawboxarray(const std::vector<RaveVector<float>>& vpos, const RaveVector<float>& vextents, const std::vector<RaveVector<float>>& vcolors);
     virtual GraphHandlePtr drawplane(const RaveTransform<float>& tplane, const RaveVector<float>& vextents, const boost::multi_array<float,3>& vtexture);
     virtual GraphHandlePtr drawtrimesh(const float* ppoints, int stride, const int* pIndices, int numTriangles, const RaveVector<float>& color);
     virtual GraphHandlePtr drawtrimesh(const float* ppoints, int stride, const int* pIndices, int numTriangles, const boost::multi_array<float,2>& colors);
@@ -340,6 +341,10 @@ public:
     virtual void _SetTriangleMesh(SoSeparator* pparent, const float* ppoints, int stride, const int* pIndices, int numTriangles);
     virtual void _Reset();
     virtual void _SetBkgndColor(const RaveVector<float>& color);
+    virtual void _SetTextSize(double size);
+    virtual double _GetTextBaseSize(double size);
+    virtual SbVec3f _GetMessageBaseTranslation();
+    virtual SbVec3f _GetMessageShadowTranslation();
     virtual void _closegraph(SoSwitch* handle);
     virtual void _SetGraphTransform(SoSwitch* handle, const RaveTransform<float>& t);
     virtual void _SetGraphShow(SoSwitch* handle, bool bshow);
@@ -412,7 +417,10 @@ public:
     std::list< boost::shared_ptr<IvDragger> > _plistdraggers;     /// draggers drawn
     SoEventCallback* _eventKeyboardCB;
 
+    SoSwitch* _messageSwitch;
+    SoFont* _messageFont;
     boost::array<SoText2*,2> _messageNodes;
+    SoTranslation* _messageBaseTranslation;
     SoTranslation* _messageShadowTranslation;
 
     bool _altDown[2];
@@ -526,6 +534,7 @@ public:
     friend class DeselectMessage;
     friend class ResetMessage;
     friend class SetBkgndColorMessage;
+    friend class SetTextSizeMessage;
     friend class StartPlaybackTimerMessage;
     friend class StopPlaybackTimerMessage;
     friend class SetGraphTransformMessage;

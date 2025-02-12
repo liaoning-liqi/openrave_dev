@@ -52,7 +52,9 @@ enum PlannerStatusCode
     PS_HasSolution = 1, ///< planner succeeded
     PS_Interrupted = 2, ///< planning was interrupted, but can be resumed by calling PlanPath again
     PS_InterruptedWithSolution = 3, ///< planning was interrupted, but a valid path/solution was returned. Can call PlanPath again to refine results
-    PS_FailedDueToCollision = 0x00030000, ///< planner failed due to collision constraints
+    PS_FailedDueToEnvCollision = 0x00010000, ///< planner failed due to env collision constraints
+    PS_FailedDueToSelfCollision = 0x00020000, ///< planner failed due to self collision constraints
+    PS_FailedDueToCollision = (PS_FailedDueToEnvCollision|PS_FailedDueToSelfCollision), ///< planner failed due to any collision constraints
     PS_FailedDueToInitial = 0x00040000, ///< failed due to initial configurations
     PS_FailedDueToGoal = 0x00080000, ///< failed due to goal configurations
     PS_FailedDueToKinematics = 0x00100000, ///< failed due to kinematics constraints
@@ -647,7 +649,7 @@ public:
         \param robot main robot to be used for planning
         \param params The parameters of the planner, any class derived from PlannerParameters can be passed. The planner should copy these parameters for future instead of storing the pointer.
      */
-    virtual bool InitPlan(RobotBasePtr robot, PlannerParametersConstPtr params) = 0;
+    virtual PlannerStatus InitPlan(RobotBasePtr robot, PlannerParametersConstPtr params) = 0;
 
     /** \brief Setup scene, robot, and properties of the plan, and reset all structures with pparams.
 
@@ -656,7 +658,7 @@ public:
         pass information to planners without excplicitly knowning the format/internal structures used
         \return true if plan is initialized successfully and initial conditions are satisfied.
      */
-    virtual bool InitPlan(RobotBasePtr robot, std::istream& isParameters);
+    virtual PlannerStatus InitPlan(RobotBasePtr robot, std::istream& isParameters);
 
     /** \brief Executes the main planner trying to solve for the goal condition.
 
@@ -713,7 +715,7 @@ protected:
     virtual PlannerAction _CallCallbacks(const PlannerProgress& progress);
 
 private:
-    virtual const char* GetHash() const {
+    virtual const char* GetHash() const override {
         return OPENRAVE_PLANNER_HASH;
     }
 

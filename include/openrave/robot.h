@@ -58,10 +58,10 @@ public:
         std::string _name;
         std::string _sBaseLinkName, _sIkChainEndLinkName, _sEffectorLinkName; ///< name of the base and effector links of the robot used to determine the chain
         Transform _tLocalTool;
-        std::vector<int> _vChuckingDirection; ///< the normal direction to move joints for the hand to grasp something
+        std::vector<int> _vChuckingDirection; ///< used to store the chucking directions from legacy source, such as "chuckingDirections" in "tools", xml/collada file, and user-defined runtime setting. The latest recommended way to define chucking direction is to use the one in GripperInfo.
         Vector _vdirection = Vector(0,0,1);
         std::string _sIkSolverXMLId; ///< xml id of the IkSolver interface to attach
-        std::vector<std::string> _vGripperJointNames;         ///< names of the gripper joints
+        std::vector<std::string> _vGripperJointNames;   ///< used to store the names of the gripper joints from legacy source, such as "gripperJointNames" in "tools", xml/collada file, and user-defined runtime setting. The latest recommended way to define gripper joint names is to use the one in GripperInfo.
         std::string _grippername; ///< associates the manipulator with a GripperInfo
         std::string _toolChangerConnectedBodyToolName; ///< When this parameter is non-empty, then this manipulator's end effector points to the mounting link of a tool changer system, then all the connected bodies that are mounted on this link become mutually exclusive in the sense that only one can be connected at a time. The value of the parameter targets a tool (manipulator) name inside those related connected bodies to select when the tool changing is complete.
         std::string _toolChangerLinkName; ///< When this parameter is non-empty then this is the link name which all connectedBodies part of the tool changer are expected to be connecting to. If empty, then the tool changer link name will be assumed to be the end-effector link name (_sEffectorLinkName).
@@ -86,6 +86,7 @@ public:
                    && name == other.name
                    && grippertype == other.grippertype
                    && gripperJointNames == other.gripperJointNames
+                   && vChuckingDirections == other.vChuckingDirections
                    && _docGripperInfo == other._docGripperInfo;
         }
         bool operator!=(const GripperInfo& other) const {
@@ -109,6 +110,7 @@ public:
         std::string name; ///< unique name
         std::string grippertype; ///< gripper type
         std::vector<std::string> gripperJointNames; ///< names of the gripper joints
+        std::vector<int> vChuckingDirections; ///< the normal direction to move joints for the hand to grasp something
         rapidjson::Document _docGripperInfo;  ///< contains entire rapid json document to hold custom parameters
     };
     typedef boost::shared_ptr<GripperInfo> GripperInfoPtr;
@@ -262,11 +264,8 @@ public:
         int GetGripperDOF() const;
 
         inline const std::vector<int>& GetChuckingDirection() const {
-            return _info._vChuckingDirection;
+            return __vChuckingDirection;
         }
-
-        /// \brief sets the normal gripper direction to move joints to close/chuck the hand
-        void SetChuckingDirection(const std::vector<int>& chuckingdirection);
 
         /// \brief Sets the local tool direction with respect to the end effector link.
         ///
@@ -527,6 +526,8 @@ private:
         mutable IkSolverBasePtr __pIkSolver;
         mutable std::string __hashstructure, __hashkinematicsstructure;
         mutable std::map<IkParameterizationType, std::string> __maphashikstructure;
+        std::vector<int> __vChuckingDirection; ///< the normal direction to move joints for the hand to grasp something. This is computed in _ComputeInternalInformation based on ManipulatorInfo and GripperInfo, and the latest recommended way to define chucking direction is to use the one in GripperInfo.
+        std::vector<std::string> __vGripperJointNames; ///< names of the gripper joints. This is computed in _ComputeInternalInformation based on ManipulatorInfo and GripperInfo, and the latest recommended way to define gripper joint names is to use the one in GripperInfo.
 
 #ifdef RAVE_PRIVATE
 #ifdef _MSC_VER
@@ -861,7 +862,11 @@ public:
         bool CanProvideManipulator(const std::string& resolvedManipulatorName) const;
 
 private:
+        /// \brief A callback function to update _info when the robot's properties change.
+        void _UpdateConnectedBodyInfo();
+
         ConnectedBodyInfo _info; ///< user specified data (to be serialized and saved), should not contain dynamically generated parameters.
+        UserDataPtr _updateInfoCallback; ///< callback registered to the robot to update _info whenever the robot properties (such as joint velocity/acceleration limits) change.
 
         std::string _nameprefix; ///< the name prefix to use for all the resolved link names. Initialized regardless of the active state of the connected body.
         std::string _dummyPassiveJointName; ///< the joint that is used to attach the connected body to the robot link
@@ -926,7 +931,7 @@ public:
         /// \brief release the body state. _pbody will not get restored on destruction
         ///
         /// After this call, it will still be possible to use \ref Restore.
-        virtual void Release();
+        virtual void Release() override;
 
 protected:
         RobotBasePtr _probot;
@@ -1383,6 +1388,16 @@ protected:
     virtual void _PostprocessChangedParameters(uint32_t parameters) override;
 
     virtual void _UpdateAttachedSensors();
+
+    /// \brief preprocess for restore for Save_GrabbedBodies.
+    /// \param[out] grabbedDataByEnvironmentIndex : original data for grabbedDataByEnvironmentIndex. if connected body change is observed, invalidate the collision related cache in it.
+    /// \param[in] vConnectedBodyActiveStates : connected bodies states, which is compared with this robot's connected bodies states.
+    virtual void _PreprocessRestoreGrabbedBodies(std::unordered_map<int, KinBody::SavedGrabbedData>& grabbedDataByEnvironmentIndex,
+                                                 const std::vector<int8_t>& vConnectedBodyActiveStates) const;
+
+    /// \brief Restore states from other robot. Please also see KinBody::_RestoreStateForClone as well.
+    /// \param[in] bRestoreGrabbedBodiesOnly : true if only restore grabbed bodies. otherwise, restore other states.
+    virtual void _RestoreStateForClone(const RobotBasePtr& pOriginalRobot, const bool bRestoreGrabbedBodiesOnly);
 
     std::vector<ManipulatorPtr> _vecManipulators; ///< \see GetManipulators
     ManipulatorPtr _pManipActive;

@@ -256,7 +256,7 @@ void toRapidJSONValue(const object &obj, rapidjson::Value &value, rapidjson::Doc
 #if PY_MAJOR_VERSION >= 3
     else if (PyUnicode_Check(obj.ptr()))
     {
-        value.SetString(PyUnicode_AsUTF8(obj.ptr()), PyUnicode_GET_SIZE(obj.ptr()), allocator);
+        value.SetString(PyUnicode_AsUTF8(obj.ptr()), PyUnicode_GET_LENGTH(obj.ptr()), allocator);
     }
 #else
     else if (PyString_Check(obj.ptr()))
@@ -603,285 +603,358 @@ AttributesList toAttributesList(object oattributes)
     return AttributesList();
 }
 
-/// \brief manages all the viewers created through SetViewer into a single thread
-class ViewerManager
+ViewerManager::ViewerManager()
 {
-    /// \brief info about the viewer to create or that is created
-    struct ViewerInfo
-    {
-        EnvironmentBasePtr _penv;
-        std::string _viewername;
-        ViewerBasePtr _pviewer; /// the created viewer
-        std::condition_variable _cond;  ///< notify when viewer thread is done processing and has initialized _pviewer
-        bool _bShowViewer; ///< true if should show the viewer when initially created
-    };
-    typedef OPENRAVE_SHARED_PTR<ViewerInfo> ViewerInfoPtr;
-public:
-    ViewerManager() {
-        _bShutdown = false;
-        _bInMain = false;
-        _threadviewer = boost::make_shared<std::thread>(std::bind(&ViewerManager::_RunViewerThread, this));
-    }
+    Initialize();
+}
 
-    virtual ~ViewerManager() {
-        Destroy();
-    }
+ViewerManager::~ViewerManager() {
+    Destroy();
+}
 
-    static ViewerManager& GetInstance() {
-        std::call_once(_onceInitialize, _InitializeSingleton);
-        // Return reference to object.
-        return *_singleton;
-    }
+ViewerManager& ViewerManager::GetInstance()
+{
+    std::call_once(_onceInitialize, _InitializeSingleton);
+    // Return reference to object.
+    return *_singleton;
+}
 
-    /// \brief adds a viewer to the environment whose GUI thread will be managed by _RunViewerThread
-    ///
-    /// \param bDoNotAddIfExists if true, will not add a viewer if one already exists and is added to the manager
-    ViewerBasePtr AddViewer(EnvironmentBasePtr penv, const string &strviewer, bool bShowViewer, bool bDoNotAddIfExists=true)
-    {
-        ViewerBasePtr pviewer;
-        if( strviewer.size() > 0 ) {
-
-            if( bDoNotAddIfExists ) {
-                // check all existing viewers
-                std::lock_guard<std::mutex> lock(_mutexViewer);
-                std::list<ViewerInfoPtr>::iterator itviewer = _listviewerinfos.begin();
-                while(itviewer != _listviewerinfos.end() ) {
-                    if( (*itviewer)->_penv == penv ) {
-                        if( (*itviewer)->_viewername == strviewer ) {
-                            if( !!(*itviewer)->_pviewer ) {
-                                (*itviewer)->_pviewer->Show(bShowViewer);
-                            }
-                            return (*itviewer)->_pviewer;
-                        }
-
-                        // should remove the viewer so can re-add a new one
+void ViewerManager::AddViewer(EnvironmentBasePtr penv, const string &strviewer, bool bShowViewer, bool bDoNotAddIfExists)
+{
+    ViewerBasePtr pviewer;
+    if( strviewer.size() > 0 ) {
+        if( !_threadviewer ) {
+            RAVELOG_DEBUG_FORMAT("env=%s, reinitializing a viewer thread for '%s'", penv->GetNameId()%strviewer);
+            Destroy(); // just in case
+            Initialize();
+        }
+        if( bDoNotAddIfExists ) {
+            // check all existing viewers
+            std::lock_guard<std::mutex> lock(_mutexViewer);
+            std::list<ViewerInfoPtr>::iterator itviewer = _listviewerinfos.begin();
+            while(itviewer != _listviewerinfos.end() ) {
+                if( (*itviewer)->_penv == penv ) {
+                    if( (*itviewer)->_viewername == strviewer ) {
                         if( !!(*itviewer)->_pviewer ) {
-                            (*itviewer)->_penv->Remove((*itviewer)->_pviewer);
+                            (*itviewer)->_pviewer->Show(bShowViewer);
                         }
-                        itviewer = _listviewerinfos.erase(itviewer);
+                        return;
                     }
-                    else {
-                        ++itviewer;
+
+                    // should remove the viewer so can re-add a new one
+                    if( !!(*itviewer)->_pviewer ) {
+                        (*itviewer)->_penv->Remove((*itviewer)->_pviewer);
                     }
+                    itviewer = _listviewerinfos.erase(itviewer);
+                }
+                else {
+                    ++itviewer;
                 }
             }
+        }
 
-            ViewerInfoPtr pinfo(new ViewerInfo());
-            pinfo->_penv = penv;
-            pinfo->_viewername = strviewer;
-            pinfo->_bShowViewer = bShowViewer;
-            if( _bInMain ) {
-                // create in this thread since viewer thread is already waiting on another viewer
-                pviewer = RaveCreateViewer(penv, strviewer);
-                if( !!pviewer ) {
-                    penv->Add(pviewer, IAM_AllowRenaming, std::string());
-                    // TODO uncomment once Show posts to queue
-                    if( bShowViewer ) {
-                        pviewer->Show(1);
-                    }
-                    pinfo->_pviewer = pviewer;
-                    std::lock_guard<std::mutex> lock(_mutexViewer);
-                    _listviewerinfos.push_back(pinfo);
-                    _conditionViewer.notify_all();
-                }
-            }
-            else {
-                // no viewer has been created yet, so let the viewer thread create it (if using Qt, this initializes the QApplication in the right thread
-                std::unique_lock<std::mutex> lock(_mutexViewer);
-                _listviewerinfos.push_back(pinfo);
-                _conditionViewer.notify_all();
+        ViewerInfoPtr pinfo(new ViewerInfo());
+        pinfo->_penv = penv;
+        pinfo->_viewername = strviewer;
+        pinfo->_bShowViewer = bShowViewer;
+        {
+            // no viewer has been created yet, so let the viewer thread create it (if using Qt, this initializes the QApplication in the right thread
+            std::unique_lock<std::mutex> lock(_mutexViewer);
+            _listviewerinfos.push_back(pinfo);
+            _conditionViewer.notify_all();
 
+            if( !_bInMain ) {
                 /// wait until viewer thread process it
                 pinfo->_cond.wait(lock);
                 pviewer = pinfo->_pviewer;
             }
         }
-        return pviewer;
     }
+}
 
-    /// \brief if removed, returns true
-    bool RemoveViewer(ViewerBasePtr pviewer)
-    {
-        if( !pviewer ) {
-            return false;
-        }
-        {
-            std::lock_guard<std::mutex> lock(_mutexViewer);
-            FOREACH(itviewer, _listviewerinfos) {
-                ViewerBasePtr ptestviewer = (*itviewer)->_pviewer;
-                if(ptestviewer == pviewer ) {
-                    pviewer->quitmainloop();
-                    _listviewerinfos.erase(itviewer);
-                    return true;
-                }
-            }
-        }
+bool ViewerManager::RemoveViewer(ViewerBasePtr pviewer)
+{
+    if( !pviewer ) {
         return false;
     }
-
-    /// \brief if anything removed, returns true
-    bool RemoveViewersOfEnvironment(EnvironmentBasePtr penv)
     {
-        if( !penv ) {
-            return false;
+        std::lock_guard<std::mutex> lock(_mutexViewer);
+        FOREACH(itviewer, _listviewerinfos) {
+            ViewerBasePtr ptestviewer = (*itviewer)->_pviewer;
+            if(ptestviewer == pviewer ) {
+                pviewer->GetEnv()->Remove(pviewer);
+                _listviewerinfos.erase(itviewer);
+                return true;
+            }
         }
-        bool bremoved = false;
+    }
+    return false;
+}
+
+bool ViewerManager::RemoveViewersOfEnvironment(EnvironmentBasePtr penv)
+{
+    if( !penv ) {
+        return false;
+    }
+    bool bremoved = false;
+    {
+        std::lock_guard<std::mutex> lock(_mutexViewer);
+        std::list<ViewerInfoPtr>::iterator itinfo = _listviewerinfos.begin();
+        while(itinfo != _listviewerinfos.end() ) {
+            if( (*itinfo)->_penv == penv ) {
+                if( !!(*itinfo)->_pviewer ) {
+                    penv->Remove((*itinfo)->_pviewer);
+                }
+                (*itinfo)->_cond.notify_all();
+                RAVELOG_DEBUG_FORMAT("env=%s, removing viewer '%s'", penv->GetNameId()%(*itinfo)->_viewername);
+                itinfo = _listviewerinfos.erase(itinfo);
+                bremoved = true;
+            }
+            else {
+                ++itinfo;
+            }
+        }
+    }
+    return bremoved;
+}
+
+void ViewerManager::Initialize()
+{
+    _bShutdown = false;
+    if( !_threadviewer ) {
+        _threadviewer = boost::make_shared<std::thread>(std::bind(&ViewerManager::_RunViewerThread, this));
+    }
+}
+
+void ViewerManager::Destroy()
+{
+    _bShutdown = true;
+    {
+        std::lock_guard<std::mutex> lock(_mutexViewer);
+        // have to notify everyone
+        for(ViewerInfoPtr& pinfo : _listviewerinfos) {
+            if( !!pinfo->_pviewer ) {
+                pinfo->_pviewer->GetEnv()->Remove(pinfo->_pviewer);
+            }
+            pinfo->_cond.notify_all();
+        }
+        _conditionViewer.notify_all();
+    }
+    if( !!_threadviewer ) {
+        _threadviewer->join();
+    }
+    _threadviewer.reset();
+    _listviewerinfos.clear();
+}
+
+void ViewerManager::_RunViewerThread()
+{
+    std::vector<ViewerBasePtr> vActiveViewers;
+    std::vector<ViewerBasePtr> vAddViewers; // viewers to add to env once lock is released
+    std::list<ViewerBasePtr> listTempViewers;
+    while(!_bShutdown) {
+        bool bShowViewer = true;
         {
-            std::lock_guard<std::mutex> lock(_mutexViewer);
+            std::unique_lock<std::mutex> lock(_mutexViewer);
+            if (_bShutdown) {
+                break;
+            }
+            if( _listviewerinfos.size() == 0 ) {
+                _conditionViewer.wait(lock);
+                if( _listviewerinfos.size() == 0 ) {
+                    continue;
+                }
+            }
+
+            vAddViewers.clear();
+            vActiveViewers.clear();
             std::list<ViewerInfoPtr>::iterator itinfo = _listviewerinfos.begin();
             while(itinfo != _listviewerinfos.end() ) {
-                if( (*itinfo)->_penv == penv ) {
-                    itinfo = _listviewerinfos.erase(itinfo);
-                    bremoved = true;
+                const ViewerInfoPtr& pinfo = *itinfo;
+                if( !pinfo->_pviewer && !pinfo->_bFailed ) {
+
+                    try{
+                        pinfo->_pviewer = RaveCreateViewer(pinfo->_penv, pinfo->_viewername);
+                    }
+                    catch(const std::exception& ex) {
+                        RAVELOG_WARN_FORMAT("env=%s, failed to create viewer '%s': %s", pinfo->_penv->GetNameId()%pinfo->_viewername%ex.what());
+                        pinfo->_bFailed = true;
+                    }
+
+                    // have to notify other thread that viewer is present before the environment lock happens! otherwise we can get into deadlock between c++ and python
+                    pinfo->_cond.notify_all();
+                    if( !!pinfo->_pviewer ) {
+                        vAddViewers.push_back(pinfo->_pviewer);
+                        ++itinfo;
+                    }
+                    else {
+                        // erase from _listviewerinfos
+                        itinfo = _listviewerinfos.erase(itinfo);
+                        continue;
+                    }
                 }
                 else {
                     ++itinfo;
                 }
-            }
-        }
-        return bremoved;
-    }
 
-    void Destroy() {
-        _bShutdown = true;
-        {
-            std::lock_guard<std::mutex> lock(_mutexViewer);
-            // have to notify everyone
-            FOREACH(itinfo, _listviewerinfos) {
-                (*itinfo)->_cond.notify_all();
-            }
-            _listviewerinfos.clear();
-            _conditionViewer.notify_all();
-        }
-        if( !!_threadviewer ) {
-            _threadviewer->join();
-        }
-        _threadviewer.reset();
-    }
-
-protected:
-    void _RunViewerThread()
-    {
-        while(!_bShutdown) {
-            std::list<ViewerBasePtr> listviewers, listtempviewers;
-            bool bShowViewer = true;
-            {
-                std::unique_lock<std::mutex> lock(_mutexViewer);
-                if( _listviewerinfos.size() == 0 ) {
-                    _conditionViewer.wait(lock);
-                    if( _listviewerinfos.size() == 0 ) {
-                        continue;
+                if( !!pinfo->_pviewer ) {
+                    if( vActiveViewers.size() == 0 ) {
+                        bShowViewer = pinfo->_bShowViewer;
                     }
+                    vActiveViewers.push_back(pinfo->_pviewer);
                 }
+            }
+        }
 
-                listtempviewers.clear(); // viewers to add to env once lock is released
-                listviewers.clear();
-                std::list<ViewerInfoPtr>::iterator itinfo = _listviewerinfos.begin();
-                while(itinfo != _listviewerinfos.end() ) {
-                    ViewerInfoPtr pinfo = *itinfo;
-                    if( !pinfo->_pviewer ) {
-                        pinfo->_pviewer = RaveCreateViewer(pinfo->_penv, pinfo->_viewername);
-                        // have to notify other thread that viewer is present before the environment lock happens! otherwise we can get into deadlock between c++ and python
-                        pinfo->_cond.notify_all();
-                        if( !!pinfo->_pviewer ) {
-                            listtempviewers.push_back(pinfo->_pviewer);
-                            ++itinfo;
+        for(ViewerBasePtr& pAddViewer : vAddViewers) {
+            try{
+                pAddViewer->GetEnv()->Add(pAddViewer, IAM_AllowRenaming, std::string());
+            }
+            catch(const std::exception& ex) {
+                RAVELOG_WARN_FORMAT("env=%s, failed to add viewer '%s' to the env: %s", pAddViewer->GetEnv()->GetNameId()%pAddViewer->GetXMLId()%ex.what());
+                // find the info to write the failure to
+                {
+                    std::unique_lock<std::mutex> lock(_mutexViewer);
+                    for(ViewerInfoPtr& pinfo : _listviewerinfos) {
+                        if( pinfo->_pviewer == pAddViewer ) {
+                            pinfo->_bFailed = true;
                         }
-                        else {
-                            // erase from _listviewerinfos
-                            itinfo = _listviewerinfos.erase(itinfo);
-                        }
-                    }
-                    else {
-                        ++itinfo;
-                    }
-
-                    if( !!pinfo->_pviewer ) {
-                        if( listviewers.size() == 0 ) {
-                            bShowViewer = pinfo->_bShowViewer;
-                        }
-                        listviewers.push_back(pinfo->_pviewer);
                     }
                 }
             }
+        }
+        vAddViewers.clear(); // do not hold pointers
 
-            FOREACH(itaddviewer, listtempviewers) {
-                (*itaddviewer)->GetEnv()->Add(*itaddviewer, IAM_AllowRenaming, std::string());
-            }
+        ViewerBasePtr puseviewer; // viewer currently in use
+        for(std::vector<ViewerBasePtr>::iterator itActiveViewer = vActiveViewers.begin(); itActiveViewer != vActiveViewers.end(); ++itActiveViewer) {
+            ViewerBasePtr& pActiveViewer = *itActiveViewer;
 
-            ViewerBasePtr puseviewer;
-            FOREACH(itviewer, listviewers) {
-                // double check if viewer is added to env
-                bool bfound = false;
-                listtempviewers.clear();
-                (*itviewer)->GetEnv()->GetViewers(listtempviewers);
-                FOREACH(itviewer2, listtempviewers) {
-                    if( *itviewer == *itviewer2 ) {
-                        bfound = true;
-                        break;
-                    }
-                }
-                if( bfound ) {
-                    puseviewer = *itviewer;
+            // double check if viewer is added to env
+            bool bfound = false;
+            listTempViewers.clear();
+            pActiveViewer->GetEnv()->GetViewers(listTempViewers);
+            for(ViewerBasePtr& pTempViewer : listTempViewers) {
+                if( pActiveViewer == pTempViewer ) {
+                    bfound = true;
                     break;
                 }
-                else {
-                    // viewer is not in environment any more, so erase from list
-                    listviewers.erase(itviewer);
-                    break; // break since modifying list
-                }
             }
+            listTempViewers.clear();
 
-            listtempviewers.clear();
+            if( bfound ) {
+                puseviewer = pActiveViewer;
+                break;
+            }
+            else {
+                RAVELOG_DEBUG_FORMAT("env=%s, viewer '%s' is not active anymore, so destroying it.", pActiveViewer->GetEnv()->GetNameId()%pActiveViewer->GetXMLId());
+                // viewer is not in environment any more, so erase from list, which will call its destructor
+                ViewerInfoPtr pActiveInfo;
 
-            if( !!puseviewer ) {
-                _bInMain = true;
-                try {
-                    puseviewer->main(bShowViewer);
-                }
-                catch(const std::exception& ex) {
-                    RAVELOG_ERROR_FORMAT("got exception in viewer main thread %s", ex.what());
-                }
-                catch(...) {
-                    RAVELOG_ERROR("got unknown exception in viewer main thread\n");
-                }
-
-                _bInMain = false;
-                // remove from _listviewerinfos in order to avoid running the main loop again
+                // find the info to write the failure to, do not destroy inside the lock
                 {
-                    std::lock_guard<std::mutex> lock(_mutexViewer);
-                    FOREACH(itinfo, _listviewerinfos) {
-                        if( (*itinfo)->_pviewer == puseviewer ) {
+                    std::unique_lock<std::mutex> lock(_mutexViewer);
+                    for(std::list<ViewerInfoPtr>::iterator itinfo = _listviewerinfos.begin(); itinfo != _listviewerinfos.end(); ++itinfo) {
+                        ViewerInfoPtr& pinfo = *itinfo;
+                        if( pinfo->_pviewer == pActiveViewer ) {
+                            pinfo->_bDestroyed = true;
+                            pActiveInfo = pinfo;
                             _listviewerinfos.erase(itinfo);
                             break;
                         }
                     }
                 }
+
+                std::string nameId = pActiveViewer->GetEnv()->GetNameId();
+                try {
+                    // destroy should be called here
+                    pActiveViewer.reset();
+                    pActiveInfo->_pviewer.reset();
+                }
+                catch(const std::exception& ex) {
+                    RAVELOG_WARN_FORMAT("env=%s, failed to destroy viewer '%s': %s", nameId%pActiveInfo->_viewername%ex.what());
+                }
+            }
+        }
+
+        vActiveViewers.clear();
+
+        if( !!puseviewer ) {
+            // need to lock the mutex to prevent AddViewer from blocking indefinitely
+            {
+                std::unique_lock<std::mutex> lock(_mutexViewer);
+                _bInMain = true;
+                // have to notify anyone in AddViewer to stop waiting
+                for(ViewerInfoPtr& pinfo : _listviewerinfos ) {
+                    pinfo->_cond.notify_all();
+                }
+            }
+
+            try {
+                puseviewer->main(bShowViewer);
+            }
+            catch(const std::exception& ex) {
+                RAVELOG_ERROR_FORMAT("env=%s, got exception in viewer main thread %s", puseviewer->GetEnv()->GetNameId()%ex.what());
+            }
+            catch(...) {
+                RAVELOG_FATAL_FORMAT("env=%s, got unknown exception in viewer main thread", puseviewer->GetEnv()->GetNameId());
+            }
+
+            _bInMain = false;
+
+            // just in case remove
+            try {
+                puseviewer->GetEnv()->Remove(puseviewer);
+            }
+            catch(const std::exception& ex) {
+                RAVELOG_WARN_FORMAT("env=%s, failed to remove viewer '%s': %s", puseviewer->GetEnv()->GetNameId()%puseviewer->GetXMLId()%ex.what());
+            }
+
+            // remove from _listviewerinfos in order to avoid running the main loop again
+            {
+                std::lock_guard<std::mutex> lock(_mutexViewer);
+                FOREACH(itinfo, _listviewerinfos) {
+                    if( (*itinfo)->_pviewer == puseviewer ) {
+                        _listviewerinfos.erase(itinfo);
+                        break;
+                    }
+                }
+            }
+
+            try {
+                // potentially calls destructor
                 puseviewer.reset();
             }
-            // just go and run the next viewer's loop, don't exit here!
+            catch(const std::exception& ex) {
+                RAVELOG_WARN_FORMAT("env=%s, failed to remove viewer '%s': %s", puseviewer->GetEnv()->GetNameId()%puseviewer->GetXMLId()%ex.what());
+            }
         }
-        RAVELOG_DEBUG("shutting down viewer manager thread\n");
+        // just go and run the next viewer's loop, don't exit here!
     }
 
-    static void _InitializeSingleton()
-    {
-        _singleton.reset(new ViewerManager());
-
+    vActiveViewers.clear();
+    vAddViewers.clear();
+    listTempViewers.clear();
+    // have to free up the viewer resources in the same thread
+    for(ViewerInfoPtr& pinfo : _listviewerinfos) {
+        try {
+            if( !!pinfo->_pviewer ) {
+                pinfo->_pviewer->GetEnv()->Remove(pinfo->_pviewer);
+                pinfo->_pviewer.reset();
+            }
+        }
+        catch(const std::exception& ex) {
+            RAVELOG_WARN_FORMAT("env=%s, failed to remove and destroy viewer '%s': %s", pinfo->_pviewer->GetEnv()->GetNameId()%pinfo->_pviewer->GetXMLId()%ex.what());
+        }
     }
 
-    OPENRAVE_SHARED_PTR<std::thread> _threadviewer;
-    std::mutex _mutexViewer;
-    std::condition_variable _conditionViewer;
-    std::list<ViewerInfoPtr> _listviewerinfos;
+    RAVELOG_DEBUG_FORMAT("shutting down viewer manager thread of %d viewers", _listviewerinfos.size());
+}
 
-    bool _bShutdown; ///< if true, shutdown everything
-    bool _bInMain; ///< if true, viewer thread is running a main function
+void ViewerManager::_InitializeSingleton()
+{
+    _singleton.reset(new ViewerManager());
 
-    static boost::scoped_ptr<ViewerManager> _singleton; ///< singleton
-    static std::once_flag _onceInitialize; ///< makes sure initialization is atomic
-
-};
+}
 
 boost::scoped_ptr<ViewerManager> ViewerManager::_singleton(0);
 std::once_flag ViewerManager::_onceInitialize;
@@ -977,6 +1050,11 @@ object PyReadablesContainer::GetReadableInterface(const std::string& id)
     return toPyReadable(_pbase->GetReadableInterface(id));
 }
 
+bool PyReadablesContainer::HasReadableInterface(const std::string& id)
+{
+    return _pbase->HasReadableInterface(id);
+}
+
 void PyReadablesContainer::SetReadableInterface(const std::string& id, object oreadable)
 {
     _pbase->SetReadableInterface(id,ExtractReadable(oreadable));
@@ -1031,6 +1109,9 @@ static std::vector<KinBody::KinBodyInfoPtr> _ExtractBodyInfoArray(object vBodyIn
     }
     catch(...) {
         RAVELOG_WARN("Cannot do ExtractArray for BodyInfos");
+#ifdef USE_PYBIND11_PYTHON_BINDINGS
+        throw;
+#endif
     }
     return vBodyInfos;
 }
@@ -1380,7 +1461,7 @@ bool PyEnvironmentBase::CheckCollision(object o1, object o2)
                 return bCollision;
             }
         }
-        
+
         throw OPENRAVE_EXCEPTION_FORMAT0(_("invalid argument 2"),ORE_InvalidArguments);
     }
     KinBodyConstPtr pbody = openravepy::GetKinBody(o1);
@@ -1404,7 +1485,7 @@ bool PyEnvironmentBase::CheckCollision(object o1, object o2)
                 return bCollision;
             }
         }
-        
+
         throw OPENRAVE_EXCEPTION_FORMAT0(_("invalid argument 2"),ORE_InvalidArguments);
     }
     throw OPENRAVE_EXCEPTION_FORMAT0(_("invalid argument 1"),ORE_InvalidArguments);
@@ -2075,20 +2156,28 @@ object PyEnvironmentBase::ReadTrimeshData(const std::string& data, const std::st
     return toPyTriMesh(*ptrimesh);
 }
 
-void PyEnvironmentBase::Add(PyInterfaceBasePtr pinterface, py::object oAddMode, const std::string& cmdargs)
+
+InterfaceAddMode _ExtractAddMode(const py::object oAddMode, PyInterfaceBasePtr pinterface, const EnvironmentBasePtr& penv)
 {
     InterfaceAddMode addMode = IAM_StrictNameChecking;
     if( !IS_PYTHONOBJECT_NONE(oAddMode) ) {
         if (PyBool_Check(oAddMode.ptr())) {
             addMode = py::extract<bool>(oAddMode) ? IAM_AllowRenaming : IAM_StrictNameChecking;
-            if( pinterface->GetInterfaceType() != PT_Module ) {
-                RAVELOG_WARN_FORMAT("env=%s trying to use 'anonymous' flag when adding object '%s' of interface type '%d' via Add", _penv->GetNameId()%pinterface->GetXMLId()%(int)pinterface->GetInterfaceType());
+            const InterfaceType type = pinterface->GetInterfaceType();
+            if( type != PT_Module && type != PT_Robot && type != PT_KinBody ) {
+                RAVELOG_WARN_FORMAT("env=%s trying to use 'anonymous' flag when adding object '%s' of interface type '%d' via Add", penv->GetNameId()%pinterface->GetXMLId()%(int)pinterface->GetInterfaceType());
             }
         }
         else {
             addMode = py::extract<InterfaceAddMode>(oAddMode);
         }
     }
+    return addMode;
+}
+
+void PyEnvironmentBase::Add(PyInterfaceBasePtr pinterface, py::object oAddMode, const std::string& cmdargs)
+{
+    const InterfaceAddMode addMode = _ExtractAddMode(oAddMode, pinterface, _penv);
     PythonThreadSaver threadsaver;
     _penv->Add(pinterface->GetInterfaceBase(), addMode, cmdargs);
 }
@@ -2100,6 +2189,10 @@ void PyEnvironmentBase::AddKinBody(PyKinBodyPtr pbody, bool bAnonymous) {
     RAVELOG_WARN("Calling AddKinBody with bAnonymous, should switch to IAM_X signals");
     CHECK_POINTER(pbody); _penv->Add(openravepy::GetKinBody(pbody),bAnonymous ? IAM_AllowRenaming : IAM_StrictNameChecking);
 }
+void PyEnvironmentBase::AddKinBody(PyKinBodyPtr pbody, py::object oAddMode, int requestedEnvironmentBodyIndex) {
+    CHECK_POINTER(pbody);
+    _penv->AddKinBody(openravepy::GetKinBody(pbody), _ExtractAddMode(oAddMode, pbody, _penv), requestedEnvironmentBodyIndex);
+}
 void PyEnvironmentBase::AddRobot(PyRobotBasePtr robot) {
     CHECK_POINTER(robot);
     _penv->Add(openravepy::GetRobot(robot), IAM_StrictNameChecking);
@@ -2108,6 +2201,10 @@ void PyEnvironmentBase::AddRobot(PyRobotBasePtr robot, bool bAnonymous) {
     RAVELOG_WARN("Calling AddRobot with bAnonymous, should switch to IAM_X signals");
     CHECK_POINTER(robot);
     _penv->Add(openravepy::GetRobot(robot), bAnonymous ? IAM_AllowRenaming : IAM_StrictNameChecking);
+}
+void PyEnvironmentBase::AddRobot(PyRobotBasePtr robot, py::object oAddMode, int requestedEnvironmentBodyIndex) {
+    CHECK_POINTER(robot);
+    _penv->AddRobot(openravepy::GetRobot(robot), _ExtractAddMode(oAddMode, robot, _penv), requestedEnvironmentBodyIndex);
 }
 void PyEnvironmentBase::AddSensor(PySensorBasePtr sensor) {
     CHECK_POINTER(sensor);
@@ -2396,8 +2493,8 @@ void PyEnvironmentBase::__exit__(object type, object value, object traceback)
 
 bool PyEnvironmentBase::SetViewer(const string &viewername, bool showviewer)
 {
-    ViewerBasePtr pviewer = ViewerManager::GetInstance().AddViewer(_penv, viewername, showviewer, true);
-    return !(pviewer == NULL);
+    ViewerManager::GetInstance().AddViewer(_penv, viewername, showviewer, true);
+    return !viewername.empty();
 }
 
 /// \brief sets the default viewer
@@ -2405,8 +2502,8 @@ bool PyEnvironmentBase::SetDefaultViewer(bool showviewer)
 {
     std::string viewername = RaveGetDefaultViewerType();
     if( viewername.size() > 0 ) {
-        ViewerBasePtr pviewer = ViewerManager::GetInstance().AddViewer(_penv, viewername, showviewer, true);
-        return !!pviewer;
+        ViewerManager::GetInstance().AddViewer(_penv, viewername, showviewer, true);
+        return !viewername.empty();
     }
 
     return false;
@@ -2488,32 +2585,55 @@ size_t PyEnvironmentBase::_getGraphColors(object ocolors, std::vector<float>&vco
     return 1;
 }
 
-size_t PyEnvironmentBase::_getListVector(object odata, std::vector<RaveVector<float> >& vvectors) {
+size_t PyEnvironmentBase::_getListVector(object odata, std::vector<RaveVector<float> >& vvectors, size_t ncol) {
     std::vector<float> vpoints;
+    if (ncol != 3 && ncol != 4) {
+        throw OPENRAVE_EXCEPTION_FORMAT(_("num col must be 3 or 4: %d"), ncol,ORE_InvalidArguments);
+    }
     if( PyObject_HasAttrString(odata.ptr(),"shape") ) {
         object datashape = odata.attr("shape");
         switch(len(datashape)) {
         case 1: {
             const size_t n = len(odata);
-            if (n%3) {
+            if (n%ncol) {
                 throw OPENRAVE_EXCEPTION_FORMAT(_("data have bad size %d"), n,ORE_InvalidArguments);
             }
-            for(size_t i = 0; i < n/3; ++i) {
-                vvectors.emplace_back(RaveVector<float>(py::extract<float>(odata[py::to_object(3*i)]),
-                                                        py::extract<float>(odata[py::to_object(3*i+1)]), py::extract<float>(odata[py::to_object(3*i+2)])));
+            for(size_t i = 0; i < n/ncol; ++i) {
+                if (ncol == 3) {
+                    RaveVector<float> v(py::extract<float>(odata[py::to_object(3*i)]),
+                            py::extract<float>(odata[py::to_object(3*i+1)]),
+                            py::extract<float>(odata[py::to_object(3*i+2)]));
+                    vvectors.emplace_back(v);
+                } else {
+                    RaveVector<float> v(py::extract<float>(odata[py::to_object(4*i)]),
+                            py::extract<float>(odata[py::to_object(4*i+1)]),
+                            py::extract<float>(odata[py::to_object(4*i+2)]),
+                            py::extract<float>(odata[py::to_object(4*i+3)]));
+                    vvectors.emplace_back(v);
+                }
             }
-            return n/3;
+            return n/ncol;
         }
         case 2: {
-            const int num = py::extract<int>(datashape[py::to_object(0)]);
-            const int dim = py::extract<int>(datashape[py::to_object(1)]);
-            if(dim != 3) {
-                throw OPENRAVE_EXCEPTION_FORMAT(_("data have bad size %dx%d"), num%dim,ORE_InvalidArguments);
+            const size_t num = py::extract<size_t>(datashape[py::to_object(0)]);
+            const size_t dim = py::extract<size_t>(datashape[py::to_object(1)]);
+            if(dim != ncol) {
+                throw OPENRAVE_EXCEPTION_FORMAT(_("data have bad size %dx%d"), num%ncol,ORE_InvalidArguments);
             }
             const object& o = odata.attr("flat");
             for(size_t i = 0; i < num; ++i) {
-                vvectors.emplace_back(RaveVector<float>(py::extract<float>(o[py::to_object(3*i)]),
-                                                        py::extract<float>(o[py::to_object(3*i+1)]), py::extract<float>(o[py::to_object(3*i+2)])));
+                if (ncol == 3) {
+                    RaveVector<float> v(py::extract<float>(odata[py::to_object(3*i)]),
+                            py::extract<float>(odata[py::to_object(3*i+1)]),
+                            py::extract<float>(odata[py::to_object(3*i+2)]));
+                    vvectors.emplace_back(v);
+                } else {
+                    RaveVector<float> v(py::extract<float>(odata[py::to_object(4*i)]),
+                            py::extract<float>(odata[py::to_object(4*i+1)]),
+                            py::extract<float>(odata[py::to_object(4*i+2)]),
+                            py::extract<float>(odata[py::to_object(4*i+3)]));
+                    vvectors.emplace_back(v);
+                }
             }
             return num;
         }
@@ -2523,12 +2643,22 @@ size_t PyEnvironmentBase::_getListVector(object odata, std::vector<RaveVector<fl
     }
     // assume it is a regular 1D list
     const size_t n = len(odata);
-    if (n%3) {
+    if (n%ncol) {
         throw OPENRAVE_EXCEPTION_FORMAT(_("data have bad size %d"), n,ORE_InvalidArguments);
     }
-    for(size_t i = 0; i < n/3; ++i) {
-        vvectors.emplace_back(RaveVector<float>(py::extract<float>(odata[py::to_object(3*i)]),
-                                                py::extract<float>(odata[py::to_object(3*i+1)]), py::extract<float>(odata[py::to_object(3*i+2)])));
+    for(size_t i = 0; i < n/ncol; ++i) {
+        if (ncol == 3) {
+            RaveVector<float> v(py::extract<float>(odata[py::to_object(3*i)]),
+                    py::extract<float>(odata[py::to_object(3*i+1)]),
+                    py::extract<float>(odata[py::to_object(3*i+2)]));
+            vvectors.emplace_back(v);
+        } else {
+            RaveVector<float> v(py::extract<float>(odata[py::to_object(4*i)]),
+                    py::extract<float>(odata[py::to_object(4*i+1)]),
+                    py::extract<float>(odata[py::to_object(4*i+2)]),
+                    py::extract<float>(odata[py::to_object(4*i+3)]));
+            vvectors.emplace_back(v);
+        }
     }
     return vvectors.size();
 }
@@ -2613,9 +2743,13 @@ object PyEnvironmentBase::drawarrow(object op1, object op2, float linewidth, obj
     return toPyGraphHandle(_penv->drawarrow(ExtractVector3(op1),ExtractVector3(op2),linewidth,vcolor));
 }
 
-object PyEnvironmentBase::drawlabel(const std::string &label, object worldPosition, object ocolor)
+object PyEnvironmentBase::drawlabel(const std::string &label, object worldPosition, object ocolor, float height)
 {
-    return toPyGraphHandle(_penv->drawlabel(label, ExtractVector3(worldPosition), ExtractVector4(ocolor)));
+    RaveVector<float> vcolor(0,0,0,1);
+    if( !IS_PYTHONOBJECT_NONE(ocolor) ) {
+        vcolor = ExtractVector34(ocolor,1.0f);
+    }
+    return toPyGraphHandle(_penv->drawlabel(label, ExtractVector3(worldPosition), vcolor, height));
 }
 
 object PyEnvironmentBase::drawbox(object opos, object oextents, object ocolor)
@@ -2627,18 +2761,22 @@ object PyEnvironmentBase::drawbox(object opos, object oextents, object ocolor)
     return toPyGraphHandle(_penv->drawbox(ExtractVector3(opos),ExtractVector3(oextents)));
 }
 
-object PyEnvironmentBase::drawboxarray(object opos, object oextents, object ocolor)
+object PyEnvironmentBase::drawboxarray(object opos, object oextents, object ocolors)
 {
-    RaveVector<float> vcolor(1,0.5,0.5,1);
-    if( !IS_PYTHONOBJECT_NONE(ocolor) ) {
-        vcolor = ExtractVector34(ocolor,1.0f);
+    std::vector<RaveVector<float> > vcolors;
+    size_t numcolors = 0;
+    if( !IS_PYTHONOBJECT_NONE(ocolors) ) {
+        numcolors = _getListVector(ocolors, vcolors, 4);
     }
     std::vector<RaveVector<float> > vvectors;
-    const size_t numpos = _getListVector(opos, vvectors);
+    const size_t numpos = _getListVector(opos, vvectors, 3);
     if (numpos <= 0) {
-        throw OpenRAVEException("a list of positions is empty",ORE_InvalidArguments);
+        throw OpenRAVEException("a list of positions is empty", ORE_InvalidArguments);
     }
-    return toPyGraphHandle(_penv->drawboxarray(vvectors,ExtractVector3(oextents)));
+    if (numcolors > 0 && numpos != numcolors) {
+        throw OpenRAVEException("number of positions and colors mismatch", ORE_InvalidArguments);
+    }
+    return toPyGraphHandle(_penv->drawboxarray(vvectors, ExtractVector3(oextents), vcolors));
 }
 
 object PyEnvironmentBase::drawaabb(object oaabb, object otransform, object ocolor, float transparency)
@@ -2750,8 +2888,8 @@ object PyEnvironmentBase::drawtrimesh(object opoints, object oindices, object oc
         else {
             const py::numeric::array array = extract<py::numeric::array>(ocolors);
             BOOST_ASSERT(array.ndim() == 2);
-            BOOST_ASSERT(array.shape(0) == vpoints.size() / 3);
-            BOOST_ASSERT(array.shape(1) == 3 || array.shape(1) == 4);
+            BOOST_ASSERT((size_t)array.shape(0) == vpoints.size() / 3);
+            BOOST_ASSERT((size_t)array.shape(1) == 3 || (size_t)array.shape(1) == 4);
             boost::multi_array<float, 2> colors(std::vector<size_t>({static_cast<unsigned long>(array.shape(0)), static_cast<unsigned long>(array.shape(1))}));
             colors.assign(array.data(), array.data() + array.size());
             return toPyGraphHandle(_penv->drawtrimesh(vpoints.data(),sizeof(float)*3,pindices,numTriangles,std::move(colors)));
@@ -2774,6 +2912,11 @@ object PyEnvironmentBase::GetBodies()
         }
     }
     return bodies;
+}
+
+int PyEnvironmentBase::GetNumBodies()
+{
+    return _penv->GetNumBodies();
 }
 
 object PyEnvironmentBase::GetRobots()
@@ -3292,7 +3435,7 @@ OPENRAVE_PYTHON_MODULE(openravepy_int)
 
     static PyOpenRAVEException<OpenRAVEException> pyOpenRAVEException(m, OPENRAVE_EXCEPTION_CLASS_NAME, PyExc_Exception);
     pyOpenRAVEException.def_property_readonly("message",[](py::object o) {
-        return o.attr("args")[0];
+        return o.attr("args")[py::to_object(0)];
     });
     pyOpenRAVEException.def_property_readonly("errortype",[](py::object o) {
         py::object oargs = o.attr("args");
@@ -3406,6 +3549,7 @@ Because race conditions can pop up when trying to lock the openrave environment 
         .def("GetReadableInterfaces",&PyReadablesContainer::GetReadableInterfaces, DOXY_FN(ReadablesContainer,GetReadableInterfaces))
         .def("GetReadableInterface",&PyReadablesContainer::GetReadableInterface, DOXY_FN(ReadablesContainer,GetReadableInterface))
         .def("SetReadableInterface",&PyReadablesContainer::SetReadableInterface, PY_ARGS("id","readable") DOXY_FN(ReadablesContainer,SetReadableInterface))
+        .def("HasReadableInterface",&PyReadablesContainer::HasReadableInterface, DOXY_FN(ReadablesContainer,HasReadableInterface))
         ;
 
 #ifdef USE_PYBIND11_PYTHON_BINDINGS
@@ -3534,8 +3678,10 @@ Because race conditions can pop up when trying to lock the openrave environment 
 #endif
         void (PyEnvironmentBase::*addkinbody1)(PyKinBodyPtr) = &PyEnvironmentBase::AddKinBody;
         void (PyEnvironmentBase::*addkinbody2)(PyKinBodyPtr,bool) = &PyEnvironmentBase::AddKinBody;
+        void (PyEnvironmentBase::*addkinbody3)(PyKinBodyPtr,object,int) = &PyEnvironmentBase::AddKinBody;
         void (PyEnvironmentBase::*addrobot1)(PyRobotBasePtr) = &PyEnvironmentBase::AddRobot;
         void (PyEnvironmentBase::*addrobot2)(PyRobotBasePtr,bool) = &PyEnvironmentBase::AddRobot;
+        void (PyEnvironmentBase::*addrobot3)(PyRobotBasePtr,object,int) = &PyEnvironmentBase::AddRobot;
         void (PyEnvironmentBase::*addsensor1)(PySensorBasePtr) = &PyEnvironmentBase::AddSensor;
         void (PyEnvironmentBase::*addsensor2)(PySensorBasePtr,bool) = &PyEnvironmentBase::AddSensor;
         void (PyEnvironmentBase::*setuserdata1)(PyUserData) = &PyEnvironmentBase::SetUserData;
@@ -3707,8 +3853,10 @@ Because race conditions can pop up when trying to lock the openrave environment 
 #endif
                      .def("AddKinBody",addkinbody1, PY_ARGS("body") DOXY_FN(EnvironmentBase,AddKinBody))
                      .def("AddKinBody",addkinbody2, PY_ARGS("body","anonymous") DOXY_FN(EnvironmentBase,AddKinBody))
+                     .def("AddKinBody",addkinbody3, PY_ARGS("body","addMode","requestedEnvironmentBodyIndex") DOXY_FN(EnvironmentBase,AddKinBody))
                      .def("AddRobot",addrobot1, PY_ARGS("robot") DOXY_FN(EnvironmentBase,AddRobot))
                      .def("AddRobot",addrobot2, PY_ARGS("robot","anonymous") DOXY_FN(EnvironmentBase,AddRobot))
+                     .def("AddRobot",addrobot3, PY_ARGS("robot","addMode","requestedEnvironmentBodyIndex") DOXY_FN(EnvironmentBase,AddRobot))
                      .def("AddSensor",addsensor1, PY_ARGS("sensor") DOXY_FN(EnvironmentBase,AddSensor))
                      .def("AddSensor",addsensor2, PY_ARGS("sensor","anonymous") DOXY_FN(EnvironmentBase,AddSensor))
                      .def("AddViewer",addsensor2, PY_ARGS("sensor","anonymous") DOXY_FN(EnvironmentBase,AddViewer))
@@ -3825,6 +3973,7 @@ Because race conditions can pop up when trying to lock the openrave environment 
                           "label"_a,
                           "worldPosition"_a,
                           "color"_a = py::none_(),
+                          "height"_a = 0.05,
                           DOXY_FN(EnvironmentBase,drawlabel)
                           )
 #else
@@ -3844,11 +3993,11 @@ Because race conditions can pop up when trying to lock the openrave environment 
                      .def("drawboxarray", &PyEnvironmentBase::drawboxarray,
                           "pos"_a,
                           "extents"_a,
-                          "color"_a = py::none_(),
+                          "colors"_a = py::none_(),
                           DOXY_FN(EnvironmentBase,drawboxarray)
                           )
 #else
-                     .def("drawboxarray",&PyEnvironmentBase::drawboxarray,drawboxarray_overloads(PY_ARGS("pos","extents","color") DOXY_FN(EnvironmentBase,drawboxarray)))
+                     .def("drawboxarray",&PyEnvironmentBase::drawboxarray,drawboxarray_overloads(PY_ARGS("pos","extents","colors") DOXY_FN(EnvironmentBase,drawboxarray)))
 #endif
 #ifdef USE_PYBIND11_PYTHON_BINDINGS
                      .def("drawaabb", &PyEnvironmentBase::drawaabb,
@@ -3882,6 +4031,7 @@ Because race conditions can pop up when trying to lock the openrave environment 
 #endif
                      .def("GetRobots",&PyEnvironmentBase::GetRobots, DOXY_FN(EnvironmentBase,GetRobots))
                      .def("GetBodies",&PyEnvironmentBase::GetBodies, DOXY_FN(EnvironmentBase,GetBodies))
+                     .def("GetNumBodies",&PyEnvironmentBase::GetNumBodies, DOXY_FN(EnvironmentBase,GetNumBodies))
                      .def("GetSensors",&PyEnvironmentBase::GetSensors, DOXY_FN(EnvironmentBase,GetSensors))
                      .def("UpdatePublishedBodies",&PyEnvironmentBase::UpdatePublishedBodies, DOXY_FN(EnvironmentBase,UpdatePublishedBodies))
 #ifdef USE_PYBIND11_PYTHON_BINDINGS
@@ -3993,18 +4143,18 @@ Because race conditions can pop up when trying to lock the openrave environment 
 #endif
 
 #ifdef USE_PYBIND11_PYTHON_BINDINGS
-    m.def("GetTimeUnitStandardValue",
-          [](const TimeUnit unit){
-        return OpenRAVE::GetTimeUnitStandardValue<dReal>(unit);
+    m.def("GetTimeDurationUnitStandardValue",
+          [](const TimeDurationUnit unit){
+        return OpenRAVE::GetTimeDurationUnitStandardValue<dReal>(unit);
     },
-          DOXY_FN1(OpenRAVE::GetTimeUnitStandardValue)
+          DOXY_FN1(OpenRAVE::GetTimeDurationUnitStandardValue)
           );
 #else
-    def("GetTimeUnitStandardValue",
-        [](const TimeUnit unit){
-        return OpenRAVE::GetTimeUnitStandardValue<dReal>(unit);
+    def("GetTimeDurationUnitStandardValue",
+        [](const TimeDurationUnit unit){
+        return OpenRAVE::GetTimeDurationUnitStandardValue<dReal>(unit);
     },
-        DOXY_FN1(OpenRAVE::GetTimeUnitStandardValue)
+        DOXY_FN1(OpenRAVE::GetTimeDurationUnitStandardValue)
         );
 #endif
 
@@ -4057,18 +4207,18 @@ Because race conditions can pop up when trying to lock the openrave environment 
 #endif
 
 #ifdef USE_PYBIND11_PYTHON_BINDINGS
-    m.def("GetTimeUnitFromString",
-          [](const std::string& pTimeUnit, TimeUnit defaultTimeUnit){
-        return OpenRAVE::GetTimeUnitFromString(pTimeUnit, defaultTimeUnit);
+    m.def("GetTimeDurationUnitFromString",
+          [](const std::string& pTimeDurationUnit, TimeDurationUnit defaultTimeDurationUnit){
+        return OpenRAVE::GetTimeDurationUnitFromString(pTimeDurationUnit, defaultTimeDurationUnit);
     },
-          DOXY_FN1(OpenRAVE::GetTimeUnitFromString)
+          DOXY_FN1(OpenRAVE::GetTimeDurationUnitFromString)
           );
 #else
-    def("GetTimeUnitFromString",
-        [](const std::string& pTimeUnit, TimeUnit defaultTimeUnit){
-        return OpenRAVE::GetTimeUnitFromString(pTimeUnit, defaultTimeUnit);
+    def("GetTimeDurationUnitFromString",
+        [](const std::string& pTimeDurationUnit, TimeDurationUnit defaultTimeDurationUnit){
+        return OpenRAVE::GetTimeDurationUnitFromString(pTimeDurationUnit, defaultTimeDurationUnit);
     },
-        DOXY_FN1(OpenRAVE::GetTimeUnitFromString)
+        DOXY_FN1(OpenRAVE::GetTimeDurationUnitFromString)
         );
 #endif
 
@@ -4121,18 +4271,18 @@ Because race conditions can pop up when trying to lock the openrave environment 
 #endif
 
 #ifdef USE_PYBIND11_PYTHON_BINDINGS
-    m.def("GetTimeUnitConversionScale",
-          [](const TimeUnit sourceUnit, const TimeUnit targetUnit){
-        return OpenRAVE::GetTimeUnitConversionScale<dReal>(sourceUnit, targetUnit);
+    m.def("GetTimeDurationUnitConversionScale",
+          [](const TimeDurationUnit sourceUnit, const TimeDurationUnit targetUnit){
+        return OpenRAVE::GetTimeDurationUnitConversionScale<dReal>(sourceUnit, targetUnit);
     },
-          DOXY_FN1(OpenRAVE::GetTimeUnitConversionScale)
+          DOXY_FN1(OpenRAVE::GetTimeDurationUnitConversionScale)
           );
 #else
-    def("GetTimeUnitConversionScale",
-        [](const TimeUnit sourceUnit, const TimeUnit targetUnit){
-        return OpenRAVE::GetTimeUnitConversionScale<dReal>(sourceUnit, targetUnit);
+    def("GetTimeDurationUnitConversionScale",
+        [](const TimeDurationUnit sourceUnit, const TimeDurationUnit targetUnit){
+        return OpenRAVE::GetTimeDurationUnitConversionScale<dReal>(sourceUnit, targetUnit);
     },
-        DOXY_FN1(OpenRAVE::GetTimeUnitConversionScale)
+        DOXY_FN1(OpenRAVE::GetTimeDurationUnitConversionScale)
         );
 #endif
 
@@ -4165,15 +4315,21 @@ Because race conditions can pop up when trying to lock the openrave environment 
 #endif
 
 #ifdef USE_PYBIND11_PYTHON_BINDINGS
-    m.def("GetTimeUnitString", OpenRAVE::GetTimeUnitString, PY_ARGS("unit") DOXY_FN1(OpenRAVE::GetTimeUnitString));
+    m.def("GetTimeDurationUnitString", OpenRAVE::GetTimeDurationUnitString, PY_ARGS("unit") DOXY_FN1(OpenRAVE::GetTimeDurationUnitString));
 #else
-    def("GetTimeUnitString", OpenRAVE::GetTimeUnitString, PY_ARGS("unit") DOXY_FN1(OpenRAVE::GetTimeUnitString));
+    def("GetTimeDurationUnitString", OpenRAVE::GetTimeDurationUnitString, PY_ARGS("unit") DOXY_FN1(OpenRAVE::GetTimeDurationUnitString));
 #endif
 
 #ifdef USE_PYBIND11_PYTHON_BINDINGS
     m.def("GetAngleUnitString", OpenRAVE::GetAngleUnitString, PY_ARGS("unit") DOXY_FN1(OpenRAVE::GetAngleUnitString));
 #else
     def("GetAngleUnitString", OpenRAVE::GetAngleUnitString, PY_ARGS("unit") DOXY_FN1(OpenRAVE::GetAngleUnitString));
+#endif
+
+#ifdef USE_PYBIND11_PYTHON_BINDINGS
+    m.def("GetTimeStampUnitString", OpenRAVE::GetTimeStampUnitString, PY_ARGS("unit") DOXY_FN1(OpenRAVE::GetTimeStampUnitString));
+#else
+    def("GetTimeStampUnitString", OpenRAVE::GetTimeStampUnitString, PY_ARGS("unit") DOXY_FN1(OpenRAVE::GetTimeStampUnitString));
 #endif
 
 #ifdef USE_PYBIND11_PYTHON_BINDINGS

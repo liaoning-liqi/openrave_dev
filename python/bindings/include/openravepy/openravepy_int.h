@@ -444,10 +444,10 @@ inline py::object toPyVector4(Vector v)
 }
 
 /// \brief converts dictionary of keyvalue pairs
-AttributesList toAttributesList(py::dict odict);
+OPENRAVEPY_API AttributesList toAttributesList(py::dict odict);
 /// \brief converts list of tuples [(key,value),(key,value)], it is possible for keys to repeat
-AttributesList toAttributesList(py::list olist);
-AttributesList toAttributesList(py::object oattributes);
+OPENRAVEPY_API AttributesList toAttributesList(py::list olist);
+OPENRAVEPY_API AttributesList toAttributesList(py::object oattributes);
 
 template <typename T>
 inline py::object ReturnTransform(const T& t)
@@ -533,11 +533,11 @@ public:
         StringSerializableData(const std::string& data) : _data(data) {
         }
 
-        virtual void Serialize(std::ostream& O, int options=0) const {
+        virtual void Serialize(std::ostream& O, int options=0) const override {
             O << _data;
         }
 
-        virtual void Deserialize(std::istream& I) {
+        virtual void Deserialize(std::istream& I) override {
             // need to read the entire input
             stringbuf buf;
             I.get(buf, 0);
@@ -554,7 +554,7 @@ public:
     }
     PySerializableData(SerializableDataPtr handle) : _handle(handle) {
     }
-    void Close() {
+    void Close() override {
         _handle.reset();
     }
     py::object Serialize(int options) {
@@ -583,6 +583,7 @@ class OPENRAVEPY_API PyRay
 public:
     PyRay() {
     }
+    virtual ~PyRay() {}
     PyRay(py::object newpos, py::object newdir);
     PyRay(const RAY& newr) : r(newr) {
     }
@@ -640,6 +641,7 @@ public:
 
     virtual py::object GetReadableInterfaces();
     virtual py::object GetReadableInterface(const std::string& xmltag);
+    virtual bool HasReadableInterface(const std::string& xmltag);
 
     virtual void SetReadableInterface(const std::string& xmltag, py::object oreadable);
 };

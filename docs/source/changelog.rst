@@ -3,10 +3,270 @@
 ChangeLog
 #########
 
-Version 0.142.0
+Version 0.163.0
 ===============
 
 * Allow EnvironmentBodyRemover not to restore a grabbed body when the grabbing link does not exist as we do for active manipulator
+
+Version 0.162.1
+===============
+
+- Apply ramp acceleration modification the same way as is done in `SegmentFeasible2` when initializing an input trajectory that is quadratic.
+
+Version 0.162.0
+===============
+
+- Add combined SetTransformAndVelocity method to reduce _UpdateGrabbedBodies calls
+
+Version 0.161.3
+===============
+
+- Fix for not respecting mustresolveuri in the json reader for invalid URIs.
+
+Version 0.161.2
+===============
+
+- Handle missing URIs when using CURL for loading JSON scenes.
+
+Version 0.161.1
+===============
+
+- Expose toAttributeList from openravepy library.
+
+Version 0.161.0
+===============
+
+- Remove the code for back electromotive force from torque limit calculation APIs.
+- Add common utility function for torque limit calculation.
+
+Version 0.160.0
+===============
+
+- Add new functions for AddKinBody/AddRobot to specify an exact environmentBodyIndex.
+- Use std::unique_lock instead of std::scoped_lock. Remove boost recursive mutex.
+
+Version 0.159.1
+===============
+
+- Fix the problem that connected body resolved joint names that are empty are not skipped in `_UpdateConnectedBodyInfo`.
+- Fix the problem that `CompareTransform` does not consider the quaternions `quat` and `-quat` to be the same rotation.
+- Fix wrong ComputeInverseDynamics for Prismatic joint.
+
+Version 0.159.0
+===============
+
+- Add HasReadableInterface API to minimize copying when using python bindings
+- Make the connected body's joint properties (such as velocity/acceleration limits) persistent by always keeping the connected body's `_info` up to date.
+
+Version 0.158.1
+===============
+
+- Set OPENRAVE_STD_SCOPED_LOCK and OPENRAVE_STD_STRING_VIEW by config.h (avoid cplusplus in openrave.h)
+
+Version 0.158.0
+===============
+
+- Fix bug of `_listNonColidingLinksWhenGrabbed` asymmetricity which might cause false positive/negative self collision checking and might make it less deterministic.
+  - Store the link pair for grabbed-grabber collision in `Grabbed` class.
+  - Store the link pair for inter-grabbed collision in `KinBody` class.
+
+Version 0.157.2
+===============
+
+- Add an interface to allow users to set `NeighborStateOptions` for jitterers to supply to their `_neighstatefn` calls, which affects how neighbor configurations are computed.
+
+Version 0.157.1
+===============
+
+- Exclude disabled and virtual links from manipulator child links AABB computation that is used for manipulator speed/acceleration computation in trajectory post-processing.
+
+Version 0.157.0
+===============
+
+- Add `KinBody::GetDirectlyAttachedBodies`
+- Create a default `JSONReadable` for rapidjson::Document deserialization
+
+Version 0.156.1
+===============
+
+- Fix with grabbedInfo not getting correctly updated when loading a partial environment.
+
+Version 0.156.0
+===============
+
+- Speed up environment loading for big scenes with lots of static links.
+- Deprecate restoring of grabbed bodies by `KinBodyStateSaver` from one env to another env since it's hard to restore any kind of bodies into different env. Instead, use the dedicated private API in `Environment::_Clone`.
+- Remove unnecessary APIs about `CheckGrabbedInfo` and `InvalidateListNonCollidingLinks`.
+- Add python enum for `GICR_UserDataNotMatch`
+
+Version 0.155.0
+===============
+
+- Add virtual destructors
+
+Version 0.154.0
+===============
+
+- Fix the bug that `KinBodyStateSaver` cannot restore the `_listNonCollidingIsValid`, `_listNonCollidingLinksWhenGrabbed`, and `_setGrabberLinkIndicesToIgnore` in `Grabbed`.
+- Resolve cyclic relationship between `KinBodyStateSaver` and `Grabbed` by eliminating `Save_GrabbedBodies` from `ComputeListNonCollidingLinks`.
+
+Version 0.153.0
+===============
+
+- Lazily calculate `_vAllPairsShortestPaths` on kinematics bodies to reduce overhead for bodies that do not make use of kinematics
+
+Version 0.152.0
+===============
+
+- Fix typo which prevented from proper state restoring for `KinBodyStateSaverRef`.
+- Use the same utility function between `KinBodyStateSaver` and `KinBodyStateSaverRef` to share the same bug fixes in the past for `Save_GrabbedBodies`.
+- Fix the bug which prevented from `KinBodyStateSaver/KinBodyStateSaverRef` retoring `_listNonCollidingLinksWhenGrabbed` for grabbed bodies.
+
+Version 0.151.3
+===============
+
+- Remove grabbed body from other grabbed bodies when `ReleaseAllWithLink` is called, as other API such as `Release`.
+- Fix `ResetGrabbed` not to unexpectedly change the internal states.
+
+Version 0.151.2
+===============
+
+- Support sensorgeometry field of ST_Force6D in PyAttachedSensorInfo
+- Viewer shutdown deadlock for openravepy
+
+Version 0.151.1
+===============
+
+- Fix: when loading environment from `{"referenceUri": "uri", "bodies": [...]}`, body infos were merged instead of overwritten.
+
+Version 0.151.0
+===============
+
+- Optimize ResetGrabbed to avoid detaching/reattaching bodies that are still grabbed with the new grab infos
+- Change the internal storage for grab records in kinbodies to use unordered maps instead of vectors
+- The function KinBody::GetGrabbedBody(int) has been removed, as grab information orderig is no longer contiguous/stable
+
+Version 0.150.0
+===============
+
+- Change AddLinkGeomCollision API to accept geomname.
+
+Version 0.149.1
+===============
+
+- Fix `FindFirstMatchingLinkIndex` and `FindSecondMatchingLinkIndex` in `CollisionPairInfo`
+- Set jitterer's `_busebiasing` flag to `false` in the beginning when receiving `SetManipulatorBias` command. The flag will be set to `true` after confirming that the requested manipulator exists and `vbiasdirection` is non-zero. This is because when the provided `vbiasdirection` is a zero vector, the intention is most likely to not use biasing.
+
+Version 0.149.0
+===============
+
+- Add new geometry types "Prism" and "Capsule"
+
+Version 0.148.1
+===============
+
+- Allow initializing bounding box types from different types.
+- Update ikfast to use newer version of sympy.
+- Relax mpmath eps so that polyroots converge better.
+  
+Version 0.148.0
+===============
+
+- Fix treating PlannerStatus::statusCode as boolean
+- Let InitPlan return PlannerStatus for better diagnosis  
+
+Version 0.147.0
+===============
+
+- Update API to enable to reserve way points memories in `TrajectoryBase::Init` and implement it in `GenericTrajectory`.
+
+Version 0.146.0
+===============
+
+- Officially support `chuckingDirection` in `gripperInfo` to deprecate gripper settings in `ManipulatorInfo`. Now it's recommended to use GripperInfo for `chuckingDirection` and `gripperJointNames`.
+- `Manipulator` has caches for `chuckingDirection` and `gripperJointNames` independent from those in `ManipulatorInfo`. Those in Manipulator are determined both by `GripperInfo` and `ManipulatorInfo`.
+- Keep code in `ManipulatorInfo` for backward compatibility purpose.
+- Deprecate the unused API for Manipulator about chucking. Remove `SetClosingDirection` and `SetChuckingDirection`, since these seem unused.
+
+Note for backward compatibility
+-------------------------------
+
+If loading scenes saved by the old openrave on the latest openrave, it requires the code in `ManipulatorInfo`. In addition, some of the downstream code uses `AddManipulator` to define temporary manipulator, and it requires setting in `ManipulatorInfo`. Thus, this MR keeps the infomration in `ManipulatorInfo`. Instead, `Manipulator` class has its own caches. That way, if the openrave loads the cleanly-migrated scene (e.g. setting is only in `GripperInfo`) and saves it, it keeps clean (e.g. `ManipulatorInfo` does not have settings).
+
+Version 0.145.0
+===============
+
+- Rename TimeUnit into TimeDurationUnit and create a new TimeStampUnit
+
+Version 0.144.4
+===============
+
+- Optimize processing of ignore links for grabbed bodies.
+
+Version 0.144.3
+===============
+
+- Maintain the grabbing state while updating environment through notifier.
+
+Version 0.144.2
+===============
+
+- Implement `env.drawarrow` for the qtosg viewer.
+
+Version 0.144.1
+===============
+
+- bug fix in `VectorBackedMap::Insert`.
+
+Version 0.144.0
+===============
+
+- Reduce memory usage by `IkFailureInfo`.
+
+Version 0.143.4
+===============
+
+- Fix environment viewers did not start because RaveDestroy() stopped the thread for viewers and RaveInitialize() did not restart it.
+
+Version 0.143.3
+===============
+
+- Fix python management of environment viewers to be safe. All resources will remain used solely by the viewer thread.
+- Fix Manipulator's `GetArmDOFValues` and `GetGripperDOFValues` so that they return an empty vector when the respective vindices is empty instead of returning the entire robot dof values.
+
+Version 0.143.2
+===============
+
+* Speed up `poseTransformPoints` by taking advantage of contiguous numpy array when extracting values from inputs as well as caching intermediate values for transform computation.
+
+Version 0.143.1
+===============
+
+- Instead of unconditionally resetting BodyState in _UpdatePublishedBodies, first test whether the state has already been initialized from the given body / update stamp. If it has, skip re-extracting all data. Since bodies are in a relatively stable order, this significantly improves average-case performance.
+- Add centidegree unit definition.
+- Cache the absence of collision bodies for a kinbody in the FCL collision manager, improving collision checking performance
+
+Version 0.143.0
+===============
+
+- Allow env.drawlabel to specify size of characters.
+
+Version 0.142.1
+===============
+
+* Clamp camera distance in the viewer to prevent invalid values in the published state
+
+Version 0.142.0
+===============
+
+- Add robotControllerAxisManufacturerCode so that servo drives from different manufacturer connected to daisy chain can be handled.
+- Fix unbounded growth of _vmimic
+* Add ViewerBase::SetUserText to customize HUD text size
+
+Version 0.141.2
+===============
+
+* Fix the issue that second-to-last configuration along the given path segment may not be checked in `Check` function.
 
 Version 0.141.1
 ===============
@@ -55,6 +315,11 @@ Version 0.137.0
 ===============
 
 * Add `GetId` to python bindings
+
+Version 0.136.1
+===============
+
+* Exclude virtual links (links with no geometries) from jittering computation
 
 Version 0.136.0
 ===============

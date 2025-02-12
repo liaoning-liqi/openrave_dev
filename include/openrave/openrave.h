@@ -54,16 +54,25 @@
 #include <map>
 #include <set>
 #include <string>
-
-#if  __cplusplus >= 201703L
-#include <string_view>
-#else
-#include <boost/utility/string_view.hpp>
-#endif
-
 #include <iomanip>
 #include <fstream>
 #include <sstream>
+
+#include <openrave/config.h>
+
+#if OPENRAVE_STD_STRING_VIEW
+#include <string_view>
+#else
+#include <boost/container_hash/hash.hpp>
+#include <boost/utility/string_view.hpp>
+namespace std{
+    // make boost::string_view handlable by std::unordered_set/map
+    template<typename CharT,typename Traits>
+    class hash<boost::basic_string_view<CharT,Traits>>: public boost::hash<boost::basic_string_view<CharT,Traits>>
+    {
+    };
+};
+#endif
 
 // QTBUG-22829 alternative workaround
 #ifndef Q_MOC_RUN
@@ -100,7 +109,6 @@
 /// The entire %OpenRAVE library
 namespace OpenRAVE {
 
-#include <openrave/config.h>
 #include <openrave/interfacehashes.h>
 
 }
@@ -111,7 +119,7 @@ namespace OpenRAVE {
 
 namespace OpenRAVE {
 
-#if  __cplusplus >= 201703L
+#if OPENRAVE_STD_STRING_VIEW
 using string_view = std::string_view;
 #else
 using string_view = ::boost::string_view;
@@ -437,9 +445,9 @@ class OPENRAVE_API DummyXMLReader : public BaseXMLReader
 {
 public:
     DummyXMLReader(const std::string& fieldname, const std::string& parentname, boost::shared_ptr<std::ostream> osrecord = boost::shared_ptr<std::ostream>());
-    virtual ProcessElement startElement(const std::string& name, const AttributesList& atts);
-    virtual bool endElement(const std::string& name);
-    virtual void characters(const std::string& ch);
+    virtual ProcessElement startElement(const std::string& name, const AttributesList& atts) override;
+    virtual bool endElement(const std::string& name) override;
+    virtual void characters(const std::string& ch) override;
     const std::string& GetFieldName() const {
         return _fieldname;
     }
@@ -630,10 +638,14 @@ class OPENRAVE_API StringReadable : public Readable
 {
 public:
     StringReadable(const std::string& id, const std::string& data);
+    StringReadable(const std::string& id, std::string&& data);
+    StringReadable(const std::string& id, const char* data, size_t dataLength);
     virtual ~StringReadable();
 
     /// \brief sets new string data
     void SetData(const std::string& newdata);
+    void SetData(std::string&& newdata);
+    void SetData(const char* data, size_t dataLength);
 
     /// \brief gets a reference to the saved data;
     const std::string& GetData() const;
@@ -660,6 +672,47 @@ private:
     std::string _data;
 };
 typedef boost::shared_ptr<StringReadable> StringReadablePtr;
+
+class OPENRAVE_API JSONReadable : public Readable
+{
+public:
+    JSONReadable(const std::string& id);
+    JSONReadable(const std::string& id, const rapidjson::Value& rValue);
+    virtual ~JSONReadable();
+
+    /// \brief sets new json value
+    void SetValue(const rapidjson::Value& rValue);
+
+    /// \brief gets a reference to the saved json value
+    rapidjson::Value& GetValue();
+    const rapidjson::Value& GetValue() const;
+
+    rapidjson::Document::AllocatorType& GetAllocator();
+
+    bool SerializeXML(BaseXMLWriterPtr wirter, int options=0) const override;
+    bool SerializeJSON(rapidjson::Value& value, rapidjson::Document::AllocatorType& allocator, dReal fUnitScale=1.0, int options=0) const override;
+    bool DeserializeJSON(const rapidjson::Value& value, dReal fUnitScale=1.0) override;
+    bool operator==(const Readable& other) const override {
+        if (GetXMLId() != other.GetXMLId()) {
+            return false;
+        }
+        const JSONReadable* pOther = dynamic_cast<const JSONReadable*>(&other);
+        if (!pOther) {
+            return false;
+        }
+        return _rValue == pOther->_rValue;
+    }
+
+    ReadablePtr CloneSelf() const override {
+        return ReadablePtr(new JSONReadable(GetXMLId(), _rValue));
+    }
+
+private:
+    std::vector<uint8_t> _vAllocBuffer; ///< buffer used for rapidjson allocator
+    rapidjson::MemoryPoolAllocator<> _rAlloc; ///< rapidjson allocator
+    rapidjson::Value _rValue;
+};
+typedef boost::shared_ptr<JSONReadable> JSONReadablePtr;
 
 /// \brief returns a string of the ik parameterization type names
 ///
@@ -743,9 +796,9 @@ public:
     {
 public:
         Reader(ConfigurationSpecification& spec);
-        virtual ProcessElement startElement(const std::string& name, const AttributesList& atts);
-        virtual bool endElement(const std::string& name);
-        virtual void characters(const std::string& ch);
+        virtual ProcessElement startElement(const std::string& name, const AttributesList& atts) override;
+        virtual bool endElement(const std::string& name) override;
+        virtual void characters(const std::string& ch) override;
 protected:
         ConfigurationSpecification& _spec;
         std::stringstream _ss;

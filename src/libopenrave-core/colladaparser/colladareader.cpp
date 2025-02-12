@@ -296,7 +296,7 @@ public:
         if (find(_vOpenRAVESchemeAliases.begin(), _vOpenRAVESchemeAliases.end(), urioriginal.scheme()) !=
             _vOpenRAVESchemeAliases.end()) {
             if (urioriginal.path().empty()) {
-                return nullptr;
+                return std::string();
             }
             // remove first slash because we need relative file
             uriresolved = "file:";
@@ -1771,6 +1771,9 @@ public:
                                             }
                                             else if( pchild->getElementName() == std::string("robotControllerAxisOffset") ) {
                                                 jci.robotControllerAxisOffset.at(ijointaxis) = boost::lexical_cast<dReal>(pchild->getCharData());
+                                            }
+                                            else if( pchild->getElementName() == std::string("robotControllerAxisManufacturerCode") ) {
+                                                jci.robotControllerAxisManufacturerCode.at(ijointaxis) = std::string(pchild->getCharData());
                                             }
                                             else if( pchild->getElementName() == std::string("robotControllerAxisProductCode") ) {
                                                 jci.robotControllerAxisProductCode.at(ijointaxis) = std::string(pchild->getCharData());

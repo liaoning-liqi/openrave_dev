@@ -167,6 +167,14 @@ inline void ReadBinaryVector(const uint8_t*& f, std::vector<dReal>& v)
     f += vectorLengthBytes;
 }
 
+inline std::string _GetGroupNamesFromSpecString(const ConfigurationSpecification& spec) {
+    std::string sgroups;
+    for(const ConfigurationSpecification::Group& group : spec._vgroups) {
+        sgroups += group.name + ", ";
+    }
+    return sgroups;
+}
+
 class GenericTrajectory : public TrajectoryBase
 {
     std::map<string,int> _maporder;
@@ -217,7 +225,7 @@ public:
         return it1->second < it2->second;
     }
 
-    void Init(const ConfigurationSpecification& spec) override
+    void Init(const ConfigurationSpecification& spec, const int nWayPointsToReserve=0, const int options=0) override
     {
         if( _bInit  && _spec == spec ) {
             // already init
@@ -248,6 +256,15 @@ public:
         _vdeltainvtime.clear();
         _bChanged = true;
         _bSamplingVerified = false;
+        // reserve
+        if( nWayPointsToReserve > 0 ) {
+            _vtrajdata.reserve(nWayPointsToReserve*_spec.GetDOF()); // see also GetNumWaypoints API.
+            if( options & TIO_ReserveTimeBasedVectors ) { // only if this option is specified, reserve the time-related vectors, since these are only necessary when the Sample-related APIs are called. If such APIs are not called, the user might want to skip the unnecessary memory allocation.
+                _vaccumtime.reserve(nWayPointsToReserve);
+                _vdeltainvtime.reserve(nWayPointsToReserve);
+            }
+        }
+        // finally set init flag
         _bInit = true;
     }
 
@@ -264,7 +281,7 @@ public:
 
     void Insert(size_t index, const std::vector<dReal>& data, bool bOverwrite) override
     {
-        Insert (index, data.data(), data.size(), bOverwrite);
+        Insert(index, data.data(), data.size(), bOverwrite);
     }
 
 
@@ -292,7 +309,7 @@ public:
 
     void Insert(size_t index, const std::vector<dReal>& data, const ConfigurationSpecification& spec, bool bOverwrite) override
     {
-        Insert (index, data.data(), data.size(), spec, bOverwrite);
+        Insert(index, data.data(), data.size(), spec, bOverwrite);
     }
 
     void Insert(size_t index, const dReal* pdata, size_t nDataElements, const ConfigurationSpecification& spec, bool bOverwrite) override
@@ -348,7 +365,7 @@ public:
     void Sample(std::vector<dReal>& data, dReal time) const override
     {
         BOOST_ASSERT(_bInit);
-        BOOST_ASSERT(_timeoffset>=0);
+        OPENRAVE_ASSERT_OP_FORMAT(_timeoffset,>=,0, "Trajectory does not have 'deltatime' in the spec with groups [%s]", _GetGroupNamesFromSpecString(_spec), ORE_InvalidState);
         BOOST_ASSERT(time >= 0);
         _ComputeInternal();
         OPENRAVE_ASSERT_OP_FORMAT0((int)_vtrajdata.size(),>=,_spec.GetDOF(), "trajectory needs at least one point to sample from", ORE_InvalidArguments);
@@ -392,7 +409,7 @@ public:
     void Sample(std::vector<dReal>& data, dReal time, const ConfigurationSpecification& spec, bool reintializeData) const override
     {
         BOOST_ASSERT(_bInit);
-        OPENRAVE_ASSERT_OP(_timeoffset,>=,0);
+        OPENRAVE_ASSERT_OP_FORMAT(_timeoffset,>=,0, "Trajectory does not have 'deltatime' in the spec with groups [%s]", _GetGroupNamesFromSpecString(_spec), ORE_InvalidState);
         OPENRAVE_ASSERT_OP(time, >=, -g_fEpsilon);
         _ComputeInternal();
         OPENRAVE_ASSERT_OP_FORMAT0((int)_vtrajdata.size(),>=,_spec.GetDOF(), "trajectory needs at least one point to sample from", ORE_InvalidArguments);
@@ -527,7 +544,7 @@ public:
     size_t GetFirstWaypointIndexAfterTime(dReal time) const override
     {
         BOOST_ASSERT(_bInit);
-        BOOST_ASSERT(_timeoffset>=0);
+        OPENRAVE_ASSERT_OP_FORMAT(_timeoffset,>=,0, "Trajectory does not have 'deltatime' in the spec with groups [%s]", _GetGroupNamesFromSpecString(_spec), ORE_InvalidState);
         _ComputeInternal();
         if( _vaccumtime.size() == 0 ) {
             return 0;
@@ -553,7 +570,7 @@ public:
     void serialize(std::ostream& O, int options) const override
     {
         dReal fUnitScale = 1.0;
-        if( options & 0x8000 ) {
+        if( options & TSO_SerializeAsXML ) {
             TrajectoryBase::serialize(O, options);
         }
         else {
@@ -1727,7 +1744,7 @@ protected:
     void _SampleRangeSameDeltaTime(std::vector<dReal>& data, dReal deltatime, dReal startTime, dReal stopTime, bool ensureLastPoint) const
     {
         BOOST_ASSERT(_bInit);
-        BOOST_ASSERT(_timeoffset>=0);
+        OPENRAVE_ASSERT_OP_FORMAT(_timeoffset,>=,0, "Trajectory does not have 'deltatime' in the spec with groups [%s]", _GetGroupNamesFromSpecString(_spec), ORE_InvalidState);
         OPENRAVE_ASSERT_OP_FORMAT0(startTime,>=,0, "start time needs to be non-negative", ORE_InvalidArguments);
         OPENRAVE_ASSERT_OP_FORMAT0(stopTime,>=,startTime, "stop time needs to be at least start time", ORE_InvalidArguments);
 

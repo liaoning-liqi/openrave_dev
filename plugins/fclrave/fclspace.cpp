@@ -26,11 +26,7 @@ void FCLSpace::FCLKinBodyInfo::Reset()
     _linkenablecallback.reset();
 }
 
-FCLSpace::FCLKinBodyInfo::FCLGeometryInfo::FCLGeometryInfo() : bFromKinBodyGeometry(false)
-{
-}
-
-FCLSpace::FCLKinBodyInfo::FCLGeometryInfo::FCLGeometryInfo(KinBody::GeometryPtr pgeom) : _pgeom(pgeom), bFromKinBodyGeometry(true)
+FCLSpace::FCLKinBodyInfo::FCLGeometryInfo::FCLGeometryInfo()
 {
 }
 
@@ -101,12 +97,13 @@ void FCLSpace::ReloadKinBodyLinks(KinBodyConstPtr pbody, FCLKinBodyInfoPtr pinfo
                 if( !pfclgeom ) {
                     continue;
                 }
-                // because user data is null pointer here, in CheckNarrowPhaseGeomCollision report.pgeom ends up being null pointer and we lose the geometry information.
-                // maybe pass plink->GetGeometries()[index] where index=distance(vgeometryinfos.begin(), itgeominfo)?
-                // or, should the collision report store names of body, link, and geom?
-                // also, currently there is no information about which geometry group was used for collision checking.
+                // currently there is no information about which geometry group was used for collision checking.
                 // It's usually obvious immediately after CheckCollision is called, but later on, it it is not that obvious collision report is computed with which geometry group.
-                pfclgeom->setUserData(nullptr);
+                boost::shared_ptr<FCLKinBodyInfo::FCLGeometryInfo> pfclgeominfo(new FCLKinBodyInfo::FCLGeometryInfo());
+                pfclgeominfo->geomname = geominfo._name;
+                pfclgeom->setUserData(pfclgeominfo.get());
+                // save the pointers
+                linkinfo->vgeominfos.push_back(pfclgeominfo);
 
                 // We do not set the transformation here and leave it to _Synchronize
                 CollisionObjectPtr pfclcoll = boost::make_shared<fcl::CollisionObject>(pfclgeom);
@@ -121,6 +118,7 @@ void FCLSpace::ReloadKinBodyLinks(KinBodyConstPtr pbody, FCLKinBodyInfoPtr pinfo
                     enclosingBV += ConvertAABBToFcl(_tmpgeometry.ComputeAABB(Transform()));
                 }
             }
+            linkinfo->bFromExtraGeometries = true;
         }
         else {
             const std::vector<KinBody::Link::GeometryPtr> & vgeometries = plink->GetGeometries();
@@ -132,8 +130,8 @@ void FCLSpace::ReloadKinBodyLinks(KinBodyConstPtr pbody, FCLKinBodyInfoPtr pinfo
                 if( !pfclgeom ) {
                     continue;
                 }
-                boost::shared_ptr<FCLKinBodyInfo::FCLGeometryInfo> pfclgeominfo(new FCLKinBodyInfo::FCLGeometryInfo(pgeom));
-                pfclgeominfo->bodylinkgeomname = pbody->GetName() + "/" + plink->GetName() + "/" + pgeom->GetName();
+                boost::shared_ptr<FCLKinBodyInfo::FCLGeometryInfo> pfclgeominfo(new FCLKinBodyInfo::FCLGeometryInfo());
+                pfclgeominfo->geomname = geominfo._name;
                 pfclgeom->setUserData(pfclgeominfo.get());
                 // save the pointers
                 linkinfo->vgeominfos.push_back(pfclgeominfo);
@@ -152,10 +150,11 @@ void FCLSpace::ReloadKinBodyLinks(KinBodyConstPtr pbody, FCLKinBodyInfoPtr pinfo
                     enclosingBV += ConvertAABBToFcl(_tmpgeometry.ComputeAABB(Transform()));
                 }
             }
+            linkinfo->bFromExtraGeometries = false;
         }
 
         if( linkinfo->vgeoms.size() == 0 ) {
-            RAVELOG_DEBUG_FORMAT("env=%s, Initializing body '%s' (index=%d) link '%s' with 0 geometries (env %d) (userdatakey %s)", _penv->GetNameId()%pbody->GetName()%pbody->GetEnvironmentBodyIndex()%plink->GetName()%_penv->GetId()%_userdatakey);
+            RAVELOG_DEBUG_FORMAT("env=%s, Initializing body '%s' (index=%d) link '%s' with 0 geometries (env %d) (userdatakey %s, group=%s, bodygroup=%s)", _penv->GetNameId()%pbody->GetName()%pbody->GetEnvironmentBodyIndex()%plink->GetName()%_penv->GetId()%_userdatakey%_geometrygroup%pinfo->_geometrygroup);
         }
         else {
             CollisionGeometryPtr pfclgeomBV = std::make_shared<fcl::Box>(enclosingBV.max_ - enclosingBV.min_);
@@ -464,6 +463,14 @@ void _AppendFclBoxCollsionObject(const OpenRAVE::Vector& fullExtents, const Open
     contents.emplace_back(std::make_shared<fcl::CollisionObject>(fclGeom, fclTrans));
 }
 
+/// \brief helper function to initialize fcl::Container
+void _AppendFclHalfspaceCollsionObject(const OpenRAVE::Transform& trans, std::vector<std::shared_ptr<fcl::CollisionObject> >& contents)
+{
+    std::shared_ptr<fcl::CollisionGeometry> fclGeom = std::make_shared<fcl::Halfspace>(fcl::Vec3f(0, 0, 1), 0);
+    const fcl::Transform3f fclTrans(ConvertQuaternionToFCL(trans.rot), ConvertVectorToFCL(trans.trans));
+    contents.emplace_back(std::make_shared<fcl::CollisionObject>(fclGeom, fclTrans));
+}
+
 CollisionGeometryPtr FCLSpace::_CreateFCLGeomFromGeometryInfo(const KinBody::GeometryInfo &info)
 {
     switch(info._type) {
@@ -480,6 +487,9 @@ CollisionGeometryPtr FCLSpace::_CreateFCLGeomFromGeometryInfo(const KinBody::Geo
 
     case OpenRAVE::GT_Cylinder:
         return std::make_shared<fcl::Cylinder>(info._vGeomData.x, info._vGeomData.y);
+
+    case OpenRAVE::GT_Capsule:
+        return std::make_shared<fcl::Capsule>(info._vGeomData.x, info._vGeomData.y);
 
     case OpenRAVE::GT_Container:
     {
@@ -535,6 +545,25 @@ CollisionGeometryPtr FCLSpace::_CreateFCLGeomFromGeometryInfo(const KinBody::Geo
         }
         // finally add the base
         _AppendFclBoxCollsionObject(2.0*vCageBaseExtents, Vector(0, 0, vCageBaseExtents.z), contents);
+        return std::make_shared<fcl::Container>(contents);
+    }
+    case OpenRAVE::GT_Prism:
+    {
+        std::vector<std::shared_ptr<fcl::CollisionObject> > contents;
+        const OpenRAVE::TriMesh& mesh = info._meshcollision;
+        const size_t nPoints = mesh.vertices.size();
+        for( size_t ipoint = 0; ipoint < nPoints; ipoint += 2 ) {
+            const OpenRAVE::Vector p0(mesh.vertices[ipoint].x, mesh.vertices[ipoint].y, 0);
+            const OpenRAVE::Vector p1(mesh.vertices[(ipoint + 2) % nPoints].x, mesh.vertices[(ipoint + 2) % nPoints].y, 0);
+            if( (p1 - p0).lengthsqr2() < g_fEpsilon ) {
+                continue; // ipoint
+            }
+            OpenRAVE::Transform trans(OpenRAVE::geometry::quatRotateDirection(OpenRAVE::Vector(1, 0, 0), (p1 - p0).normalize()), (p0 + p1) * 0.5); // Y pointing to the left side of the directed segment (p0, p1)
+            trans *= OpenRAVE::Transform(OpenRAVE::geometry::quatFromAxisAngle(OpenRAVE::Vector(1, 0, 0), -M_PI * 0.5), OpenRAVE::Vector()); // Z pointing to the left side of the directed segment (p0, p1)
+            _AppendFclHalfspaceCollsionObject(trans, contents);
+        }
+        _AppendFclHalfspaceCollsionObject(OpenRAVE::Transform(OpenRAVE::Vector(1, 0, 0, 0), OpenRAVE::Vector(0, 0, -info._vGeomData.y * 0.5)), contents);
+        _AppendFclHalfspaceCollsionObject(OpenRAVE::Transform(OpenRAVE::Vector(0, 1, 0, 0), OpenRAVE::Vector(0, 0, info._vGeomData.y * 0.5)), contents);
         return std::make_shared<fcl::Container>(contents);
     }
     case OpenRAVE::GT_ConicalFrustum:

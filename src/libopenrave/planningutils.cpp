@@ -620,8 +620,10 @@ PlannerStatus _PlanActiveDOFTrajectory(TrajectoryBasePtr traj, RobotBasePtr prob
     params->_sPostProcessingPlanner = ""; // have to turn off the second post processing stage
     params->_hastimestamps = hastimestamps;
     params->_sExtraParameters += plannerparameters;
-    if( !planner->InitPlan(probot,params) ) {
-        return PlannerStatus("InitPlan failed", PS_Failed);
+
+    PlannerStatus statusFromInit = planner->InitPlan(probot,params);
+    if( !(statusFromInit.GetStatusCode() & PS_HasSolution) ) {
+        return statusFromInit;
     }
     PlannerStatus plannerStatus = planner->PlanPath(traj);
     if( plannerStatus.GetStatusCode() != PS_HasSolution ) {
@@ -649,9 +651,14 @@ ActiveDOFTrajectorySmoother::ActiveDOFTrajectorySmoother(RobotBasePtr robot, con
     params->_sPostProcessingPlanner = ""; // have to turn off the second post processing stage
     params->_hastimestamps = false;
     params->_sExtraParameters += plannerparameters;
-    if( !_planner->InitPlan(_robot,params) ) {
-        throw OPENRAVE_EXCEPTION_FORMAT(_("failed to init planner %s with robot %s"), plannername%_robot->GetName(), ORE_InvalidArguments);
+
+    PlannerStatus statusFromInit = _planner->InitPlan(_robot,params);
+    if( !(statusFromInit.GetStatusCode() & PS_HasSolution) ) {
+        rapidjson::Document rStatus(rapidjson::kObjectType);
+        statusFromInit.SaveToJson(rStatus, rStatus.GetAllocator());
+        throw OPENRAVE_EXCEPTION_FORMAT(_("failed to init planner %s with robot %s:%s"), plannername%_robot->GetName()%(orjson::DumpJson(rStatus)), ORE_InvalidArguments);
     }
+
     _parameters=params; // necessary because SetRobotActiveJoints builds functions that hold weak_ptr to the parameters
     _changehandler = robot->RegisterChangeCallback(KinBody::Prop_JointAccelerationVelocityTorqueLimits|KinBody::Prop_JointLimits|KinBody::Prop_JointProperties, boost::bind(&ActiveDOFTrajectorySmoother::_UpdateParameters, this));
 }
@@ -690,9 +697,14 @@ void ActiveDOFTrajectorySmoother::_UpdateParameters()
     params->_sPostProcessingPlanner = ""; // have to turn off the second post processing stage
     params->_hastimestamps = false;
     params->_sExtraParameters = _parameters->_sExtraParameters;
-    if( !_planner->InitPlan(_robot,params) ) {
-        throw OPENRAVE_EXCEPTION_FORMAT(_("failed to init planner %s with robot %s"), _planner->GetXMLId()%_robot->GetName(), ORE_InvalidArguments);
+
+    PlannerStatus statusFromInit = _planner->InitPlan(_robot,params);
+    if( !(statusFromInit.GetStatusCode() & PS_HasSolution) ) {
+        rapidjson::Document rStatus(rapidjson::kObjectType);
+        statusFromInit.SaveToJson(rStatus, rStatus.GetAllocator());
+        throw OPENRAVE_EXCEPTION_FORMAT(_("failed to init planner %s with robot %s:%s"), _planner->GetXMLId()%_robot->GetName()%(orjson::DumpJson(rStatus)), ORE_InvalidArguments);
     }
+
     _parameters=params; // necessary because SetRobotActiveJoints builds functions that hold weak_ptr to the parameters
 }
 
@@ -712,8 +724,12 @@ ActiveDOFTrajectoryRetimer::ActiveDOFTrajectoryRetimer(RobotBasePtr robot, const
     params->_setstatevaluesfn.clear();
     params->_checkpathvelocityconstraintsfn.clear();
     params->_sExtraParameters = plannerparameters;
-    if( !_planner->InitPlan(_robot,params) ) {
-        throw OPENRAVE_EXCEPTION_FORMAT(_("failed to init planner %s with robot %s"), plannername%_robot->GetName(), ORE_InvalidArguments);
+
+    PlannerStatus statusFromInit = _planner->InitPlan(_robot,params);
+    if( !(statusFromInit.GetStatusCode() & PS_HasSolution) ) {
+        rapidjson::Document rStatus(rapidjson::kObjectType);
+        statusFromInit.SaveToJson(rStatus, rStatus.GetAllocator());
+        throw OPENRAVE_EXCEPTION_FORMAT(_("failed to init planner %s with robot %s:%s"), _planner->GetXMLId()%_robot->GetName()%(orjson::DumpJson(rStatus)), ORE_InvalidArguments);
     }
     _parameters=params; // necessary because SetRobotActiveJoints builds functions that hold weak_ptr to the parameters
     _changehandler = robot->RegisterChangeCallback(KinBody::Prop_JointAccelerationVelocityTorqueLimits|KinBody::Prop_JointLimits|KinBody::Prop_JointProperties, boost::bind(&ActiveDOFTrajectoryRetimer::_UpdateParameters, this));
@@ -735,8 +751,11 @@ PlannerStatus ActiveDOFTrajectoryRetimer::PlanPath(TrajectoryBasePtr traj, bool 
     TrajectoryTimingParametersPtr parameters = boost::dynamic_pointer_cast<TrajectoryTimingParameters>(_parameters);
     if( parameters->_hastimestamps != hastimestamps ) {
         parameters->_hastimestamps = hastimestamps;
-        if( !_planner->InitPlan(_robot,parameters) ) {
-            throw OPENRAVE_EXCEPTION_FORMAT(_("failed to init planner %s with robot %s"), _planner->GetXMLId()%_robot->GetName(), ORE_InvalidArguments);
+        PlannerStatus statusFromInit = _planner->InitPlan(_robot,parameters);
+        if( !(statusFromInit.GetStatusCode() & PS_HasSolution) ) {
+            rapidjson::Document rStatus(rapidjson::kObjectType);
+            statusFromInit.SaveToJson(rStatus, rStatus.GetAllocator());
+            throw OPENRAVE_EXCEPTION_FORMAT(_("failed to init planner %s with robot %s:%s"), _planner->GetXMLId()%_robot->GetName()%(orjson::DumpJson(rStatus)), ORE_InvalidArguments);
         }
     }
 
@@ -754,8 +773,11 @@ void ActiveDOFTrajectoryRetimer::_UpdateParameters()
     params->_setstatevaluesfn.clear();
     params->_checkpathvelocityconstraintsfn.clear();
     params->_sExtraParameters = _parameters->_sExtraParameters;
-    if( !_planner->InitPlan(_robot,params) ) {
-        throw OPENRAVE_EXCEPTION_FORMAT(_("failed to init planner %s with robot %s"), _planner->GetXMLId()%_robot->GetName(), ORE_InvalidArguments);
+    PlannerStatus statusFromInit = _planner->InitPlan(_robot,params);
+    if( !(statusFromInit.GetStatusCode() & PS_HasSolution) ) {
+        rapidjson::Document rStatus(rapidjson::kObjectType);
+        statusFromInit.SaveToJson(rStatus, rStatus.GetAllocator());
+        throw OPENRAVE_EXCEPTION_FORMAT(_("failed to init planner %s with robot %s:%s"), _planner->GetXMLId()%_robot->GetName()%(orjson::DumpJson(rStatus)), ORE_InvalidArguments);
     }
     _parameters=params; // necessary because SetRobotActiveJoints builds functions that hold weak_ptr to the parameters
 }
@@ -791,8 +813,10 @@ PlannerStatus _PlanTrajectory(TrajectoryBasePtr traj, bool hastimestamps, dReal 
     params->_sPostProcessingPlanner = ""; // have to turn off the second post processing stage
     params->_hastimestamps = hastimestamps;
     params->_sExtraParameters += plannerparameters;
-    if( !planner->InitPlan(RobotBasePtr(),params) ) {
-        return PlannerStatus("InitPlan failed", PS_Failed);
+
+    PlannerStatus statusFromInit = planner->InitPlan(RobotBasePtr(),params);
+    if( !(statusFromInit.GetStatusCode() & PS_HasSolution) ) {
+        return statusFromInit;
     }
     PlannerStatus plannerStatus = planner->PlanPath(traj);
     if( !(plannerStatus.statusCode & PS_HasSolution) ) {
@@ -991,9 +1015,11 @@ static PlannerStatus _PlanAffineTrajectory(TrajectoryBasePtr traj, const std::ve
     params->_hastimestamps = hastimestamps;
     params->_sExtraParameters = plannerparameters;
 
-    if( !planner->InitPlan(RobotBasePtr(),params) ) {
-        return PlannerStatus("InitPlan failed", PS_Failed);
+    PlannerStatus statusFromInit = planner->InitPlan(RobotBasePtr(),params);
+    if( !(statusFromInit.GetStatusCode() & PS_HasSolution) ) {
+        return statusFromInit;
     }
+
     PlannerStatus plannerStatus = planner->PlanPath(traj);
     if( plannerStatus.GetStatusCode() != PS_HasSolution ) {
         return plannerStatus;
@@ -1030,8 +1056,11 @@ void AffineTrajectoryRetimer::SetPlanner(const std::string& plannername, const s
         if( !!_parameters ) {
             _parameters->_sExtraParameters = _extraparameters;
             if( !!_planner ) {
-                if( !_planner->InitPlan(RobotBasePtr(), _parameters) ) {
-                    throw OPENRAVE_EXCEPTION_FORMAT(_("failed to init planner %s"), _plannername, ORE_InvalidArguments);
+                PlannerStatus statusFromInit = _planner->InitPlan(RobotBasePtr(), _parameters);
+                if( !(statusFromInit.GetStatusCode() & PS_HasSolution) ) {
+                    rapidjson::Document rStatus(rapidjson::kObjectType);
+                    statusFromInit.SaveToJson(rStatus, rStatus.GetAllocator());
+                    throw OPENRAVE_EXCEPTION_FORMAT(_("failed to init planner %s:%s"), _plannername%(orjson::DumpJson(rStatus)), ORE_InvalidArguments);
                 }
             }
         }
@@ -1145,9 +1174,12 @@ PlannerStatus AffineTrajectoryRetimer::PlanPath(TrajectoryBasePtr traj, const st
         bInitPlan = true;
     }
     if( bInitPlan ) {
-        if( !_planner->InitPlan(RobotBasePtr(),parameters) ) {
+        PlannerStatus statusFromInit = _planner->InitPlan(RobotBasePtr(),parameters);
+        if( !(statusFromInit.GetStatusCode() & PS_HasSolution) ) {
             stringstream ss; ss << trajspec;
-            throw OPENRAVE_EXCEPTION_FORMAT(_("failed to init planner %s with affine trajectory spec: %s"), _plannername%ss.str(), ORE_InvalidArguments);
+            rapidjson::Document rStatus(rapidjson::kObjectType);
+            statusFromInit.SaveToJson(rStatus, rStatus.GetAllocator());
+            throw OPENRAVE_EXCEPTION_FORMAT(_("failed to init planner %s with affine trajectory spec: %s, msg=%s"), _plannername%ss.str()%(orjson::DumpJson(rStatus)), ORE_InvalidArguments);
         }
     }
 
@@ -1272,7 +1304,7 @@ PlannerStatus AffineTrajectoryRetimer::PlanPath(TrajectoryBasePtr traj, const st
     }
 
     if( bInitPlan ) {
-        if( !_planner->InitPlan(RobotBasePtr(), parameters) ) {
+        if( !_planner->InitPlan(RobotBasePtr(), parameters).HasSolution() ) {
             std::stringstream ssdebug; ssdebug << trajspec;
             throw OPENRAVE_EXCEPTION_FORMAT(_("env=%s, failed to initialize planner %s with affine trajectory spec: %s"), env->GetNameId()%_plannername%ssdebug.str(), ORE_InvalidArguments);
         }
@@ -1623,8 +1655,12 @@ size_t InsertWaypointWithSmoothing(int index, const std::vector<dReal>& dofvalue
     params->_hastimestamps = false;
 
     PlannerBasePtr planner = RaveCreatePlanner(traj->GetEnv(),plannername.size() > 0 ? plannername : string("parabolictrajectoryretimer"));
-    if( !planner->InitPlan(RobotBasePtr(),params) ) {
-        throw OPENRAVE_EXCEPTION_FORMAT0(_("failed to InitPlan"),ORE_Failed);
+
+    PlannerStatus statusFromInit = planner->InitPlan(RobotBasePtr(),params);
+    if( !(statusFromInit.GetStatusCode() & PS_HasSolution) ) {
+        rapidjson::Document rStatus(rapidjson::kObjectType);
+        statusFromInit.SaveToJson(rStatus, rStatus.GetAllocator());
+        throw OPENRAVE_EXCEPTION_FORMAT(_("failed to init planner %s:%s"), plannername%(orjson::DumpJson(rStatus)), ORE_InvalidArguments);
     }
 
     return InsertWaypointWithSmoothing(index, dofvalues, dofvelocities, traj, planner);
@@ -2059,15 +2095,15 @@ TrajectoryBasePtr MergeTrajectories(const std::list<TrajectoryBaseConstPtr>& lis
     ConfigurationSpecification spec;
     vector<dReal> vpointdata;
     vector<dReal> vtimes; vtimes.reserve(listtrajectories.front()->GetNumWaypoints());
-    int totaldof = 1; // for delta time
+    // int totaldof = 1; // for delta time
     FOREACHC(ittraj,listtrajectories) {
         const ConfigurationSpecification& trajspec = (*ittraj)->GetConfigurationSpecification();
         ConfigurationSpecification::Group gtime = trajspec.GetGroupFromName("deltatime");
         spec += trajspec;
-        totaldof += trajspec.GetDOF()-1;
-        if( trajspec.FindCompatibleGroup("iswaypoint",true) != trajspec._vgroups.end() ) {
-            totaldof -= 1;
-        }
+        // totaldof += trajspec.GetDOF()-1;
+        // if( trajspec.FindCompatibleGroup("iswaypoint",true) != trajspec._vgroups.end() ) {
+        //     totaldof -= 1;
+        // }
         dReal curtime = 0;
         for(size_t ipoint = 0; ipoint < (*ittraj)->GetNumWaypoints(); ++ipoint) {
             (*ittraj)->GetWaypoint(ipoint,vpointdata);
@@ -2082,7 +2118,7 @@ TrajectoryBasePtr MergeTrajectories(const std::list<TrajectoryBaseConstPtr>& lis
     vector<ConfigurationSpecification::Group>::const_iterator itwaypointgroup = spec.FindCompatibleGroup("iswaypoint",true);
     vector<dReal> vwaypoints;
     if( itwaypointgroup != spec._vgroups.end() ) {
-        totaldof += 1;
+        // totaldof += 1;
         vwaypoints.resize(vtimes.size(),0);
     }
 
@@ -3234,33 +3270,29 @@ int DynamicsCollisionConstraint::Check(const std::vector<dReal>& q0, const std::
             }
         }
 
-        if( bCheckEnd && bHasNewTempConfigToAdd && bHasRampDeviatedFromInterpolation ) {
-            dReal dist = params->_distmetricfn(_vtempconfig, q1);
+        if( bHasNewTempConfigToAdd ) {
+            // At this point, _vtempconfig is expected to have reached q1. But if not, then need to check _vtempconfig.
+            const dReal dist = params->_distmetricfn(_vtempconfig, q1);
             if( dist > 1e-7 ) {
-                RAVELOG_DEBUG_FORMAT("env=%d, ramp has deviated, so most likely q1 is not following constraints and there's a difference dist=%f", _listCheckBodies.front()->GetEnv()->GetId()%dist);
-                bCheckEnd = false; // to prevent adding the last point
-
-                if( !!filterreturn ) {
-                    if( options & CFO_FillCheckedConfiguration ) {
-                        int nstateret = 0;
-                        if( istep >= start ) {
-                            nstateret = _SetAndCheckState(params, _vtempconfig, _vtempvelconfig, _vtempaccelconfig, maskoptions, filterreturn);
-                            bHasNewTempConfigToAdd = false;
-                            if( !!params->_getstatefn ) {
-                                params->_getstatefn(_vtempconfig);     // query again in order to get normalizations/joint limits
-                            }
-                            if( !!filterreturn && (options & CFO_FillCheckedConfiguration) ) {
-                                filterreturn->_configurations.insert(filterreturn->_configurations.end(), _vtempconfig.begin(), _vtempconfig.end());
-                                filterreturn->_configurationtimes.push_back(timestep);
-                            }
-                        }
-                        if( nstateret != 0 ) {
-                            if( !!filterreturn ) {
-                                filterreturn->_returncode = nstateret;
-                            }
-                            return nstateret;
-                        }
+                bCheckEnd = false; // _vtempconfig ends up far from q1 and we haven't checked the segment connecting _vtempconfig and q1 so prevent adding q1 to the list of checked configuration to tell the caller that the checked segment ends here.
+                int nstateret = 0;
+                nstateret = _SetAndCheckState(params, _vtempconfig, _vtempvelconfig, _vtempaccelconfig, maskoptions, filterreturn);
+                bHasNewTempConfigToAdd = false;
+                if( !!params->_getstatefn ) {
+                    params->_getstatefn(_vtempconfig);     // query again in order to get normalizations/joint limits
+                }
+                if( !!filterreturn && (options & CFO_FillCheckedConfiguration) ) {
+                    filterreturn->_configurations.insert(filterreturn->_configurations.end(), _vtempconfig.begin(), _vtempconfig.end());
+                    filterreturn->_configurationtimes.push_back(timestep);
+                }
+                if( nstateret != 0 ) {
+                    if( !!filterreturn ) {
+                        filterreturn->_returncode = nstateret;
+                        filterreturn->_invalidvalues = _vtempconfig;
+                        filterreturn->_invalidvelocities = _vtempvelconfig;
+                        filterreturn->_fTimeWhenInvalid = timestep;
                     }
+                    return nstateret;
                 }
             }
         }
@@ -3277,13 +3309,7 @@ int DynamicsCollisionConstraint::Check(const std::vector<dReal>& q0, const std::
             *it *= fisteps;
         }
 
-        // just in case, have to set the current values to _vtempconfig since neighstatefn expects the state to be set.
-        if( params->SetStateValues(_vtempconfig, 0) != 0 ) {
-            if( !!filterreturn ) {
-                filterreturn->_returncode = CFO_StateSettingError;
-            }
-            return CFO_StateSettingError;
-        }
+        const bool validVelocities = (timeelapsed > 0) && (dq0.size() == _vtempconfig.size()) && (dq1.size() == _vtempconfig.size());
 
         _vdiffconfig.resize(dQ.size());
         _vstepconfig.resize(dQ.size());
@@ -3366,8 +3392,13 @@ int DynamicsCollisionConstraint::Check(const std::vector<dReal>& q0, const std::
                         }
                     } // end checking configurations between _vtempconfig2 (the previous _vtempconfig) and _vtempconfig (the new one)
                 } // end if maxnumsteps > 1
+            } // end check neighstatus
+            if( validVelocities ) {
+                // Compute the next velocity
+                for( size_t idof = 0; idof < dQ.size(); ++idof ) {
+                    _vtempvelconfig.at(idof) = dq0.at(idof) + _vtempveldelta.at(idof);
+                }
             }
-            // Else, _neighstatefn returns _vtempconfig + dQ.
         }
 
         _vprevtempconfig.resize(dQ.size());
@@ -3485,11 +3516,40 @@ int DynamicsCollisionConstraint::Check(const std::vector<dReal>& q0, const std::
                         }
                     } // end collision checking
                 } // end if maxnumsteps > 1
+            } // end check neighstatus
+            if( validVelocities ) {
+                // Compute the next velocity
+                for( size_t idof = 0; idof < dQ.size(); ++idof ) {
+                    _vtempvelconfig.at(idof) = dq0.at(idof) + dReal(f + 1)*_vtempveldelta.at(idof);
+                }
             }
-        }
+        } // end for
 
-        // check if _vtempconfig is close to q1!
-        {
+        // At this point, _vtempconfig is not checked yet!
+        const dReal dist = params->_distmetricfn(_vtempconfig, q1);
+        if( dist > 1e-7 ) {
+            // _vtempconfig is different from q1 so must check it.
+            int nstateret = 0;
+            nstateret = _SetAndCheckState(params, _vtempconfig, _vtempvelconfig, _vtempaccelconfig, maskoptions, filterreturn);
+            if( !!params->_getstatefn ) {
+                params->_getstatefn(_vtempconfig);     // query again in order to get normalizations/joint limits
+            }
+            if( !!filterreturn && (options & CFO_FillCheckedConfiguration) ) {
+                filterreturn->_configurations.insert(filterreturn->_configurations.end(), _vtempconfig.begin(), _vtempconfig.end());
+                filterreturn->_configurationtimes.push_back(1.0);
+            }
+            if( nstateret != 0 ) {
+                if( !!filterreturn ) {
+                    filterreturn->_returncode = nstateret;
+                    filterreturn->_invalidvalues = _vtempconfig;
+                    if( validVelocities ) {
+                        filterreturn->_invalidvelocities = _vtempvelconfig;
+                    }
+                    filterreturn->_fTimeWhenInvalid = 1.0;
+                }
+                return nstateret;
+            }
+
             // the neighbor function could be a constraint function and might move _vtempconfig by more than the specified dQ! so double check the straight light distance between them justin case?
             // TODO check if acceleration limits are satisfied between _vtempconfig, _vprevtempconfig, and _vprevtempvelconfig
             int numPostNeighSteps = 1;
@@ -3505,14 +3565,8 @@ int DynamicsCollisionConstraint::Check(const std::vector<dReal>& q0, const std::
             }
 
             if( numPostNeighSteps > 1 ) {
-                bHasRampDeviatedFromInterpolation = true;
-                // should never happen, but just in case _neighstatefn is some non-linear constraint projection
-                if( _listCheckBodies.size() > 0 ) {
-                    RAVELOG_WARN_FORMAT("env=%d, have to divide the arc in %d steps even after original interpolation is done, interval=%d", _listCheckBodies.front()->GetEnv()->GetId()%numPostNeighSteps%interval);
-                }
-                else {
-                    RAVELOG_WARN_FORMAT("have to divide the arc in %d steps even after original interpolation is done, interval=%d", numPostNeighSteps%interval);
-                }
+                bHasRampDeviatedFromInterpolation = true; // set here again just in case
+                RAVELOG_WARN_FORMAT("env=%s, have to divide the arc in %d steps even after original interpolation is done, interval=%d", _listCheckBodies.front()->GetEnv()->GetNameId()%numPostNeighSteps%interval);
 
                 // this case should be rare, so can create a vector here. don't look at constraints since we would never converge...
                 // note that circular constraints would break here
@@ -3528,7 +3582,7 @@ int DynamicsCollisionConstraint::Check(const std::vector<dReal>& q0, const std::
                 _vprevtempconfig = _vtempconfig;
                 _vprevtempvelconfig = _vtempvelconfig;
                 // do only numPostNeighSteps-1 since the last step should be checked by _vtempconfig
-                for(int ipoststep = 0; ipoststep+1 < numPostNeighSteps; ++ipoststep) {
+                for(int ipoststep = 0; ipoststep < numPostNeighSteps; ++ipoststep) {
                     for( int idof = 0; idof < (int)_vtempconfig.size(); ++idof) {
                         _vprevtempconfig[idof] += vpostdq[idof];
                     }
@@ -3538,24 +3592,21 @@ int DynamicsCollisionConstraint::Check(const std::vector<dReal>& q0, const std::
                         }
                     }
 
-                    int nstateret = _SetAndCheckState(params, _vprevtempconfig, _vprevtempvelconfig, _vtempaccelconfig, maskoptions, filterreturn);
-//                        if( !!params->_getstatefn ) {
-//                            params->_getstatefn(_vprevtempconfig);     // query again in order to get normalizations/joint limits
-//                        }
-                    // since the timeelapsed is not clear, it is dangerous to write filterreturn->_configurations and filterreturn->_configurationtimes since it could force programing using those times to accelerate too fast. so don't write
-//                        if( !!filterreturn && (options & CFO_FillCheckedConfiguration) ) {
-//                            filterreturn->_configurations.insert(filterreturn->_configurations.end(), _vtempconfig.begin(), _vtempconfig.end());
-//                            filterreturn->_configurationtimes.push_back(timestep);
-//                        }
-                    if( nstateret != 0 ) {
+                    int npostneighret = _SetAndCheckState(params, _vprevtempconfig, _vprevtempvelconfig, _vtempaccelconfig, maskoptions, filterreturn);
+                    if( npostneighret != 0 ) {
                         if( !!filterreturn ) {
-                            filterreturn->_returncode = nstateret;
+                            filterreturn->_returncode = npostneighret;
+                            filterreturn->_invalidvalues = _vprevtempconfig;
+                            if( validVelocities ) {
+                                filterreturn->_invalidvelocities = _vprevtempvelconfig;
+                            }
+                            filterreturn->_fTimeWhenInvalid = 1.0;
                         }
-                        return nstateret;
+                        return npostneighret;
                     }
-                }
-            }
-        }
+                } // end for ipoststep
+            } // end numPostNeighSteps > 1
+        } // end dist > 1e-7
     }
 
     if( !!filterreturn ) {
@@ -4147,7 +4198,7 @@ int DynamicsCollisionConstraint::Check(const std::vector<dReal>& q0, const std::
                         BOOST_ASSERT(0);
                     } // end switch maskinterpolation
                     bool bFoundTimeInstant = false;
-                    dReal root;
+                    dReal root = 0;
                     if( numroots > 0 ) {
                         std::sort(_vrawroots.begin(), _vrawroots.begin() + numroots);
                         for( int iroot = 0; iroot < numroots; ++iroot ) {
