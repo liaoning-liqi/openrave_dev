@@ -596,7 +596,7 @@ EnvironmentBodyRemover::~EnvironmentBodyRemover() noexcept(true) {
         }
     }
     if( !_pGrabbedInfos.empty() ) {
-        // it might be ok with grabbing link doesn't exist if ConnectedBody acitve state changes.
+        // it might be ok with grabbing link doesn't exist if ConnectedBody active state changes.
         std::vector<KinBody::GrabbedInfoPtr>::iterator itRemoveFirst = _pGrabbedInfos.begin();
         for( std::vector<KinBody::GrabbedInfoPtr>::const_iterator itGrabbedInfo = _pGrabbedInfos.begin(); itGrabbedInfo != _pGrabbedInfos.end(); ++itGrabbedInfo ) {
             const KinBody::GrabbedInfoPtr pGrabbedInfo = *itGrabbedInfo;
