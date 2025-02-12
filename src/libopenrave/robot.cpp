@@ -559,7 +559,7 @@ void RobotBase::RobotStateSaver::Release()
     KinBodyStateSaver::Release();
 }
 
-EnvironmentBodyRemover::EnvironmentBodyRemover(KinBodyPtr pBody, int restoreOptions) : _pBody(pBody), _restoreOptions(restoreOptions) {
+EnvironmentBodyRemover::EnvironmentBodyRemover(KinBodyPtr pBody, int restoreOptions) : _pBody(pBody), _environmentBodyIndex(_pBody->GetEnvironmentBodyIndex()), _restoreOptions(restoreOptions) {
     if( _pBody->IsRobot() ) {
         // If the manip comes from a connected body, the information of which manip is active is lost once the robot
         // is removed from env. Need to save the active manip name so that we can set it back later when the robot
@@ -574,7 +574,7 @@ EnvironmentBodyRemover::EnvironmentBodyRemover(KinBodyPtr pBody, int restoreOpti
 }
 
 EnvironmentBodyRemover::~EnvironmentBodyRemover() noexcept(true) {
-    _pBody->GetEnv()->Add(_pBody, IAM_StrictNameChecking);
+    _pBody->GetEnv()->AddKinBody(_pBody, IAM_StrictNameChecking, _environmentBodyIndex);
     if( !!_pBodyRobot && !_activeManipName.empty() ) {
         RobotBase::ManipulatorPtr pmanip = _pBodyRobot->GetManipulator(_activeManipName);
         // it might be ok with manipulator doesn't exist if ConnectedBody acitve state changes.

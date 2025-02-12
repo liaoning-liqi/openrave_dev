@@ -1472,6 +1472,7 @@ private:
     std::vector<KinBody::GrabbedInfoPtr> _pGrabbedInfos; ///< the list of the current grabbed info of pBody at the time of removal.
     RobotBasePtr _pBodyRobot;
     std::string _activeManipName; ///< the name of the current active manipulator of pBody at the time of removal.
+    const int _environmentBodyIndex; ///< environment body index before removal from env. This is used to add body back to the env with same environment body index. Unless explicitly given, EnvironmentBase::Add may assign a different environment body index from the original one. This breaks assumption of constant environmentBodyIndex.
     int _restoreOptions;
 };
 
