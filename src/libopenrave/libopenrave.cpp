@@ -31,6 +31,7 @@
 #include <locale>
 #include <set>
 
+#include "plugindatabase_virtual.h"
 #include "plugindatabase.h"
 
 #include <boost/algorithm/string/trim.hpp>
@@ -444,7 +445,11 @@ public:
         }
 
         // since initialization depends on _pdatabase, have pdatabase be local until it is complete
+#if OPENRAVE_STATIC_PLUGINS
+        boost::shared_ptr<RaveDatabase> pdatabase = boost::make_shared<StaticRaveDatabase>();
+#else
         boost::shared_ptr<RaveDatabase> pdatabase = boost::make_shared<DynamicRaveDatabase>();
+#endif // OPENRAVE_STATIC_PLUGINS
         pdatabase->Init();
 
         char* phomedir = getenv("OPENRAVE_HOME"); // getenv not thread-safe?
@@ -1952,275 +1957,6 @@ void RaveGetVelocityFromAffineDOFVelocities(Vector& linearvel, Vector& angularve
     }
 }
 
-OpenRAVEException::OpenRAVEException() : std::exception(), _s("unknown exception"), _error(ORE_Failed)
-{
-}
-
-OpenRAVEException::OpenRAVEException(const std::string& s, OpenRAVEErrorCode error) : std::exception()
-{
-    _error = error;
-    _s = "openrave (";
-    _s += RaveGetErrorCodeString(_error);
-    _s += "): ";
-    _s += s;
-}
-
-char const* OpenRAVEException::what() const throw() {
-    return _s.c_str();
-}
-
-const std::string& OpenRAVEException::message() const {
-    return _s;
-}
-
-OpenRAVEErrorCode OpenRAVEException::GetCode() const {
-    return _error;
-}
-
-const char* RaveGetErrorCodeString(OpenRAVEErrorCode error)
-{
-    switch(error) {
-    case ORE_Failed: return "Failed";
-    case ORE_InvalidArguments: return "InvalidArguments";
-    case ORE_EnvironmentNotLocked: return "EnvironmentNotLocked";
-    case ORE_CommandNotSupported: return "CommandNotSupported";
-    case ORE_Assert: return "Assert";
-    case ORE_InvalidPlugin: return "InvalidPlugin";
-    case ORE_InvalidInterfaceHash: return "InvalidInterfaceHash";
-    case ORE_NotImplemented: return "NotImplemented";
-    case ORE_InconsistentConstraints: return "InconsistentConstraints";
-    case ORE_NotInitialized: return "NotInitialized";
-    case ORE_InvalidState: return "InvalidState";
-    case ORE_Timeout: return "Timeout";
-    case ORE_InvalidURI: return "InvalidURI";
-    case ORE_BodyNameConflict: return "BodyNameConflict";
-    case ORE_SensorNameConflict: return "SensorNameConflict";
-    case ORE_BodyIdConflict: return "BodyIdConflict";
-    case ORE_EnvironmentFormatUnrecognized: return "EnvironmentFormatUnrecognized";
-    case ORE_CurlTimeout: return "CurlTimeout";
-    case ORE_CurlInvalidHandle: return "CurlInvalidHandle";
-    case ORE_CurlInvalidResponse: return "CurlInvalidResponse";
-    }
-    // should throw an exception?
-    return "";
-}
-
-void CollisionReport::Reset(int coloptions)
-{
-    options = coloptions;
-    if( !(nKeepPrevious & 1) ) {
-        minDistance = 1e20f;
-        numWithinTol = 0;
-        contacts.resize(0);
-        vLinkColliding.resize(0);
-        plink1.reset();
-        plink2.reset();
-        pgeom1.reset();
-        pgeom2.reset();
-    }
-}
-
-std::string CollisionReport::__str__() const
-{
-    stringstream s;
-    if( vLinkColliding.size() > 0 ) {
-        s << "pairs=" << vLinkColliding.size();
-        int index = 0;
-        FOREACH(itlinkpair, vLinkColliding) {
-            s << ", [" << index << "](";
-            if( !!itlinkpair->first ) {
-                KinBodyPtr parent = itlinkpair->first->GetParent(true);
-                if( !!parent ) {
-                    s << parent->GetName() << ":" << itlinkpair->first->GetName();
-                }
-                else {
-                    RAVELOG_WARN_FORMAT("could not get parent for link name %s when printing collision report", itlinkpair->first->GetName());
-                    s << "[deleted]:" << itlinkpair->first->GetName();
-                }
-            }
-            s << ")x(";
-            if( !!itlinkpair->second ) {
-                KinBodyPtr parent = itlinkpair->second->GetParent(true);
-                if( !!parent ) {
-                    s << parent->GetName() << ":" << itlinkpair->second->GetName();
-                }
-                else {
-                    RAVELOG_WARN_FORMAT("could not get parent for link name %s when printing collision report", itlinkpair->second->GetName());
-                    s << "[deleted]:" << itlinkpair->second->GetName();
-                }
-            }
-            s << ") ";
-            ++index;
-        }
-    }
-    else {
-        s << "(";
-        if( !!plink1 ) {
-            KinBodyPtr parent = plink1->GetParent(true);
-            if( !!parent ) {
-                s << plink1->GetParent()->GetName() << ":" << plink1->GetName();
-            }
-            else {
-                RAVELOG_WARN_FORMAT("could not get parent for link name %s when printing collision report", plink1->GetName());
-                s << "[deleted]:" << plink1->GetName();
-            }
-            if( !!pgeom1 ) {
-                s << ":" << pgeom1->GetName();
-            }
-        }
-        s << ")x(";
-        if( !!plink2 ) {
-            KinBodyPtr parent = plink2->GetParent(true);
-            if( !!parent ) {
-                s << plink2->GetParent()->GetName() << ":" << plink2->GetName();
-            }
-            else {
-                RAVELOG_WARN_FORMAT("could not get parent for link name %s when printing collision report", plink2->GetName());
-                s << "[deleted]:" << plink2->GetName();
-            }
-            if( !!pgeom2 ) {
-                s << ":" << pgeom2->GetName();
-            }
-        }
-        s << ")";
-    }
-    s << ", contacts="<<contacts.size();
-    if( minDistance < 1e10 ) {
-        s << ", mindist="<<minDistance;
-    }
-    return s.str();
-}
-
-
-void CollisionReportInfo::Reset()
-{
-    body1Name.clear();
-    body2Name.clear();
-    body1LinkName.clear();
-    body2LinkName.clear();
-    body1GeomName.clear();
-    body2GeomName.clear();
-    contacts.clear();
-}
-
-void CollisionReportInfo::InitInfoFromReport(const OpenRAVE::CollisionReport& report)
-{
-    Reset();
-    if ( !!report.plink1 ) {
-        body1LinkName = report.plink1->GetName();
-        const KinBodyPtr pBody1 = report.plink1->GetParent();
-        if ( !!pBody1 ) {
-            body1Name = pBody1->GetName();
-        }
-    }
-    if ( !!report.pgeom1 ) {
-        body1GeomName = report.pgeom1->GetName();
-    }
-
-    if ( !!report.plink2 ) {
-        body2LinkName = report.plink2->GetName();
-        const KinBodyPtr pBody2 = report.plink2->GetParent();
-        if ( !!pBody2 ) {
-            body2Name = pBody2->GetName();
-        }
-    }
-    if ( !!report.pgeom2 ) {
-        body2GeomName = report.pgeom2->GetName();
-    }
-
-    contacts.resize(report.contacts.size());
-    for(int icontact = 0; icontact < (int)contacts.size(); ++icontact) {
-        contacts[icontact] = report.contacts[icontact].pos;
-    }
-}
-
-void CollisionReportInfo::LoadFromJson(const rapidjson::Value& rReport)
-{
-    orjson::LoadJsonValueByKey(rReport, "body1Name", body1Name);
-    orjson::LoadJsonValueByKey(rReport, "body2Name", body2Name);
-    orjson::LoadJsonValueByKey(rReport, "body1LinkName", body1LinkName);
-    orjson::LoadJsonValueByKey(rReport, "body2LinkName", body2LinkName);
-    orjson::LoadJsonValueByKey(rReport, "body1GeomName", body1GeomName);
-    orjson::LoadJsonValueByKey(rReport, "body2GeomName", body2GeomName);
-    if( rReport.HasMember("contacts") && rReport["contacts"].IsArray() ) {
-        for( const rapidjson::Value& rContact : rReport["contacts"].GetArray() ) {
-            if( !rContact.IsArray() || rContact.Size() != 3 ) {
-                continue;
-            }
-            bool isAllNumber = true;
-            for( const rapidjson::Value& rXYZ : rContact.GetArray() ) {
-                if (!rXYZ.IsNumber()) {
-                    isAllNumber = false;
-                    break;
-                }
-            }
-            if (!isAllNumber) {
-                continue;
-            }
-            contacts.push_back(OpenRAVE::Vector(rContact[0].GetDouble(), rContact[1].GetDouble(), rContact[2].GetDouble()));
-        }
-    }
-}
-
-void CollisionReportInfo::SaveToJson(rapidjson::Value& rReport, rapidjson::Document::AllocatorType& alloc) const
-{
-    if( !body1Name.empty() ) {
-        orjson::SetJsonValueByKey(rReport, "body1Name", body1Name, alloc);
-    }
-    if( !body2Name.empty() ) {
-        orjson::SetJsonValueByKey(rReport, "body2Name", body2Name, alloc);
-    }
-
-    if( !body1LinkName.empty() ) {
-        orjson::SetJsonValueByKey(rReport, "body1LinkName", body1LinkName, alloc);
-    }
-    if( !body2LinkName.empty() ) {
-        orjson::SetJsonValueByKey(rReport, "body2LinkName", body2LinkName, alloc);
-    }
-
-    if( !body1GeomName.empty() ) {
-        orjson::SetJsonValueByKey(rReport, "body1GeomName", body1GeomName, alloc);
-    }
-    if( !body2GeomName.empty() ) {
-        orjson::SetJsonValueByKey(rReport, "body2GeomName", body2GeomName, alloc);
-    }
-
-    {
-        rapidjson::Value rContacts; rContacts.SetArray();
-        rContacts.Reserve(contacts.size(), alloc);
-        for(const Vector& contact : contacts) {
-            rapidjson::Value rContact; rContact.SetArray();
-            rContact.Reserve(3, alloc);
-            rContact.PushBack(rapidjson::Value(contact[0]), alloc);
-            rContact.PushBack(rapidjson::Value(contact[1]), alloc);
-            rContact.PushBack(rapidjson::Value(contact[2]), alloc);
-            rContacts.PushBack(rContact, alloc);
-        }
-
-        rReport.AddMember(rapidjson::Document::StringRefType("contacts"), rContacts, alloc);
-    }
-}
-
-bool CollisionReportInfo::operator==(const CollisionReportInfo& other) const
-{
-    if (body1Name != other.body1Name ||
-        body2Name != other.body2Name ||
-        body1LinkName != other.body1LinkName ||
-        body2LinkName != other.body2LinkName ||
-        body1GeomName != other.body1GeomName ||
-        body2GeomName != other.body2GeomName ||
-        contacts.size() != other.contacts.size()) {
-        return false;
-    }
-
-    for (size_t index = 0; index < contacts.size(); ++index) {
-        if (contacts[index] != other.contacts[index]) {
-            return false;
-        }
-    }
-    return true;
-}
-
 bool PhysicsEngineBase::GetLinkForceTorque(KinBody::LinkConstPtr plink, Vector& force, Vector& torque)
 {
     force = Vector(0,0,0);
@@ -2295,11 +2031,11 @@ void TriMesh::Append(const TriMesh& mesh)
 {
     int offset = (int)vertices.size();
     vertices.insert(vertices.end(), mesh.vertices.begin(), mesh.vertices.end());
-    if( indices.capacity() < indices.size()+mesh.indices.size() ) {
-        indices.reserve(indices.size()+mesh.indices.size());
-    }
-    FOREACHC(it, mesh.indices) {
-        indices.push_back(*it+offset);
+
+    const size_t baseIndicesSize = indices.size();
+    indices.resize(baseIndicesSize + mesh.indices.size());
+    for (size_t i = 0; i < mesh.indices.size(); i++) {
+        indices[baseIndicesSize + i] = mesh.indices[i] + offset;
     }
 }
 
@@ -2310,11 +2046,11 @@ void TriMesh::Append(const TriMesh& mesh, const Transform& trans)
     for(size_t i = 0; i < mesh.vertices.size(); ++i) {
         vertices[i+offset] = trans * mesh.vertices[i];
     }
-    if( indices.capacity() < indices.size()+mesh.indices.size() ) {
-        indices.reserve(indices.size()+mesh.indices.size());
-    }
-    FOREACHC(it, mesh.indices) {
-        indices.push_back(*it+offset);
+
+    const size_t baseIndicesSize = indices.size();
+    indices.resize(baseIndicesSize + mesh.indices.size());
+    for (size_t i = 0; i < mesh.indices.size(); i++) {
+        indices[baseIndicesSize + i] = mesh.indices[i] + offset;
     }
 }
 
@@ -2369,6 +2105,21 @@ void TriMesh::serialize(std::ostream& o, int options) const
     FOREACHC(it,indices) {
         o << *it << " ";
     }
+}
+
+void TriMesh::SerializeJSON(rapidjson::Value& rTriMesh, rapidjson::Document::AllocatorType& allocator, dReal fUnitScale, int options) const
+{
+    rTriMesh.SetObject();
+    rapidjson::Value rVertices;
+    rVertices.SetArray();
+    rVertices.Reserve(vertices.size()*3, allocator);
+    for(size_t ivertex = 0; ivertex < vertices.size(); ++ivertex) {
+        rVertices.PushBack(vertices[ivertex][0]*fUnitScale, allocator);
+        rVertices.PushBack(vertices[ivertex][1]*fUnitScale, allocator);
+        rVertices.PushBack(vertices[ivertex][2]*fUnitScale, allocator);
+    }
+    rTriMesh.AddMember("vertices", rVertices, allocator);
+    orjson::SetJsonValueByKey(rTriMesh, "indices", indices, allocator);
 }
 
 std::ostream& operator<<(std::ostream& O, const TriMesh& trimesh)
@@ -2604,6 +2355,32 @@ bool SensorBase::CameraGeomData::DeserializeJSON(const rapidjson::Value& value, 
     return true;
 }
 
+bool SensorBase::LaserGeomData::SerializeJSON(rapidjson::Value& value, rapidjson::Document::AllocatorType& allocator, dReal fUnitScale, int options) const
+{
+    SensorBase::SensorGeometry::SerializeJSON(value, allocator, fUnitScale, options);
+    orjson::SetJsonValueByKey(value, "minAngle", min_angle[0], allocator);
+    orjson::SetJsonValueByKey(value, "maxAngle", max_angle[0], allocator);
+    orjson::SetJsonValueByKey(value, "resolution", resolution[0], allocator);
+    orjson::SetJsonValueByKey(value, "minRange", min_range, allocator);
+    orjson::SetJsonValueByKey(value, "maxRange", max_range, allocator);
+    orjson::SetJsonValueByKey(value, "timeIncrement", time_increment, allocator);
+    orjson::SetJsonValueByKey(value, "timeScan", time_scan, allocator);
+    return true;
+}
+
+bool SensorBase::LaserGeomData::DeserializeJSON(const rapidjson::Value& value, dReal fUnitScale)
+{
+    SensorBase::SensorGeometry::DeserializeJSON(value, fUnitScale);
+    orjson::LoadJsonValueByKey(value, "minAngle", min_angle[0]);
+    orjson::LoadJsonValueByKey(value, "maxAngle", max_angle[0]);
+    orjson::LoadJsonValueByKey(value, "resolution", resolution[0]);
+    orjson::LoadJsonValueByKey(value, "minRange", min_range);
+    orjson::LoadJsonValueByKey(value, "maxRange", max_range);
+    orjson::LoadJsonValueByKey(value, "timeIncrement", time_increment);
+    orjson::LoadJsonValueByKey(value, "timeScan", time_scan);
+    return true;
+}
+
 bool SensorBase::Force6DGeomData::SerializeXML(BaseXMLWriterPtr writer, int options) const
 {
     SensorGeometry::SerializeXML(writer, options);
@@ -2677,20 +2454,8 @@ int SpaceSamplerBase::_CallStatusFunctions(int sampleiteration)
     return ret;
 }
 
-CollisionOptionsStateSaver::CollisionOptionsStateSaver(CollisionCheckerBasePtr p, int newoptions, bool required)
+void ModuleBase::SetIkFailureAccumulator(IkFailureAccumulatorBasePtr& pIkFailureAccumulator)
 {
-    _oldoptions = p->GetCollisionOptions();
-    _p = p;
-    if( !_p->SetCollisionOptions(newoptions) ) {
-        if( required ) {
-            throw openrave_exception(str(boost::format(_("Failed to set collision options %d in checker %s\n"))%newoptions%_p->GetXMLId()));
-        }
-    }
-}
-
-CollisionOptionsStateSaver::~CollisionOptionsStateSaver()
-{
-    _p->SetCollisionOptions(_oldoptions);
 }
 
 void RaveInitRandomGeneration(uint32_t seed)
@@ -2722,8 +2487,13 @@ double RaveRandomDouble(IntervalType interval)
 void IkParameterization::SerializeJSON(rapidjson::Value& rIkParameterization, rapidjson::Document::AllocatorType& allocator, dReal fUnitScale) const
 {
     rIkParameterization.SetObject();
-    orjson::SetJsonValueByKey(rIkParameterization, "id", GetId(), allocator);
-    orjson::SetJsonValueByKey(rIkParameterization, "type", GetName(), allocator);
+    if( !_id.empty() ) {
+        orjson::SetJsonValueByKey(rIkParameterization, "id", _id, allocator);
+    }
+    if( !_name.empty() ) {
+        orjson::SetJsonValueByKey(rIkParameterization, "name", _name, allocator);
+    }
+    orjson::SetJsonValueByKey(rIkParameterization, "type", GetTypeString(), allocator);
 
     Transform transform = _transform;
     transform.trans *= fUnitScale;
@@ -2786,6 +2556,7 @@ void IkParameterization::DeserializeJSON(const rapidjson::Value& rIkParameteriza
         throw OPENRAVE_EXCEPTION_FORMAT0(_("Cannot decode non-object JSON value to IkParameterization"), ORE_InvalidArguments);
     }
     orjson::LoadJsonValueByKey(rIkParameterization, "id", _id);
+    orjson::LoadJsonValueByKey(rIkParameterization, "name", _name);
 
     if( rIkParameterization.HasMember("type") ) {
         const char* ptype =  rIkParameterization["type"].GetString();
@@ -2920,7 +2691,45 @@ void IkParameterization::DeserializeJSON(const rapidjson::Value& rIkParameteriza
     // TODO have to scale _mapCustomData by fUnitScale
 }
 
-StringReadable::StringReadable(const std::string& id, const std::string& data) : Readable(id), _data(data)
+void IkParameterization::ConvertUnitScale(dReal fUnitScale)
+{
+    switch (_type & ~IKP_VelocityDataBit) {
+    case IKP_Transform6D:
+    case IKP_Translation3D:
+    case IKP_TranslationXY2D:
+    case IKP_TranslationXYOrientation3D:
+    case IKP_Ray4D:
+    case IKP_Lookat3D:
+    case IKP_TranslationDirection5D:
+    case IKP_TranslationXAxisAngle4D:
+    case IKP_TranslationYAxisAngle4D:
+    case IKP_TranslationZAxisAngle4D:
+    case IKP_TranslationXAxisAngleZNorm4D:
+    case IKP_TranslationYAxisAngleXNorm4D:
+    case IKP_TranslationZAxisAngleYNorm4D:
+        _transform.trans *= fUnitScale;
+        break;
+    case IKP_TranslationLocalGlobal6D:
+        _transform.trans *= fUnitScale;
+        _transform.rot *= fUnitScale;
+        break;
+    }
+
+    // TODO have to scale _mapCustomData by fUnitScale
+}
+
+StringReadable::StringReadable(const std::string& id, const std::string& data)
+    : Readable(id), _data(data)
+{
+}
+
+StringReadable::StringReadable(const std::string& id, std::string&& data)
+    : Readable(id), _data(std::move(data))
+{
+}
+
+StringReadable::StringReadable(const std::string& id, const char* data, size_t dataLength)
+    : Readable(id), _data(data, dataLength)
 {
 }
 
@@ -2931,6 +2740,16 @@ StringReadable::~StringReadable()
 void StringReadable::SetData(const std::string& newdata)
 {
     _data = newdata;
+}
+
+void StringReadable::SetData(std::string&& newdata)
+{
+    _data = std::move(newdata);
+}
+
+void StringReadable::SetData(const char* data, size_t dataLength)
+{
+    _data.assign(data, dataLength);
 }
 
 const std::string& StringReadable::GetData() const
@@ -2955,14 +2774,105 @@ bool StringReadable::SerializeXML(BaseXMLWriterPtr writer, int options) const
 
 bool StringReadable::SerializeJSON(rapidjson::Value& value, rapidjson::Document::AllocatorType& allocator, dReal fUnitScale, int options) const
 {
-    value.SetString(_data.c_str(), allocator);
+    value.SetString(_data.c_str(), _data.size(), allocator);
     return true;
 }
 
 bool StringReadable::DeserializeJSON(const rapidjson::Value& value, dReal fUnitScale)
 {
-    _data = value.GetString();
+    _data.assign(value.GetString(), value.GetStringLength());
     return true;
+}
+
+JSONReadable::JSONReadable(const std::string& id) : JSONReadable(id, rapidjson::Value())
+{
+}
+
+JSONReadable::JSONReadable(const std::string& id, const rapidjson::Value& rValue) : Readable(id), _vAllocBuffer(4*1024, 0), _rAlloc(&_vAllocBuffer[0], _vAllocBuffer.size())
+{
+    _rValue.CopyFrom(rValue, _rAlloc);
+}
+
+JSONReadable::~JSONReadable()
+{
+}
+
+void JSONReadable::SetValue(const rapidjson::Value& rValue)
+{
+    _rAlloc.Clear();
+    _rValue.CopyFrom(rValue, _rAlloc);
+}
+
+rapidjson::Value& JSONReadable::GetValue()
+{
+    return _rValue;
+}
+
+const rapidjson::Value& JSONReadable::GetValue() const
+{
+    return _rValue;
+}
+
+rapidjson::Document::AllocatorType& JSONReadable::GetAllocator()
+{
+    return _rAlloc;
+}
+
+bool JSONReadable::SerializeXML(BaseXMLWriterPtr writer, int options) const
+{
+    return false;
+}
+
+bool JSONReadable::SerializeJSON(rapidjson::Value& rValue, rapidjson::Document::AllocatorType& rAlloc, dReal fUnitScale, int options) const
+{
+    rValue.CopyFrom(_rValue, rAlloc);
+    return true;
+}
+
+bool JSONReadable::DeserializeJSON(const rapidjson::Value& rValue, dReal fUnitScale)
+{
+    _rAlloc.Clear();
+    _rValue.CopyFrom(rValue, _rAlloc);
+    return true;
+}
+
+int64_t ConvertIsoFormatDateTimeToLinuxTimeUS(const char* pIsoFormatDateTime)
+{
+    if (pIsoFormatDateTime == nullptr) {
+        return 0;
+    }
+    // RFC 3339 Nano format (2006-01-02T15:04:05.999999999Z07:00)
+    struct tm datetime = {0};
+    const char *remain = strptime(pIsoFormatDateTime, "%FT%T", &datetime);
+    if (remain == nullptr) {
+        return 0;
+    }
+
+    int64_t timestamp = std::mktime(&datetime) - timezone;
+    timestamp *= 1000000;
+
+    if (*remain == '.') {
+        int64_t fraction = 0, multiplier = 100000000;
+        while (std::isdigit(*(++remain)) && multiplier > 0) {
+            fraction += (*remain - '0') * multiplier;
+            multiplier /= 10;
+        }
+        timestamp += fraction / 1000; // nanoseconds convert to microseconds
+    }
+
+    if (*remain == '+' || *remain == '-') {
+        const bool positive = (*(remain++) == '+');
+        int64_t tz_hour = 0, tz_min = 0;
+        if (std::sscanf(remain, "%ld:%ld", &tz_hour, &tz_min) == 2) {
+            if (positive) {
+                timestamp -= (tz_hour * 3600 + tz_min * 60) * 1000000;
+            } else {
+                timestamp += (tz_hour * 3600 + tz_min * 60) * 1000000;
+            }
+        }
+    }
+
+    return timestamp;
 }
 
 } // end namespace OpenRAVE

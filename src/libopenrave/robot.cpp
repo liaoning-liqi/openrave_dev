@@ -26,6 +26,7 @@ RobotBase::GripperInfo& RobotBase::GripperInfo::operator=(const RobotBase::Gripp
     name = other.name;
     grippertype = other.grippertype;
     gripperJointNames = other.gripperJointNames;
+    vChuckingDirections = other.vChuckingDirections;
     rapidjson::Document docGripperInfo;
     if (other._docGripperInfo.IsObject()) {
         docGripperInfo.CopyFrom(other._docGripperInfo, docGripperInfo.GetAllocator());
@@ -40,6 +41,7 @@ void RobotBase::GripperInfo::Reset()
     name.clear();
     grippertype.clear();
     gripperJointNames.clear();
+    vChuckingDirections.clear();
     _docGripperInfo = rapidjson::Document();
 }
 
@@ -53,6 +55,7 @@ void RobotBase::GripperInfo::SerializeJSON(rapidjson::Value &value, rapidjson::D
     orjson::SetJsonValueByKey(value, "id", _id, allocator);
     orjson::SetJsonValueByKey(value, "grippertype", grippertype, allocator);
     orjson::SetJsonValueByKey(value, "gripperJointNames", gripperJointNames, allocator);
+    orjson::SetJsonValueByKey(value, "chuckingDirection", vChuckingDirections, allocator);
 }
 
 void RobotBase::GripperInfo::DeserializeJSON(const rapidjson::Value& value, dReal fUnitScale, int options)
@@ -66,6 +69,46 @@ void RobotBase::GripperInfo::DeserializeJSON(const rapidjson::Value& value, dRea
     orjson::LoadJsonValueByKey(value, "grippertype", grippertype);
     orjson::LoadJsonValueByKey(value, "gripperJointNames", gripperJointNames);
 
+    {
+        rapidjson::Value::ConstMemberIterator itChuckingDirections = value.FindMember("chuckingDirection");
+        vChuckingDirections.assign(gripperJointNames.size(), 0);
+        if( itChuckingDirections != value.MemberEnd() ) {
+            const rapidjson::Value& rChuckingDirections = itChuckingDirections->value;
+            if( !rChuckingDirections.IsArray() ) {
+                throw OPENRAVE_EXCEPTION_FORMAT(_("When loading gripperInfo '%s' with id '%s', 'chuckingDirection' needs to be an array, currently it is '%s'"), name%_id%orjson::DumpJson(rChuckingDirections), ORE_InvalidArguments);
+            }
+
+            int nMinSize = rChuckingDirections.Size();
+            if( gripperJointNames.size() < rChuckingDirections.Size() ) {
+                RAVELOG_WARN_FORMAT("When loading gripperInfo with '%s' with id '%s', the size of 'chuckingDirection'=%d is more than the size of 'gripperJointNames'=%d. Clamp it with 'gripperJointNames' size.", name%_id%rChuckingDirections.Size()%gripperJointNames.size());
+                nMinSize = gripperJointNames.size();
+            }
+            for(int index = 0; index < nMinSize; ++index) {
+                int direction = 0;
+                if( rChuckingDirections[index].IsFloat() || rChuckingDirections[index].IsDouble() ) {
+                    double fdirection = 0;
+                    orjson::LoadJsonValue(rChuckingDirections[index], fdirection);
+                    if( fdirection > 0 ) {
+                        direction = 1;
+                    }
+                    else if( fdirection < 0 ) {
+                        direction = -1;
+                    }
+                }
+                else {
+                    orjson::LoadJsonValue(rChuckingDirections[index], direction);
+                    if (direction > 0) {
+                        direction = 1;
+                    }
+                    else if (direction < 0) {
+                        direction = -1;
+                    }
+                }
+                vChuckingDirections[index] = direction;
+            }
+        }
+    }
+
     rapidjson::Document docGripperInfo;
     docGripperInfo.SetObject();
     if (_docGripperInfo.IsObject()) {
@@ -74,10 +117,13 @@ void RobotBase::GripperInfo::DeserializeJSON(const rapidjson::Value& value, dRea
     }
     for (rapidjson::Value::ConstMemberIterator it = value.MemberBegin(); it != value.MemberEnd(); ++it) {
         const std::string& memberName = it->name.GetString();
-        if (memberName == "id" || memberName == "name" || memberName == "grippertype" || memberName == "gripperJointNames") {
+        if (memberName == "id" || memberName == "name" || memberName == "grippertype" || memberName == "gripperJointNames" || memberName == "chuckingDirection" ) {
             continue;
         }
-        orjson::SetJsonValueByKey(docGripperInfo, memberName, it->value);
+
+        // update objects recursively
+        orjson::UpdateJsonByKey(docGripperInfo, memberName.c_str(), it->value, docGripperInfo.GetAllocator());
+
     }
     _docGripperInfo.Swap(docGripperInfo);
 }
@@ -87,8 +133,23 @@ UpdateFromInfoResult RobotBase::GripperInfo::UpdateFromInfo(const RobotBase::Gri
     if (info == *this) {
         return UFIR_NoChange;
     }
+
+    UpdateFromInfoResult updateFromInfoResult = UFIR_Success;
+    // In the following, if necessary, set UFIR_RequireReinitialize for members referred by Manipulator since these need to update internal information of Manipulator.
+    if( info.name != name ) {
+        RAVELOG_VERBOSE_FORMAT("gripper %s name changed", name);
+        updateFromInfoResult = UFIR_RequireReinitialize;
+    }
+    if( info.gripperJointNames != gripperJointNames ) {
+        RAVELOG_VERBOSE_FORMAT("gripper %s gripperJointNames changed", name);
+        updateFromInfoResult = UFIR_RequireReinitialize;
+    }
+    if( info.vChuckingDirections != vChuckingDirections ) {
+        RAVELOG_VERBOSE_FORMAT("gripper %s chuckingDirection changed", name);
+        updateFromInfoResult = UFIR_RequireReinitialize;
+    }
     *this = info;
-    return UFIR_Success;
+    return updateFromInfoResult;
 }
 
 void RobotBase::AttachedSensorInfo::Reset()
@@ -383,6 +444,60 @@ const std::string& RobotBase::AttachedSensor::GetStructureHash() const
     return __hashstructure;
 }
 
+void RobotBase::_PreprocessRestoreGrabbedBodies(std::unordered_map<int, KinBody::SavedGrabbedData>& grabbedDataByEnvironmentIndex,
+                                                const std::vector<int8_t>& vConnectedBodyActiveStates) const
+{
+    // For now, if a robot's connected body active states change, have to reset _setGrabberLinkIndicesToIgnore
+    bool bConnectedBodyStatesChanged = vConnectedBodyActiveStates.size() != _vecConnectedBodies.size();
+    if( !bConnectedBodyStatesChanged ) {
+        for( size_t iConnectedBody = 0; iConnectedBody < vConnectedBodyActiveStates.size(); ++iConnectedBody ) {
+            if(vConnectedBodyActiveStates[iConnectedBody] != _vecConnectedBodies[iConnectedBody]->IsActive() ) {
+                bConnectedBodyStatesChanged = true;
+                break;
+            }
+        }
+    }
+
+    if( bConnectedBodyStatesChanged ) {
+        if( !grabbedDataByEnvironmentIndex.empty() ) {
+            RAVELOG_WARN_FORMAT("env=%s, robot '%s' connected body states changed while grabbing %d bodies, so invalidating", GetEnv()->GetNameId()%GetName()%grabbedDataByEnvironmentIndex.size());
+            for (std::unordered_map<int, SavedGrabbedData>::value_type& grabPair : grabbedDataByEnvironmentIndex) {
+                grabPair.second.listNonCollidingIsValid = false;
+            }
+        }
+    }
+}
+
+void RobotBase::_RestoreStateForClone(const RobotBasePtr& pOriginalRobot, const bool bRestoreGrabbedBodiesOnly)
+{
+    // In the old code, this is done by KinBodyStateSaver's Save_GrabbedBodies|Save_LinkVelocities|Save_ActiveDOF|Save_ActiveManipulator
+    // The restoring order was: RobotBase::Save_GrabbedBodies -> RobotBase::Save_ActiveDOF -> RobotBase::Save_ActiveManipulator -> KinBody::Save_GrabbedBodies -> KinBody::Save_LinkVelocities
+    // This function re-implement it by individual API call.
+
+    // RobotBase::Save_GrabbedBodies. It requires the same data of Save_ConnectedBodies.
+    std::vector<int8_t> vOriginalConnectedBodyActiveStates;
+    pOriginalRobot->GetConnectedBodyActiveStates(vOriginalConnectedBodyActiveStates);
+    std::unordered_map<int, KinBody::SavedGrabbedData> originalGrabbedDataByEnvironmentIndex;
+    pOriginalRobot->_SaveKinBodySavedGrabbedData(originalGrabbedDataByEnvironmentIndex);
+    _PreprocessRestoreGrabbedBodies(originalGrabbedDataByEnvironmentIndex, vOriginalConnectedBodyActiveStates);
+
+    // RobotBase::Save_ActiveDOF, RobotBase::Save_ActiveManipulator
+    if( !bRestoreGrabbedBodiesOnly ) {
+        RobotBase::RobotStateSaver saver(pOriginalRobot, KinBody::Save_ActiveDOF|KinBody::Save_ActiveManipulator);
+        saver.Restore(shared_robot());
+    }
+
+    // KinBody::Save_GrabbedBodies
+    const int options = 0; // the following function works without Save_GrabbedBodies. also, the original code in Environment's Clone does not set Save_LinkTransformation, used in the following function. Thus, we don't need any options here and set it to 0.
+    _RestoreGrabbedBodiesFromSavedData(*pOriginalRobot, options, originalGrabbedDataByEnvironmentIndex, pOriginalRobot->_mapListNonCollidingInterGrabbedLinkPairsWhenGrabbed, /*bCalledFromClone*/ true);
+
+    // KinBody::Save_LinkVelocities
+    if( !bRestoreGrabbedBodiesOnly ) {
+        RobotBase::RobotStateSaver saver(pOriginalRobot, KinBody::Save_LinkVelocities);
+        saver.Restore(shared_robot());
+    }
+}
+
 RobotBase::RobotStateSaver::RobotStateSaver(RobotBasePtr probot, int options) : KinBodyStateSaver(probot, options), _probot(probot)
 {
     if( _options & Save_ActiveDOF ) {
@@ -514,25 +629,7 @@ void RobotBase::RobotStateSaver::_RestoreRobot(boost::shared_ptr<RobotBase> prob
     }
 
     if( _options & Save_GrabbedBodies ) {
-        // For now, if a robot's connected body active states change, have to reset _setGrabberLinkIndicesToIgnore
-        bool bConnectedBodyStatesChanged = _vConnectedBodyActiveStates.size() != probot->_vecConnectedBodies.size();
-        if( !bConnectedBodyStatesChanged ) {
-            for( size_t iConnectedBody = 0; iConnectedBody < _vConnectedBodyActiveStates.size(); ++iConnectedBody ) {
-                if(_vConnectedBodyActiveStates[iConnectedBody] != probot->_vecConnectedBodies[iConnectedBody]->IsActive() ) {
-                    bConnectedBodyStatesChanged = true;
-                    break;
-                }
-            }
-        }
-
-        if( bConnectedBodyStatesChanged ) {
-            if( !_vGrabbedBodies.empty() ) {
-                RAVELOG_WARN_FORMAT("env=%s, robot '%s' connected body states changed while grabbing %d bodies, so invalidating", probot->GetEnv()->GetNameId()%probot->GetName()%_vGrabbedBodies.size());
-                for(GrabbedPtr& grabbed : _vGrabbedBodies) {
-                    grabbed->InvalidateListNonCollidingLinks();
-                }
-            }
-        }
+        probot->_PreprocessRestoreGrabbedBodies(_grabbedDataByEnvironmentIndex, _vConnectedBodyActiveStates);
     }
 
     if( _options & Save_ActiveDOF ) {
@@ -715,7 +812,7 @@ void RobotBase::RobotBaseInfo::DeserializeJSON(const rapidjson::Value& value, dR
     }
 }
 
-void RobotBase::RobotBaseInfo::_DeserializeReadableInterface(const std::string& id, const rapidjson::Value& value, dReal fUnitScale) {
+void RobotBase::RobotBaseInfo::_DeserializeReadableInterface(const std::string& id, const rapidjson::Value& rReadable, dReal fUnitScale) {
     std::map<std::string, ReadablePtr>::iterator itReadable = _mReadableInterfaces.find(id);
     ReadablePtr pReadable;
     if(itReadable != _mReadableInterfaces.end()) {
@@ -723,16 +820,18 @@ void RobotBase::RobotBaseInfo::_DeserializeReadableInterface(const std::string& 
     }
     BaseJSONReaderPtr pReader = RaveCallJSONReader(PT_Robot, id, pReadable, AttributesList());
     if (!!pReader) {
-        pReader->DeserializeJSON(value, fUnitScale);
+        pReader->DeserializeJSON(rReadable, fUnitScale);
         _mReadableInterfaces[id] = pReader->GetReadable();
         return;
     }
-    if (value.IsString()) {
-        StringReadablePtr pReadableString(new StringReadable(id, value.GetString()));
+    if (rReadable.IsString()) {
+        StringReadablePtr pReadableString(new StringReadable(id, rReadable.GetString()));
         _mReadableInterfaces[id] = pReadableString;
         return;
     }
-    RAVELOG_WARN_FORMAT("deserialize readable interface %s failed", id);
+    JSONReadablePtr pReadableJSON(new JSONReadable(id, rReadable));
+    _mReadableInterfaces[id] = pReadableJSON;
+    // RAVELOG_WARN_FORMAT("deserialize readable interface %s failed", id);
 }
 
 RobotBase::RobotBase(EnvironmentBasePtr penv) : KinBody(PT_Robot, penv)
@@ -2046,6 +2145,15 @@ bool RobotBase::Grab(KinBodyPtr pbody, const std::set<int>& setRobotLinksToIgnor
     return Grab(pbody, pmanip->GetEndEffector(), setRobotLinksToIgnore, rGrabbedUserData);
 }
 
+bool RobotBase::Grab(KinBodyPtr pbody, const std::set<std::string>& setIgnoreBodyLinkNames, const rapidjson::Value& rGrabbedUserData)
+{
+    ManipulatorPtr pmanip = GetActiveManipulator();
+    if( !pmanip ) {
+        return false;
+    }
+    return Grab(pbody, pmanip->GetEndEffector(), setIgnoreBodyLinkNames, rGrabbedUserData);
+}
+
 bool RobotBase::Grab(KinBodyPtr body, LinkPtr pRobotLinkToGrabWith, const rapidjson::Value& rGrabbedUserData)
 {
     return KinBody::Grab(body, pRobotLinkToGrabWith, rGrabbedUserData);
@@ -2533,9 +2641,9 @@ const std::string& RobotBase::GetRobotStructureHash() const
     return __hashrobotstructure;
 }
 
-void RobotBase::ExtractInfo(RobotBaseInfo& info)
+void RobotBase::ExtractInfo(RobotBaseInfo& info, ExtractInfoOptions options)
 {
-    KinBody::ExtractInfo(info);
+    KinBody::ExtractInfo(info, options);
     info._isRobot = true;
     // need to avoid extracting info from connectedbodies
     std::vector<bool> isConnectedManipulator(_vecManipulators.size(), false);

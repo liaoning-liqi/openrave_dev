@@ -16,6 +16,7 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "jsondownloader.h"
+#include "stringutils.h"
 
 #if OPENRAVE_CURL
 
@@ -23,47 +24,39 @@
 
 namespace OpenRAVE {
 
-static bool _EndsWith(const std::string& fullString, const std::string& endString)
-{
-    if (fullString.length() >= endString.length()) {
-        return fullString.compare(fullString.length() - endString.length(), endString.length(), endString) == 0;
-    }
-    return false;
-}
+// Need to forward declare this
+static void _ParseDocument(OpenRAVE::JSONDownloadContextPtr pContext);
 
-/// \brief get the scheme of the uri, e.g. file: or openrave:
-static void _ParseURI(const std::string& uri, std::string& scheme, std::string& path, std::string& fragment)
+static void _DecryptDocument(OpenRAVE::JSONDownloadContextPtr pContext)
 {
-    path = uri;
-    size_t hashindex = path.find_last_of('#');
-    if (hashindex != std::string::npos) {
-        fragment = path.substr(hashindex + 1);
-        path = path.substr(0, hashindex);
-    }
-
-    size_t colonindex = path.find_first_of(':');
-    if (colonindex != std::string::npos) {
-        // notice: in python code, like realtimerobottask3.py, it pass scheme as {openravescene: mujin}. No colon,
-        scheme = path.substr(0, colonindex);
-        path = path.substr(colonindex + 1);
+    std::istringstream iss(pContext->buffer, std::ios::in | std::ios::binary);
+    std::ostringstream oss;
+    if (GpgDecrypt(iss, oss)) {
+        if (RemoveSuffix(pContext->uri, ".gpg")) {
+            pContext->buffer = oss.str();
+            _ParseDocument(pContext);
+        }
+    } else {
+        RAVELOG_ERROR("Failed to decrypt document.");
     }
 }
 
-static void _ParseMsgPackDocument(const rapidjson::StringBuffer& buffer, const std::string& uri, rapidjson::Document& doc)
+static void _ParseDocument(OpenRAVE::JSONDownloadContextPtr pContext)
 {
-    try {
-        MsgPack::ParseMsgPack(doc, buffer.GetString(), buffer.GetSize());
+    if (StringEndsWith(pContext->uri, ".json")) {
+        rapidjson::ParseResult ok = pContext->pDoc->Parse<rapidjson::kParseFullPrecisionFlag>(pContext->buffer.data(), pContext->buffer.size());
+        if (!ok) {
+            throw OPENRAVE_EXCEPTION_FORMAT("failed to parse json document \"%s\"", pContext->uri, ORE_CurlInvalidResponse);
+        }
     }
-    catch(const std::exception& ex) {
-        throw OPENRAVE_EXCEPTION_FORMAT("failed to parse msgpack document \"%\"': %s", uri%ex.what(), ORE_CurlInvalidResponse);
+    else if (StringEndsWith(pContext->uri, ".msgpack")) {
+        MsgPack::ParseMsgPack(*(pContext->pDoc), pContext->buffer.data(), pContext->buffer.size());
     }
-}
-
-static void _ParseJsonDocument(const rapidjson::StringBuffer& buffer, const std::string& uri, rapidjson::Document& doc)
-{
-    rapidjson::ParseResult ok = doc.Parse<rapidjson::kParseFullPrecisionFlag>(buffer.GetString());
-    if (!ok) {
-        throw OPENRAVE_EXCEPTION_FORMAT("failed to parse json document \"%s\"", uri, ORE_CurlInvalidResponse);
+    else if (StringEndsWith(pContext->uri, ".gpg")) {
+        _DecryptDocument(pContext);
+    }
+    else {
+        throw OPENRAVE_EXCEPTION_FORMAT("Do not know how to parse data from uri '%s', supported is json/msgpack", pContext->uri, ORE_EnvironmentFormatUnrecognized);
     }
 }
 
@@ -83,10 +76,11 @@ JSONDownloadContext::~JSONDownloadContext()
     }
 }
 
-JSONDownloader::JSONDownloader(std::map<std::string, boost::shared_ptr<const rapidjson::Document> >& rapidJSONDocuments, const std::string& remoteUrl, const std::vector<std::string>& vOpenRAVESchemeAliases) :
+JSONDownloader::JSONDownloader(std::map<std::string, boost::shared_ptr<const rapidjson::Document> >& rapidJSONDocuments, const std::vector<std::string>& vOpenRAVESchemeAliases, const std::string& remoteUrl, const std::string& unixEndpoint) :
     _rapidJSONDocuments(rapidJSONDocuments),
+    _vOpenRAVESchemeAliases(vOpenRAVESchemeAliases),
     _remoteUrl(remoteUrl),
-    _vOpenRAVESchemeAliases(vOpenRAVESchemeAliases)
+    _unixEndpoint(unixEndpoint)
 {
     _curlm = curl_multi_init();
     if (!_curlm) {
@@ -104,29 +98,31 @@ JSONDownloader::~JSONDownloader()
     }
 }
 
-JSONDownloaderScope::JSONDownloaderScope(JSONDownloader& downloader, rapidjson::Document::AllocatorType& alloc, bool downloadRecursively) :
+JSONDownloaderScope::JSONDownloaderScope(const std::string& contextdesc, JSONDownloader& downloader, rapidjson::Document::AllocatorType& alloc, bool downloadRecursively) :
     _downloader(downloader),
     _alloc(alloc),
     _downloadRecursively(downloadRecursively)
 {
+    _contextdesc = contextdesc;
 }
 
 JSONDownloaderScope::~JSONDownloaderScope()
 {
 }
 
-void JSONDownloaderScope::Download(const std::string& uri, rapidjson::Document& doc, uint64_t timeoutUS)
+bool JSONDownloaderScope::Download(const char* pUri, rapidjson::Document& doc, bool bMustResolveURI, uint64_t timeoutUS)
 {
-    _QueueDownloadURI(uri, &doc);
-    WaitForDownloads(timeoutUS);
+    _QueueDownloadURI(pUri, &doc);
+    return WaitForDownloads(bMustResolveURI, timeoutUS);
 }
 
-void JSONDownloaderScope::WaitForDownloads(uint64_t timeoutUS)
+bool JSONDownloaderScope::WaitForDownloads(bool bMustResolveURI, uint64_t timeoutUS)
 {
     if (_mapDownloadContexts.empty()) {
-        return;
+        return true;
     }
 
+    bool bHasInvalidURI = false;
     const uint64_t startTimestampUS = utils::GetMonotonicTime();
     int numDownloads = 0;
     while (!_mapDownloadContexts.empty()) {
@@ -134,32 +130,32 @@ void JSONDownloaderScope::WaitForDownloads(uint64_t timeoutUS)
         int numRunningHandles = 0;
         const CURLMcode performCode = curl_multi_perform(_downloader._curlm, &numRunningHandles);
         if (performCode) {
-            throw OPENRAVE_EXCEPTION_FORMAT("failed to download, curl_multi_perform() failed with code %d", (int)performCode, ORE_CurlInvalidHandle);
+            throw OPENRAVE_EXCEPTION_FORMAT("%s failed to download, curl_multi_perform() failed with code %d", _contextdesc%(int)performCode, ORE_CurlInvalidHandle);
         }
-        RAVELOG_VERBOSE_FORMAT("curl_multi_perform(): numRunningHandles = %d", numRunningHandles);
+        RAVELOG_VERBOSE_FORMAT("%s curl_multi_perform(): numRunningHandles = %d", _contextdesc%numRunningHandles);
         if (numRunningHandles > 0) {
             // poll for 100ms
             const CURLMcode pollCode = curl_multi_poll(_downloader._curlm, NULL, 0, 100, NULL);
             if (pollCode) {
-                throw OPENRAVE_EXCEPTION_FORMAT("failed to download, curl_multi_poll() failed with code %d", (int)pollCode, ORE_CurlInvalidHandle);
+                throw OPENRAVE_EXCEPTION_FORMAT("%s failed to download, curl_multi_poll() failed with code %d", _contextdesc%(int)pollCode, ORE_CurlInvalidHandle);
             }
         }
 
         // check for timeout
         const uint64_t currentTimestampUS = utils::GetMonotonicTime();
         if (currentTimestampUS > startTimestampUS + timeoutUS) {
-            throw OPENRAVE_EXCEPTION_FORMAT("timed out waiting for download to finish, timeout is %d[us]", timeoutUS, ORE_CurlTimeout);
+            throw OPENRAVE_EXCEPTION_FORMAT("%s timed out waiting for download to finish, timeout is %d[us]", _contextdesc%timeoutUS, ORE_CurlTimeout);
         }
 
         // process all messages
         for (;;) {
             int numMessagesInQueue = 0;
             const CURLMsg *curlMessage = curl_multi_info_read(_downloader._curlm, &numMessagesInQueue);
-            RAVELOG_VERBOSE_FORMAT("curl_multi_info_read(): numMessagesInQueue = %d", numMessagesInQueue);
+            RAVELOG_VERBOSE_FORMAT("%s curl_multi_info_read(): numMessagesInQueue=%d", _contextdesc%numMessagesInQueue);
             if (!curlMessage) {
                 break;
             }
-            RAVELOG_VERBOSE_FORMAT("curl_multi_info_read(): curlMessage->msg = %d", (int)curlMessage->msg);
+            RAVELOG_VERBOSE_FORMAT("%s curl_multi_info_read(): curlMessage->msg=%d", _contextdesc%(int)curlMessage->msg);
             if (curlMessage->msg != CURLMSG_DONE) {
                 // go to the next message in the queue
                 continue;
@@ -168,12 +164,12 @@ void JSONDownloaderScope::WaitForDownloads(uint64_t timeoutUS)
             // remove handle
             const CURLMcode removeHandleCode = curl_multi_remove_handle(_downloader._curlm, curlMessage->easy_handle);
             if (removeHandleCode) {
-                throw OPENRAVE_EXCEPTION_FORMAT("failed to download, curl_multi_remove_handle() failed with code %d", (int)removeHandleCode, ORE_CurlInvalidHandle);
+                throw OPENRAVE_EXCEPTION_FORMAT("%s failed to download, curl_multi_remove_handle() failed with code %d", _contextdesc%(int)removeHandleCode, ORE_CurlInvalidHandle);
             }
             const std::map<CURL*, JSONDownloadContextPtr>::iterator it = _mapDownloadContexts.find(curlMessage->easy_handle);
             if (it == _mapDownloadContexts.end()) {
                 // if this happens, it is probably a bug in this code
-                throw OPENRAVE_EXCEPTION_FORMAT0("curl download finished, but failed to find corresponding context, cannot continue", ORE_CurlInvalidHandle);
+                throw OPENRAVE_EXCEPTION_FORMAT("%s curl download finished failed to find corresponding context, cannot continue", _contextdesc, ORE_CurlInvalidHandle);
             }
             JSONDownloadContextPtr pContext;
             pContext.swap(it->second);
@@ -182,74 +178,78 @@ void JSONDownloaderScope::WaitForDownloads(uint64_t timeoutUS)
             // check result
             const CURLcode curlCode = curlMessage->data.result;
             if (curlCode != CURLE_OK) {
-                throw OPENRAVE_EXCEPTION_FORMAT("failed to download uri \"%s\": %s", pContext->uri%curl_easy_strerror(curlCode), ORE_CurlInvalidResponse);
+                throw OPENRAVE_EXCEPTION_FORMAT("%s failed to download uri '%s': %s", _contextdesc%pContext->uri%curl_easy_strerror(curlCode), ORE_CurlInvalidResponse);
             }
 
             // check http response code
-            int responseCode = 0;
+            long responseCode = 0;
             const CURLcode getInfoCode = curl_easy_getinfo(pContext->curl, CURLINFO_RESPONSE_CODE, &responseCode);
             if (getInfoCode != CURLE_OK) {
-                throw OPENRAVE_EXCEPTION_FORMAT("failed to get response status code for uri \"%s\": %s", pContext->uri%curl_easy_strerror(getInfoCode), ORE_CurlInvalidHandle);
+                throw OPENRAVE_EXCEPTION_FORMAT("%s failed to get response status code for uri '%s': %s", _contextdesc%pContext->uri%curl_easy_strerror(getInfoCode), ORE_CurlInvalidHandle);
             }
             if (responseCode != 0 && responseCode != 200) {
                 // file scheme downloads have a zero response code
-                throw OPENRAVE_EXCEPTION_FORMAT("failed to download uri \"%s\", received http %d response", pContext->uri%responseCode, ORE_CurlInvalidResponse);
+                if (bMustResolveURI || responseCode != 404 ) {
+                    throw OPENRAVE_EXCEPTION_FORMAT("%s failed to download uri '%s', received http %d response", _contextdesc%pContext->uri%responseCode, responseCode == 404 ? ORE_InvalidURI : ORE_CurlInvalidResponse);
+                }
+                else {
+                    RAVELOG_DEBUG_FORMAT("%s failed to download uri '%s', received http %d response, continuing since mustresolveuri is not true", _contextdesc%pContext->uri%responseCode);
+                    bHasInvalidURI = true;
+                    continue;
+                }
             }
 
             // parse data
-            if (_EndsWith(pContext->uri, ".json")) {
-                _ParseJsonDocument(pContext->buffer, pContext->uri, *pContext->pDoc);
-            }
-            else if (_EndsWith(pContext->uri, ".msgpack")) {
-                _ParseMsgPackDocument(pContext->buffer, pContext->uri, *pContext->pDoc);
-            }
-            else {
-                throw OPENRAVE_EXCEPTION_FORMAT("Do not know how to parse data from uri '%s', supported is json/msgpack", pContext->uri, ORE_EnvironmentFormatUnrecognized);
-            }
+            _ParseDocument(pContext);
 
-            RAVELOG_DEBUG_FORMAT("successfully downloaded \"%s\", took %d[us]", pContext->uri%(currentTimestampUS-pContext->startTimestampUS));
+            RAVELOG_DEBUG_FORMAT("%s successfully downloaded '%s', took %d[us]", _contextdesc%pContext->uri%(currentTimestampUS-pContext->startTimestampUS));
             ++numDownloads;
 
             // reuse the context object later
             const rapidjson::Document& doc = *pContext->pDoc;
             pContext->pDoc = nullptr;
-            pContext->buffer.Clear();
+            pContext->buffer.clear();
             _downloader._vDownloadContextPool.emplace_back();
             _downloader._vDownloadContextPool.back().swap(pContext);
 
             // queue other resources to be downloaded
             if (_downloadRecursively) {
-                QueueDownloadReferenceURIs(doc);
+                QueueDownloadReferenceURIs(bMustResolveURI, doc);
             }
         }
     }
 
     const uint64_t stopTimestampUS = utils::GetMonotonicTime();
-    RAVELOG_DEBUG_FORMAT("downloaded %d files, took %d[us]", numDownloads%(stopTimestampUS-startTimestampUS));
+    RAVELOG_DEBUG_FORMAT("%s downloaded %d files, took %d[us]", _contextdesc%numDownloads%(stopTimestampUS-startTimestampUS));
+    return !bHasInvalidURI;
 }
 
 static size_t _WriteBackDataFromCurl(const char *data, size_t size, size_t dataSize, JSONDownloadContext* pContext)
 {
     const size_t numBytes = size * dataSize;
-    std::memcpy(pContext->buffer.Push(numBytes), data, numBytes);
+    pContext->buffer.append(data, numBytes);
     return numBytes;
 }
 
-void JSONDownloaderScope::_QueueDownloadURI(const std::string& uri, rapidjson::Document* pDoc)
+void JSONDownloaderScope::_QueueDownloadURI(const char* pUri, rapidjson::Document* pDoc)
 {
+    if( !pUri[0] ) {
+        return;
+    }
     std::string scheme, path, fragment;
-    _ParseURI(uri, scheme, path, fragment);
+    ParseURI(pUri, scheme, path, fragment);
 
     if (scheme.empty() && path.empty()) {
-        RAVELOG_WARN_FORMAT("unknown uri \"%s\"", uri);
+        RAVELOG_VERBOSE_FORMAT("skipping uri '%s' due to empty path/scheme.", pUri);
         return; // unknown uri
     }
+    RAVELOG_VERBOSE_FORMAT("downloading uri '%s'.", pUri);
     std::string canonicalUri;
     std::string url;
     if (scheme == "file") {
         std::string fullFilename = RaveFindLocalFile(path);
         if (fullFilename.empty()) {
-            RAVELOG_WARN_FORMAT("failed to resolve uri \"%s\" to local file", uri);
+            RAVELOG_WARN_FORMAT("failed to resolve uri \"%s\" to local file", pUri);
             return; // no such file to download
         }
         url = "file://" + fullFilename;
@@ -260,7 +260,7 @@ void JSONDownloaderScope::_QueueDownloadURI(const std::string& uri, rapidjson::D
         canonicalUri = scheme + ":" + path;
     }
     else {
-        RAVELOG_WARN_FORMAT("unable to handle uri \"%s\"", uri);
+        RAVELOG_WARN_FORMAT("unable to handle uri \"%s\"", pUri);
         return; // do not understand this uri
     }
 
@@ -321,6 +321,12 @@ void JSONDownloaderScope::_QueueDownloadURI(const std::string& uri, rapidjson::D
     if (curlCode != CURLE_OK) {
         throw OPENRAVE_EXCEPTION_FORMAT("failed to curl_easy_setopt(CURLOPT_WRITEDATA) for uri \"%s\": %s", canonicalUri%curl_easy_strerror(curlCode), ORE_CurlInvalidHandle);
     }
+    if (!_downloader._unixEndpoint.empty()) {
+        curlCode = curl_easy_setopt(pContext->curl, CURLOPT_UNIX_SOCKET_PATH, _downloader._unixEndpoint.c_str());
+        if (curlCode != CURLE_OK) {
+            throw OPENRAVE_EXCEPTION_FORMAT("failed to curl_easy_setopt(CURLOPT_UNIX_SOCKET_PATH) for uri \"%s\" unix endpoint \"%s\": %s", canonicalUri%_downloader._unixEndpoint%curl_easy_strerror(curlCode), ORE_CurlInvalidHandle);
+        }
+    }
 
     // add handle to curl multi
     const CURLMcode addHandleCode = curl_multi_add_handle(_downloader._curlm, pContext->curl);
@@ -329,10 +335,10 @@ void JSONDownloaderScope::_QueueDownloadURI(const std::string& uri, rapidjson::D
     }
 
     _mapDownloadContexts[pContext->curl].swap(pContext);
-    RAVELOG_DEBUG_FORMAT("start to download uri \"%s\" from \"%s\"", canonicalUri%url);
+    RAVELOG_VERBOSE_FORMAT("%s start to download uri '%s' from '%s'", _contextdesc%canonicalUri%url);
 }
 
-void JSONDownloaderScope::QueueDownloadReferenceURIs(const rapidjson::Value& rEnvInfo)
+void JSONDownloaderScope::QueueDownloadReferenceURIs(bool bMustResolveURI, const rapidjson::Value& rEnvInfo)
 {
     if (!rEnvInfo.IsObject()) {
         return;
@@ -343,30 +349,40 @@ void JSONDownloaderScope::QueueDownloadReferenceURIs(const rapidjson::Value& rEn
         return;
     }
     const rapidjson::Value& rBodies = itBodies->value;
+    if( !rBodies.IsArray() ) {
+        return;
+    }
     for (rapidjson::Value::ConstValueIterator itBody = rBodies.Begin(); itBody != rBodies.End(); ++itBody) {
         const rapidjson::Value& rBody = *itBody;
         if (!rBody.IsObject()) {
             continue;
         }
-        const std::string referenceUri = orjson::GetJsonValueByKey<std::string>(rBody, "referenceUri", "");
-        if (referenceUri.empty()) {
+        const char* pReferenceUri = orjson::GetCStringJsonValueByKey(rBody, "referenceUri", "");
+        if (!pReferenceUri[0]) {
             continue;
         }
-        if (!_IsExpandableReferenceUri(referenceUri)) {
-            throw OPENRAVE_EXCEPTION_FORMAT("body '%s' has invalid referenceUri='%s", orjson::GetJsonValueByKey<std::string>(rBody, "id", "")%referenceUri, ORE_InvalidURI);
+        if (!_IsExpandableReferenceUri(pReferenceUri)) {
+            const char* pId = orjson::GetCStringJsonValueByKey(rBody, "id","");
+            if( bMustResolveURI ) {
+                throw OPENRAVE_EXCEPTION_FORMAT("bodyId '%s' has invalid referenceUri='%s'.", pId%pReferenceUri, ORE_InvalidURI);
+            }
+            else {
+                RAVELOG_VERBOSE_FORMAT("bodyId '%s' has invalid referenceUri='%s', but continuing since does not need to resolve uri", pId%pReferenceUri);
+                return;
+            }
         }
-        QueueDownloadURI(referenceUri);
+        QueueDownloadURI(pReferenceUri);
     }
 }
 
 /// \brief returns true if the referenceUri is a valid URI that can be loaded
-bool JSONDownloaderScope::_IsExpandableReferenceUri(const std::string& referenceUri) const
+bool JSONDownloaderScope::_IsExpandableReferenceUri(const char* pReferenceUri) const
 {
-    if (referenceUri.empty()) {
+    if (!pReferenceUri || !pReferenceUri[0]) {
         return false;
     }
     std::string scheme, path, fragment;
-    _ParseURI(referenceUri, scheme, path, fragment);
+    ParseURI(pReferenceUri, scheme, path, fragment);
     if (!fragment.empty()) {
         return true;
     }

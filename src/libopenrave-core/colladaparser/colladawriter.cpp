@@ -428,9 +428,9 @@ private:
             contribAuthor->setValue(author.c_str());
 
             domAsset::domUnitRef units = daeSafeCast<domAsset::domUnit>( asset->add( COLLADA_ELEMENT_UNIT ) );
-            std::pair<std::string, dReal> unit = _penv->GetUnit();
-            units->setMeter(unit.second);
-            units->setName(unit.first.c_str());
+            UnitInfo unitInfo = _penv->GetUnitInfo();
+            units->setMeter(1.0 / GetLengthUnitStandardValue<dReal>(unitInfo.lengthUnit));
+            units->setName(OpenRAVE::GetLengthUnitString(unitInfo.lengthUnit));
 
             domAsset::domUp_axisRef zup = daeSafeCast<domAsset::domUp_axis>( asset->add( COLLADA_ELEMENT_UP_AXIS ) );
             zup->setValue(UP_AXIS_Z_UP);
@@ -1709,11 +1709,23 @@ private:
                         // robotId
                         daeElementRef param_controllerType = param_jointcontrolinfo_robotcontroller->add("controllerType");
                         param_controllerType->setCharData(pjoint->_info._jci_robotcontroller->controllerType.c_str());
-                        // robotControllerAxisIndex
+                        // robotControllerAxis[Index, Mult, Offset, ProductCode]
                         for( int iaxis = 0; iaxis < pjoint->GetDOF(); ++iaxis ) {
                             daeElementRef param_robotControllerAxisIndex = param_jointcontrolinfo_robotcontroller->add("robotControllerAxisIndex");
                             param_robotControllerAxisIndex->setAttribute("axis", boost::lexical_cast<std::string>(iaxis).c_str());
                             param_robotControllerAxisIndex->setCharData(boost::lexical_cast<std::string>(pjoint->_info._jci_robotcontroller->robotControllerAxisIndex[iaxis]).c_str());
+                            daeElementRef param_robotControllerAxisMult = param_jointcontrolinfo_robotcontroller->add("robotControllerAxisMult");
+                            param_robotControllerAxisMult->setAttribute("axis", boost::lexical_cast<std::string>(iaxis).c_str());
+                            param_robotControllerAxisMult->setCharData(boost::lexical_cast<std::string>(pjoint->_info._jci_robotcontroller->robotControllerAxisMult[iaxis]).c_str());
+                            daeElementRef param_robotControllerAxisOffset = param_jointcontrolinfo_robotcontroller->add("robotControllerAxisOffset");
+                            param_robotControllerAxisOffset->setAttribute("axis", boost::lexical_cast<std::string>(iaxis).c_str());
+                            param_robotControllerAxisOffset->setCharData(boost::lexical_cast<std::string>(pjoint->_info._jci_robotcontroller->robotControllerAxisOffset[iaxis]).c_str());
+                            daeElementRef param_robotControllerAxisManufacturerCode = param_jointcontrolinfo_robotcontroller->add("robotControllerAxisManufacturerCode");
+                            param_robotControllerAxisManufacturerCode->setAttribute("axis", boost::lexical_cast<std::string>(iaxis).c_str());
+                            param_robotControllerAxisManufacturerCode->setCharData(pjoint->_info._jci_robotcontroller->robotControllerAxisManufacturerCode[iaxis].c_str());
+                            daeElementRef param_robotControllerAxisProductCode = param_jointcontrolinfo_robotcontroller->add("robotControllerAxisProductCode");
+                            param_robotControllerAxisProductCode->setAttribute("axis", boost::lexical_cast<std::string>(iaxis).c_str());
+                            param_robotControllerAxisProductCode->setCharData(pjoint->_info._jci_robotcontroller->robotControllerAxisProductCode[iaxis].c_str());
                         }
                         break;
                     } // end case JCM_RobotController
@@ -2127,6 +2139,10 @@ private:
                 pcylinder->add("height")->setCharData(boost::lexical_cast<std::string>(geom->GetCylinderHeight()));
                 break;
             }
+            case GT_Prism:
+            case GT_Capsule:
+            case GT_Axial:
+            case GT_ConicalFrustum:
             case GT_None:
             case GT_TriMesh:
                 // don't add anything

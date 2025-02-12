@@ -11,7 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from common_test_openrave import *
+from common_test_openrave import EnvironmentSetup
+from openravepy import RaveCreateCollisionChecker, RaveCreateKinBody, CollisionReport, CollisionOptions, CollisionAction
+from numpy import array, random, abs, any
 
 class RunCollision(EnvironmentSetup):
     def __init__(self,collisioncheckername):
@@ -233,20 +235,23 @@ class RunCollision(EnvironmentSetup):
             pqp.SetCollisionOptions(CollisionOptions.Contacts|CollisionOptions.Distance)
             pqp.CheckCollision(manip.GetEndEffector(),report=report)
             assert(abs(report.minDistance-0.38737) < 0.01 )
-            assert(report.plink1 == manip.GetEndEffector())
-            assert(report.plink2 == env.GetKinBody('pole').GetLinks()[0])
-            
+            # assert(report.plink1 == manip.GetEndEffector())
+            # assert(report.plink2 == env.GetKinBody('pole').GetLinks()[0])
+            assert any([info.ExtractFirstBodyLinkGeomNames() == (robot.GetName(), manip.GetEndEffector().GetName(), '') and info.ExtractSecondBodyLinkGeomNames() == ('pole', '', '') for info in report.collisionInfos])
+
             pqp.CheckCollision(robot,report=report)
             assert(abs(report.minDistance-0.0027169) < 0.01 )
-            assert(report.plink1 == robot.GetLink('segway'))
-            assert(report.plink2 == env.GetKinBody('floorwalls').GetLinks()[0])
+            # assert(report.plink1 == robot.GetLink('segway'))
+            # assert(report.plink2 == env.GetKinBody('floorwalls').GetLinks()[0])
+            assert any([info.ExtractFirstBodyLinkGeomNames() == (robot.GetName(), 'segway', '') and info.ExtractSecondBodyLinkGeomNames() == ('floorwalls', '', '') for info in report.collisionInfos])
             
             pqp.SetCollisionOptions(CollisionOptions.Contacts|CollisionOptions.Distance|CollisionOptions.ActiveDOFs)
             robot.SetActiveDOFs(manip.GetArmIndices())
             pqp.CheckCollision(robot,report=report)
             assert(abs(report.minDistance-0.29193971893003506) < 0.01 )
-            assert(report.plink1 == robot.GetLink('wam1'))
-            assert(report.plink2 == env.GetKinBody('pole').GetLinks()[0])
+            # assert(report.plink1 == robot.GetLink('wam1'))
+            # assert(report.plink2 == env.GetKinBody('pole').GetLinks()[0])
+            assert any([info.ExtractFirstBodyLinkGeomNames() == (robot.GetName(), 'wam1', '') and info.ExtractSecondBodyLinkGeomNames() == ('pole', '', '') for info in report.collisionInfos])
 
     def test_multiplecontacts(self):
         env=self.env
@@ -263,10 +268,10 @@ class RunCollision(EnvironmentSetup):
         report = CollisionReport()
         env.CheckCollision(robot,report=report)
 
-        assert(len(report.vLinkColliding)==8)
+        assert(len(report.collisionInfos)==8)
         
         manip.CheckEndEffectorCollision(report)
-        assert(len(report.vLinkColliding)==4)
+        assert(len(report.collisionInfos)==4)
 
 #generate_classes(RunCollision, globals(), [('ode','ode'),('bullet','bullet')])
 
