@@ -3,10 +3,15 @@
 ChangeLog
 #########
 
-Version 0.162.2
+Version 0.163.1
 ===============
 
 - In `Check` function, correctly compute `fMinNextTimeStep` when `bComputeNewStep = false`.
+
+Version 0.163.0
+===============
+
+- Make classes in openravepy_int.so defined in the installed headers visible.
 
 Version 0.162.1
 ===============
