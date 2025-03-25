@@ -100,6 +100,22 @@ protected:
     boost::function<void()> _fn;
 };
 
+/// \brief check validity of mesh collision indices. if invalid, throw.
+/// \param[in] vertices, indices : coming from TriMesh
+/// \param[in] name, id, type : coming from GeometryInfo. used for exception message.
+/// \param[in] context : used for exception message.
+static void _CheckValidityOfMeshCollisionIndices(const std::vector<Vector>& vertices,
+                                                 const std::vector<int32_t>& indices,
+                                                 const std::string& name, const std::string& id, const GeometryType type, const char* context)
+{
+    for(const int32_t meshIndex : indices) {
+        if( (int)vertices.size() <= meshIndex || meshIndex < 0 ) {
+            throw OPENRAVE_EXCEPTION_FORMAT(_("geometry(name=\"%s\";id=\"%s\";type=%d) has incorrect mesh indices %d in \"%s\", which is out of range of vertices which size is %d."),
+                                            name%id%(int)type%context%meshIndex%vertices.size(), ORE_InvalidArguments);
+        }
+    }
+}
+
 typedef boost::shared_ptr<ChangeCallbackData> ChangeCallbackDataPtr;
 
 bool KinBody::KinBodyInfo::operator==(const KinBodyInfo& other) const {
@@ -714,6 +730,12 @@ void KinBody::SetLinkGeometriesFromGroup(const std::string& geomname, const bool
 void KinBody::SetLinkGroupGeometries(const std::string& geomname, const std::vector< std::vector<KinBody::GeometryInfoPtr> >& linkgeometries)
 {
     OPENRAVE_ASSERT_OP( linkgeometries.size(), ==, _veclinks.size() );
+    for(const std::vector<KinBody::GeometryInfoPtr>& vGeometries : linkgeometries) {
+        for(const KinBody::GeometryInfoPtr& pGeometry : vGeometries) {
+            const KinBody::GeometryInfo& geometry = *pGeometry;
+            _CheckValidityOfMeshCollisionIndices(geometry._meshcollision.vertices, geometry._meshcollision.indices, geometry._name, geometry._id, geometry._type, __FUNCTION__);
+        }
+    }
     FOREACH(itlink, _veclinks) {
         Link& link = **itlink;
         std::map< std::string, std::vector<KinBody::GeometryInfoPtr> >::iterator it = link._info._mapExtraGeometries.insert(make_pair(geomname,std::vector<KinBody::GeometryInfoPtr>())).first;
@@ -947,10 +969,10 @@ void KinBody::GetDOFValues(std::vector<dReal>& v, const std::vector<int>& dofind
                 }
                 ss << "]; jointorder=[";
                 FOREACH(itj, _vDOFOrderedJoints) {
-                    ss << (*itj)->GetName() << ", ";
+                    ss << (*itj)->GetName() << "=(" << (*it)->GetValue(0) << "," << (*it)->GetDOFIndex() << "),  ";
                 }
                 ss << "];";
-                throw OPENRAVE_EXCEPTION_FORMAT(_("dof indices mismatch joint %s (dofindex=%d), toadd=%d, v.size()=%d in call GetDOFValues with %s"), (*it)->GetName()%(*it)->GetDOFIndex()%toadd%v.size()%ss.str(), ORE_InvalidState);
+                throw OPENRAVE_EXCEPTION_FORMAT(_("env=%s, body '%s' (%d) dof indices mismatch joint '%s' (dofindex=%d), toadd=%d, v.size()=%d in call GetDOFValues with %s"), GetEnv()->GetNameId()%GetName()%GetEnvironmentBodyIndex()%(*it)->GetName()%(*it)->GetDOFIndex()%toadd%v.size()%ss.str(), ORE_InvalidState);
             }
             (*it)->GetValues(v,true);
         }
@@ -1442,46 +1464,66 @@ void KinBody::SubtractDOFValues(std::vector<dReal>& q1, const std::vector<dReal>
     }
 }
 
-// like apply transform except everything is relative to the first frame
-void KinBody::SetTransform(const Transform& bodyTransform)
+void KinBody::_SetTransformNoPostProcess(const Transform& bodyTransform)
 {
-    if( _veclinks.size() == 0 ) {
+    if (_veclinks.empty()) {
         return;
     }
+
     Transform baseLinkTransform = bodyTransform * _baseLinkInBodyTransform;
     Transform tbaseinv = _veclinks.front()->GetTransform().inverse();
     Transform tapply = baseLinkTransform * tbaseinv;
     FOREACH(itlink, _veclinks) {
         (*itlink)->SetTransform(tapply * (*itlink)->GetTransform());
     }
+}
+
+bool KinBody::_SetVelocityNoPostProcess(const Vector& linearvel, const Vector& angularvel)
+{
+    if (_veclinks.empty()) {
+        return false;
+    }
+
+    bool bSuccess = false;
+    if (_veclinks.size() == 1) {
+        bSuccess = GetEnv()->GetPhysicsEngine()->SetLinkVelocity(_veclinks[0], linearvel, angularvel);
+    }
+    else {
+        std::vector<std::pair<Vector, Vector>>& velocities = _vVelocitiesCache;
+        velocities.resize(_veclinks.size());
+        velocities.at(0).first = linearvel;
+        velocities.at(0).second = angularvel;
+        Vector vlinktrans = _veclinks.at(0)->GetTransform().trans;
+        for (size_t ilink = 1; ilink < _veclinks.size(); ++ilink) {
+            velocities[ilink].first = linearvel + angularvel.cross(_veclinks[ilink]->GetTransform().trans - vlinktrans);
+            velocities[ilink].second = angularvel;
+        }
+
+        bSuccess = GetEnv()->GetPhysicsEngine()->SetLinkVelocities(shared_kinbody(), velocities);
+    }
+
+    return bSuccess;
+}
+
+void KinBody::SetTransformAndVelocity(const Transform& bodyTransform, const Vector& linearvel, const Vector& angularvel)
+{
+    _SetTransformNoPostProcess(bodyTransform);
+    _SetVelocityNoPostProcess(linearvel, angularvel);
+    _UpdateGrabbedBodies();
+    _PostprocessChangedParameters(Prop_LinkTransforms);
+}
+
+// like apply transform except everything is relative to the first frame
+void KinBody::SetTransform(const Transform& bodyTransform)
+{
+    _SetTransformNoPostProcess(bodyTransform);
     _UpdateGrabbedBodies();
     _PostprocessChangedParameters(Prop_LinkTransforms);
 }
 
 bool KinBody::SetVelocity(const Vector& linearvel, const Vector& angularvel)
 {
-    if (_veclinks.size() == 0) {
-        return false;
-    }
-
-    bool bSuccess = false;
-    if( _veclinks.size() == 1 ) {
-        bSuccess = GetEnv()->GetPhysicsEngine()->SetLinkVelocity(_veclinks[0], linearvel, angularvel);
-    }
-    else {
-        std::vector<std::pair<Vector,Vector> >& velocities = _vVelocitiesCache;
-        velocities.resize(_veclinks.size());
-        velocities.at(0).first = linearvel;
-        velocities.at(0).second = angularvel;
-        Vector vlinktrans = _veclinks.at(0)->GetTransform().trans;
-        for(size_t ilink = 1; ilink < _veclinks.size(); ++ilink) {
-            velocities[ilink].first = linearvel + angularvel.cross(_veclinks[ilink]->GetTransform().trans-vlinktrans);
-            velocities[ilink].second = angularvel;
-        }
-
-        bSuccess = GetEnv()->GetPhysicsEngine()->SetLinkVelocities(shared_kinbody(),velocities);
-    }
-
+    const bool bSuccess = _SetVelocityNoPostProcess(linearvel, angularvel);
     _UpdateGrabbedBodies();
     return bSuccess;
 }
@@ -3593,7 +3635,7 @@ void KinBody::ComputeInverseDynamics(std::vector<dReal>& doftorques, const std::
                 doftorques.at(pjoint->GetDOFIndex()) += pjoint->GetAxis(0).dot3(vjointtorque + vcomtoanchor.cross(vcomforce));
             }
             else if( pjoint->GetType() == JointSlider ) {
-                doftorques.at(pjoint->GetDOFIndex()) += pjoint->GetAxis(0).dot3(vcomforce)/(2*PI);
+                doftorques.at(pjoint->GetDOFIndex()) += pjoint->GetAxis(0).dot3(vcomforce);
             }
             else {
                 throw OPENRAVE_EXCEPTION_FORMAT(_("joint 0x%x not supported"), pjoint->GetType(), ORE_Assert);
@@ -3631,7 +3673,7 @@ void KinBody::ComputeInverseDynamics(std::vector<dReal>& doftorques, const std::
                 faxistorque = pjoint->GetAxis(0).dot3(vjointtorque + vcomtoanchor.cross(vcomforce));
             }
             else if( pjoint->GetType() == JointSlider ) {
-                faxistorque = pjoint->GetAxis(0).dot3(vcomforce)/(2*PI);
+                faxistorque = pjoint->GetAxis(0).dot3(vcomforce);
             }
             else {
                 throw OPENRAVE_EXCEPTION_FORMAT(_("joint 0x%x not supported"), pjoint->GetType(), ORE_Assert);
@@ -3818,7 +3860,7 @@ void KinBody::ComputeInverseDynamics(boost::array< std::vector<dReal>, 3>& vDOFT
                     vDOFTorqueComponents[j].at(pjoint->GetDOFIndex()) += pjoint->GetAxis(0).dot3(vjointtorque + vcomtoanchor.cross(vcomforce));
                 }
                 else if( pjoint->GetType() == JointSlider ) {
-                    vDOFTorqueComponents[j].at(pjoint->GetDOFIndex()) += pjoint->GetAxis(0).dot3(vcomforce)/(2*PI);
+                    vDOFTorqueComponents[j].at(pjoint->GetDOFIndex()) += pjoint->GetAxis(0).dot3(vcomforce);
                 }
                 else {
                     throw OPENRAVE_EXCEPTION_FORMAT(_("joint 0x%x not supported"), pjoint->GetType(), ORE_Assert);
@@ -3832,7 +3874,7 @@ void KinBody::ComputeInverseDynamics(boost::array< std::vector<dReal>, 3>& vDOFT
                     faxistorque = pjoint->GetAxis(0).dot3(vjointtorque + vcomtoanchor.cross(vcomforce));
                 }
                 else if( pjoint->GetType() == JointSlider ) {
-                    faxistorque = pjoint->GetAxis(0).dot3(vcomforce)/(2*PI);
+                    faxistorque = pjoint->GetAxis(0).dot3(vcomforce);
                 }
                 else {
                     throw OPENRAVE_EXCEPTION_FORMAT(_("joint 0x%x not supported"), pjoint->GetType(), ORE_Assert);
@@ -4792,7 +4834,7 @@ void KinBody::_ComputeInternalInformation()
             else {
                 // NOTE: possibly try to choose roots that do not involve mimic joints. ikfast might have problems
                 // dealing with very complex formulas
-                LinkPtr plink0 = joint.GetFirstAttached(), plink1 = joint.GetSecondAttached();
+                const LinkPtr& plink0 = joint.GetFirstAttached(), plink1 = joint.GetSecondAttached();
                 if( vlinkdepths[plink0->GetIndex()] < vlinkdepths[plink1->GetIndex()] ) {
                     parentlinkindex = plink0->GetIndex();
                 }
@@ -4914,7 +4956,7 @@ void KinBody::_ComputeInternalInformation()
                 stringstream ss;
                 ss << GetName() << " closedloop found: ";
                 FOREACH(itlinkindex,*itclosedloop) {
-                    LinkPtr plink = _veclinks.at(*itlinkindex);
+                    const LinkPtr& plink = _veclinks.at(*itlinkindex);
                     ss << plink->GetName() << "(" << plink->GetIndex() << ") ";
                 }
                 RAVELOG_VERBOSE(ss.str());
@@ -4959,7 +5001,7 @@ void KinBody::_ComputeInternalInformation()
 
         // breadth first search for rigid links
         for(size_t icurlink = 0; icurlink<vattachedlinks.size(); ++icurlink) {
-            LinkPtr plink=_veclinks.at(vattachedlinks[icurlink]);
+            const LinkPtr& plink = _veclinks.at(vattachedlinks[icurlink]);
             FOREACHC(itjoint, _vecjoints) {
                 if( (*itjoint)->IsStatic() ) {
                     if(((*itjoint)->GetFirstAttached() == plink)&& !!(*itjoint)->GetSecondAttached() &&(find(vattachedlinks.begin(),vattachedlinks.end(),(*itjoint)->GetSecondAttached()->GetIndex()) == vattachedlinks.end())) {
