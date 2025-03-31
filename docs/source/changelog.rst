@@ -3,10 +3,15 @@
 ChangeLog
 #########
 
-Version 0.163.1
+Version 0.163.2
 ===============
 
 - In `Check` function, correctly compute `fMinNextTimeStep` when `bComputeNewStep = false`.
+
+Version 0.163.1
+===============
+
+- Fix AddGripperInfo with removeduplicate=True did not remove duplicated gripperInfo.
 
 Version 0.163.0
 ===============
