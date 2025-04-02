@@ -562,6 +562,13 @@ public:
     /// \throw openrave_exception with ORE_Timeout error code
     virtual void GetBodies(std::vector<KinBodyPtr>& bodies, uint64_t timeout=0) const = 0;
 
+    /// \brief Apply a function to every body in the environment
+    ///
+    /// This method allows for iterating over all of the bodies in the env without having to copy the list of bodies first.
+    /// The environment mutex must be held when calling this function.
+    /// The callback function must not cause any bodies to be added or removed from the environment, as this would mutate the internal list of bodies while it is being iterated.
+    virtual void IterateBodies(const std::function<void(const KinBodyPtr&)>& mapFunction) = 0;
+
     /// \brief Fill an array with all robots loaded in the environment. <b>[multi-thread safe]</b>
     ///
     /// A separate **interface mutex** is locked for reading the bodies.

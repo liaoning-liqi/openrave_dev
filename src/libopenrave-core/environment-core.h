@@ -26,6 +26,7 @@
 #include <boost/filesystem/operations.hpp>
 #endif
 
+#include <atomic>
 #include <chrono>
 #include <mutex>
 #include <shared_mutex>
@@ -1637,6 +1638,22 @@ public:
 
     virtual EnvironmentMutex& GetMutex() const override {
         return _mutexEnvironment;
+    }
+
+    virtual void IterateBodies(const std::function<void(const KinBodyPtr&)>& mapFunction) override
+    {
+        // Add one to the active iterator count, and release our read when exiting.
+        // This reader count allows us to catch abuses of the iterator API (mutation during iteration) that might otherwise cause undefined behaviour.
+        _vecbodiesActiveReaders.fetch_add(1, std::memory_order::memory_order_acq_rel);
+        std::shared_ptr<void> __deferReleaseRead{
+            nullptr, [&](nullptr_t) { _vecbodiesActiveReaders.fetch_sub(1, std::memory_order::memory_order_acq_rel); }};
+
+        // Map the provided function over all of the live bodies in the environment
+        for (const KinBodyPtr& pBody : _vecbodies) {
+            if (!!pBody) {
+                mapFunction(pBody);
+            }
+        }
     }
 
     virtual void GetBodies(std::vector<KinBodyPtr>& bodies, uint64_t timeout) const override
@@ -3512,6 +3529,7 @@ protected:
     /// assumes environment and _mutexInterfaces are exclusively locked
     KinBodyPtr _InvalidateKinBodyFromEnvBodyIndex(int bodyIndex)
     {
+        OPENRAVE_ASSERT_OP(_vecbodiesActiveReaders.load(std::memory_order::memory_order_acquire), ==, 0); // We are modifying vecbodies, assert there are no concurrent reads
         KinBodyPtr& pbodyref = _vecbodies.at(bodyIndex);
         if (!pbodyref) {
             return KinBodyPtr();
@@ -4021,6 +4039,7 @@ protected:
     /// assuming _mutexInterfaces is exclusively locked
     inline void _AddKinBodyInternal(KinBodyPtr pbody, int envBodyIndex)
     {
+        OPENRAVE_ASSERT_OP(_vecbodiesActiveReaders.load(std::memory_order::memory_order_acquire), ==, 0); // We are modifying vecbodies, assert there are no concurrent reads
         EnsureVectorSize(_vecbodies, envBodyIndex+1);
         _vecbodies.at(envBodyIndex) = pbody;
 
@@ -4487,6 +4506,11 @@ protected:
     }
 
     std::vector<KinBodyPtr> _vecbodies;     ///< all objects that are collidable (includes robots) sorted by env body index ascending order. Note that some element can be nullptr, and size of _vecbodies should be kept unchanged when body is removed from env. protected by _mutexInterfaces. [0] should always be kept null since 0 means no assignment.
+
+    /// Number of active loops that are directly iterating the contents of _vecbodies
+    /// Any functions that might mutate the contents of _vecbodies should test this value, and throw if it is non-zero
+    /// This prevents accidental mutate-during-iterate if a caller performs an e.g. Add of a body during IterateBodies.
+    std::atomic<uint64_t> _vecbodiesActiveReaders{0};
 
     string_map<int> _mapBodyNameIndex; /// maps body name to env body index of bodies stored in _vecbodies sorted by name. used to lookup kin body by name. protected by _mutexInterfaces.
     string_map<int> _mapBodyIdIndex; /// maps body id to env body index of bodies stored in _vecbodies sorted by name. used to lookup kin body by name. protected by _mutexInterfaces
