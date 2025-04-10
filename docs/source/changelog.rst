@@ -3,10 +3,20 @@
 ChangeLog
 #########
 
-Version 0.163.3
+Version 0.164.1
 ===============
 
 - In `Check` function, correctly compute `fMinNextTimeStep` when `bComputeNewStep = false`.
+
+Version 0.164.0
+===============
+
+- Add member `_grippername` to GrabbedInfo and Grabbed.
+
+Version 0.163.3
+===============
+
+- Apply `fUnitScale` to applicable values when serializing KinBody to JSON.
 
 Version 0.163.2
 ===============
