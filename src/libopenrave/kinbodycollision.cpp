@@ -53,6 +53,7 @@ bool KinBody::CheckSelfCollision(CollisionReportPtr report, CollisionCheckerBase
                 // no checker set
                 return false;
             }
+            RAVELOG_WARN_FORMAT("env=%s, self-collision checker is not set for '%s' so using env collision checker instead", GetEnv()->GetNameId() % GetName());
         }
         else {
             // have to set the same options as GetEnv()->GetCollisionChecker() since stuff like CO_ActiveDOFs is only set on the global checker
