@@ -2214,6 +2214,35 @@ void DummyXMLReader::characters(const std::string& ch)
     }
 }
 
+void RecursiveMutexWithGILCheck::lock()
+{
+    if( lockCounter == 0 ) {
+        const bool isGILLocked = PyGILState_Check();
+        if( isGILLocked ) {
+            throw openrave_exception("GIL is locked but this mutex is not locked by this thread yet. When locking this mutex for the first time from a Python thread, please release the GIL or use try_lock.");
+        }
+    }
+    mutex.lock();
+    ++lockCounter;      // referring to glibc/nptl/pthread_mutex_lock.c
+}
+
+void RecursiveMutexWithGILCheck::unlock()
+{
+    --lockCounter;      // referring to glibc/nptl/pthread_mutex_unlock.c
+    mutex.unlock();
+}
+
+bool RecursiveMutexWithGILCheck::try_lock()
+{
+    const bool bSuccess = mutex.try_lock();
+    if( bSuccess ) {
+        ++lockCounter;      // referring to glibc/nptl/pthread_mutex_trylock.c
+    }
+    return bSuccess;
+}
+
+thread_local uint64_t RecursiveMutexWithGILCheck::lockCounter = 0;
+
 void EnvironmentBase::_InitializeInternal()
 {
     if( !RaveGlobalState() ) {

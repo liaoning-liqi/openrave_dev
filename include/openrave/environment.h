@@ -24,10 +24,26 @@
 
 #include <openrave/config.h>
 #include <mutex>
+#include <Python.h>
 
 namespace OpenRAVE {
-
-#if OPENRAVE_ENVIRONMENT_RECURSIVE_LOCK
+class OPENRAVE_API RecursiveMutexWithGILCheck
+{
+public:
+  RecursiveMutexWithGILCheck() = default;
+  void lock();
+  void unlock();
+  bool try_lock();
+private:
+  std::recursive_mutex mutex;
+  static thread_local uint64_t lockCounter;
+};
+#if true
+using EnvironmentMutex = RecursiveMutexWithGILCheck;
+using EnvironmentLock  = ::std::unique_lock<RecursiveMutexWithGILCheck>;
+using defer_lock_t     = ::std::defer_lock_t;
+using try_to_lock_t    = ::std::try_to_lock_t;
+#elif OPENRAVE_ENVIRONMENT_RECURSIVE_LOCK
 using EnvironmentMutex = ::std::recursive_mutex;
 using EnvironmentLock  = ::std::unique_lock<std::recursive_mutex>;
 using defer_lock_t     = ::std::defer_lock_t;

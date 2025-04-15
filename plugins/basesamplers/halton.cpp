@@ -979,7 +979,7 @@ void HaltonSampler::i4_to_halton ( int dim_num, int step, int seed[], int leap[]
 //
 {
     dReal base_inv;
-    int digit;
+    int digit_renamed;
     int i;
     int seed2;
     //
@@ -1006,8 +1006,8 @@ void HaltonSampler::i4_to_halton ( int dim_num, int step, int seed[], int leap[]
 
         while ( seed2 != 0 )
         {
-            digit = seed2 % base[i];
-            r[i] = r[i] + ( ( dReal ) digit ) * base_inv;
+            digit_renamed = seed2 % base[i];
+            r[i] = r[i] + ( ( dReal ) digit_renamed ) * base_inv;
             base_inv = base_inv / ( ( dReal ) base[i] );
             seed2 = seed2 / base[i];
         }
@@ -1104,7 +1104,7 @@ void HaltonSampler::i4_to_halton_sequence ( int dim_num, int n, int step, int se
 //
 {
     dReal base_inv;
-    int digit;
+    int digit_renamed;
     int i;
     int j;
     int *seed2;
@@ -1143,8 +1143,8 @@ void HaltonSampler::i4_to_halton_sequence ( int dim_num, int n, int step, int se
 
             while ( seed2[j] != 0 )
             {
-                digit = seed2[j] % base[i];
-                r[i+j*dim_num] = r[i+j*dim_num] + ( ( dReal ) digit ) * base_inv;
+                digit_renamed = seed2[j] % base[i];
+                r[i+j*dim_num] = r[i+j*dim_num] + ( ( dReal ) digit_renamed ) * base_inv;
                 base_inv = base_inv / ( ( dReal ) base[i] );
                 seed2[j] = seed2[j] / base[i];
             }
@@ -1195,7 +1195,7 @@ char *HaltonSampler::i4_to_s ( int i )
 //    Output, char *I4_TO_S, the representation of the integer.
 //
 {
-    int digit;
+    int digit_renamed;
     int j;
     int length;
     int ten_power;
@@ -1237,10 +1237,10 @@ char *HaltonSampler::i4_to_s ( int i )
     //
     while ( 0 < ten_power )
     {
-        digit = i / ten_power;
-        s[j] = digit_to_ch ( digit );
+        digit_renamed = i / ten_power;
+        s[j] = digit_to_ch ( digit_renamed );
         j = j + 1;
-        i = i - digit * ten_power;
+        i = i - digit_renamed * ten_power;
         ten_power = ten_power / 10;
     }
     //
