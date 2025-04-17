@@ -24,7 +24,6 @@
 
 #include <openrave/config.h>
 #include <mutex>
-#include <Python.h>
 
 namespace OpenRAVE {
 class OPENRAVE_API RecursiveMutexWithGILCheck

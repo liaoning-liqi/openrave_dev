@@ -16,6 +16,7 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "libopenrave.h"
 
+#include <Python.h>
 #include <boost/scoped_ptr.hpp>
 #include <boost/utility.hpp>
 
