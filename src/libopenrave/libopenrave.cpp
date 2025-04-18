@@ -2218,9 +2218,11 @@ void DummyXMLReader::characters(const std::string& ch)
 void RecursiveMutexWithGILCheck::lock()
 {
     if( lockCounter == 0 ) {
-        const bool isGILLocked = PyGILState_Check();
-        if( isGILLocked ) {
-            throw openrave_exception("GIL is locked but this mutex is not locked by this thread yet. When locking this mutex for the first time from a Python thread, please release the GIL or use try_lock.");
+        if( Py_IsInitialized() ) {
+            const bool isGILLocked = PyGILState_Check();
+            if( isGILLocked ) {
+                throw openrave_exception("GIL is locked but this mutex is not locked by this thread yet. When locking this mutex for the first time from a Python thread, please release the GIL or use try_lock.");
+            }
         }
     }
     mutex.lock();
