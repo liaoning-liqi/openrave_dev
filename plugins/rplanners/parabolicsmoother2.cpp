@@ -2728,7 +2728,7 @@ protected:
                         {
                             dReal f = fStartTimeAccelMult * _parameters->_vConfigAccelerationLimit[j];
                             if( accellimits[j] > f ) {
-                                accellimits[j] = f;
+                                accellimits[j] = f;//YOSHITO
                             }
                         }
                     }
