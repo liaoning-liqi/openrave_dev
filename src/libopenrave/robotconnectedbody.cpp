@@ -1211,7 +1211,7 @@ bool RobotBase::SetConnectedBodyActiveStates(const std::vector<int8_t>& activest
     if (bChanged) {
         __hashKinematicsGeometryDynamics.resize(0);
         //YOSHITO env
-        RAVELOG_DEBUG_FORMAT("YOSHITOLOG env=%s bChanged=%d name=", GetEnv()->GetId() % bChanged % GetName());
+        RAVELOG_DEBUG_FORMAT("YOSHITOLOG env=%s bChanged=%d name=%s", GetEnv()->GetId() % bChanged % GetName());
     }
     return bChanged;
 }
