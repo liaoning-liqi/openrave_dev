@@ -212,6 +212,7 @@ bool ParabolicInterpolator::ComputeArbitraryVelNDTrajectory(const std::vector<dR
             return false;
         }
         if( amVect[idof] <= 0 ) {
+            OPENRAVE_ASSERT_OP(amVect[idof], <=, 0.0);
             RAVELOG_WARN_FORMAT("env=%d, amVect[%d] = %.15e is not positive", _envid%idof%amVect[idof]);
             return false;
         }
