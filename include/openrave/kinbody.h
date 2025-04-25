@@ -25,6 +25,8 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include <openrave/hashcontext.h>
+
 namespace OpenRAVE {
 
 class OpenRAVEFunctionParserReal;
@@ -853,6 +855,7 @@ public:
         }
 
         void serialize(std::ostream& o, int options) const;
+        void digest(HashContext& hash, int options) const;
 
         /// \brief sets a new collision mesh and notifies every registered callback about it
         void SetCollisionMesh(const TriMesh& mesh);
@@ -1300,8 +1303,8 @@ public:
         /// This gives a user control for dynamically changing the object geometry. Note that the kinbody/robot hash could change.
         /// \param geometries a list of geometry infos to be initialized into new geometry objects, note that the geometry info data is copied
         /// \param bForceRecomputeMeshCollision if true, then recompute mesh collision for all non-tri meshes
-        void InitGeometries(std::vector<KinBody::GeometryInfoConstPtr>& geometries, bool bForceRecomputeMeshCollision=true);
-        void InitGeometries(std::list<KinBody::GeometryInfo>& geometries, bool bForceRecomputeMeshCollision=true);
+        void InitGeometries(const std::vector<KinBody::GeometryInfoConstPtr>& geometries, bool bForceRecomputeMeshCollision=true);
+        void InitGeometries(const std::list<KinBody::GeometryInfo>& geometries, bool bForceRecomputeMeshCollision=true);
 
 private:
         /// \brief _vGeometries is expected to be filled with the new Geometries already. This will initialize them.
@@ -1384,6 +1387,7 @@ public:
         void GetRigidlyAttachedLinks(std::vector<boost::shared_ptr<Link> >& vattachedlinks) const;
 
         void serialize(std::ostream& o, int options) const;
+        void digest(HashContext& hash, int options) const;
 
         /// \brief return a map of custom float parameters
         inline const std::map<std::string, std::vector<dReal> >& GetFloatParameters() const {
@@ -2021,6 +2025,7 @@ public:
         void SetWrapOffset(dReal offset, int iaxis=0);
 
         void serialize(std::ostream& o, int options) const;
+        void digest(HashContext& hash, int options) const;
 
         /// @name Internal Hierarchy Methods
         //@{
@@ -3206,7 +3211,7 @@ public:
     virtual void SetSelfCollisionChecker(CollisionCheckerBasePtr collisionchecker);
 
     /// \brief Returns the self-collision checker set specifically for this robot. If none has been set, return empty.
-    virtual CollisionCheckerBasePtr GetSelfCollisionChecker() const;
+    virtual const CollisionCheckerBasePtr& GetSelfCollisionChecker() const;
 
     /// Collision checking utilities that use internal structures of the kinbody like grabbed info or the self-collision checker.
     /// @name Collision Checking Utilities
@@ -3606,6 +3611,7 @@ public:
 
     /// only used for hashes...
     virtual void serialize(std::ostream& o, int options) const;
+    virtual void digest(HashContext& hash, int options) const;
 
     inline KinBodyPtr shared_kinbody() {
         return boost::static_pointer_cast<KinBody>(shared_from_this());
@@ -3810,6 +3816,11 @@ protected:
     /// Map of grabbed body record indexed by the environment index of the grabbed body to provide faster lookup
     /// It is assumed that bodies cannot have their environment index change while they are grabbed.
     MapGrabbedByEnvironmentIndex _grabbedBodiesByEnvironmentIndex;
+
+    /// Flag to track whether this body has ever been grabbed.
+    /// If it has, then when it is removed from the environment, we need to make sure to also remove it from any non-environment collision checkers
+    /// For bodies that were never grabbed, we can skip iterating all of the other bodies in the env.
+    bool _wasEverGrabbed = false;
 
     mutable std::vector<std::list<UserDataWeakPtr> > _vlistRegisteredCallbacks; ///< callbacks to call when particular properties of the body change. _vlistRegisteredCallbacks[index] is the list of change callbacks where 1<<index is part of KinBodyProperty, this makes it easy to find out if any particular bits have callbacks. The registration/de-registration of the lists can happen at any point and does not modify the kinbody state exposed to the user, hence it is mutable.
 

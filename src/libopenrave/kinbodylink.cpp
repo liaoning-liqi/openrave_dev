@@ -688,6 +688,21 @@ void KinBody::Link::serialize(std::ostream& o, int options) const
     }
 }
 
+void KinBody::Link::digest(HashContext& hash, int options) const
+{
+    hash << _index;
+    if( options & SO_Geometry ) {
+        hash << _vGeometries.size();
+        FOREACHC(it,_vGeometries) {
+            (*it)->digest(hash, options);
+        }
+    }
+    if( options & SO_Dynamics ) {
+        hash << _info._tMassFrame << _info._mass;
+        hash << _info._vinertiamoments;
+    }
+}
+
 void KinBody::Link::SetStatic(bool bStatic)
 {
     if( _info._bStatic != bStatic ) {
@@ -771,21 +786,21 @@ void KinBody::Link::_InitGeometriesInternal(bool bForceRecomputeMeshCollision) {
     _Update(/* parametersChanged */ true, /* extraParametersChanged */ Prop_LinkGeometryGroup);
 }
 
-void KinBody::Link::InitGeometries(std::vector<KinBody::GeometryInfoConstPtr>& geometries, bool bForceRecomputeMeshCollision)
+void KinBody::Link::InitGeometries(const std::vector<KinBody::GeometryInfoConstPtr>& geometries, bool bForceRecomputeMeshCollision)
 {
     int index = 0;
     _vGeometries.resize(geometries.size());
-    for(KinBody::GeometryInfoConstPtr& pgeominfo : geometries) {
+    for (const KinBody::GeometryInfoConstPtr& pgeominfo : geometries) {
         _vGeometries[index++].reset(new KinBody::Link::Geometry(shared_from_this(), *pgeominfo));
     }
     _InitGeometriesInternal(bForceRecomputeMeshCollision);
 }
 
-void KinBody::Link::InitGeometries(std::list<KinBody::GeometryInfo>& geometries, bool bForceRecomputeMeshCollision)
+void KinBody::Link::InitGeometries(const std::list<KinBody::GeometryInfo>& geometries, bool bForceRecomputeMeshCollision)
 {
     int index = 0;
     _vGeometries.resize(geometries.size());
-    for(KinBody::GeometryInfo& geominfo : geometries) {
+    for (const KinBody::GeometryInfo& geominfo : geometries) {
         _vGeometries[index++].reset(new KinBody::Link::Geometry(shared_from_this(), geominfo));
     }
     _InitGeometriesInternal(bForceRecomputeMeshCollision);
