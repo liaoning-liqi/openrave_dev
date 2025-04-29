@@ -113,10 +113,10 @@ void EnvironmentBase::EnvironmentBaseInfo::DeserializeJSON(const rapidjson::Valu
 /// InfoType must be one of RobotBase::RobotBaseInfo or KinBody::KinBodyInfo, depending on whether rKinBodyInfo describes a robot or a body.
 template <typename InfoType>
 void _DeserializeKinBodyInfo(const rapidjson::Value& rKinBodyInfo, const float fUnitScale, const int options, const bool isDeleted,
-                             const size_t existingBodyIndex, const std::string& id,
+                             const int existingBodyIndex, const string_view& id,
                              std::vector<KinBody::KinBodyInfoPtr>& vBodyInfos,
-                             std::unordered_map<string_view, size_t>& existingBodyInfoIndicesById,
-                             std::unordered_map<string_view, size_t>& existingBodyInfoIndicesByName)
+                             std::unordered_map<string_view, int>& existingBodyInfoIndicesById,
+                             std::unordered_map<string_view, int>& existingBodyInfoIndicesByName)
 {
     // Pull out whether or not we expect to be creating a robot or body info
     const bool newTypeIsRobot = std::is_same<InfoType, RobotBase::RobotBaseInfo>::value;
@@ -132,7 +132,7 @@ void _DeserializeKinBodyInfo(const rapidjson::Value& rKinBodyInfo, const float f
         }
 
         // If the record is valid, create a new info and be done
-        pBaseInfo->_id = id;
+        pBaseInfo->_id.assign(id.data(), id.size());
         const size_t bodyInfoIndex = vBodyInfos.size(); // Stash the index we will be inserting this record at
         vBodyInfos.push_back(pBaseInfo);
         RAVELOG_VERBOSE_FORMAT("created new %s id='%s'", (newTypeIsRobot ? "robot" : "body")%id);
@@ -184,7 +184,7 @@ void _DeserializeKinBodyInfo(const rapidjson::Value& rKinBodyInfo, const float f
 
     // Update the info struct with the new input json
     existingBodyInfo->DeserializeJSON(rKinBodyInfo, fUnitScale, options);
-    existingBodyInfo->_id = id;
+    existingBodyInfo->_id.assign(id.data(), id.size());
 
     // Restore the index mapping for this entry
     existingBodyInfoIndicesById.emplace(existingBodyInfo->_id, existingBodyIndex);
@@ -246,33 +246,34 @@ void EnvironmentBase::EnvironmentBaseInfo::DeserializeJSONWithMapping(const rapi
     if (rEnvInfo.HasMember("bodies")) {
         // Reserve space for the additional body infos, assuming they're all unique
         const rapidjson::Value& rBodies = rEnvInfo["bodies"];
+        BOOST_ASSERT(rBodies.IsArray());
         _vBodyInfos.reserve(_vBodyInfos.size() + rBodies.Size());
 
         // Build a lookup table of name/id to existing body info index in _vBodyInfos
         // Later, when checking if a new json record should be merged with an existing body info, we can do one hash lookup instead of a sequential scan
-        std::unordered_map<string_view, size_t> existingBodyInfoIndicesById;
-        std::unordered_map<string_view, size_t> existingBodyInfoIndicesByName;
-        for (size_t i = 0; i < _vBodyInfos.size(); i++) {
-            const KinBody::KinBodyInfoPtr& pExistingBodyInfo = _vBodyInfos[i];
-            existingBodyInfoIndicesById.emplace(pExistingBodyInfo->_id, i);
-            existingBodyInfoIndicesByName.emplace(pExistingBodyInfo->_name, i);
+        std::unordered_map<string_view, int> existingBodyInfoIndicesById;
+        std::unordered_map<string_view, int> existingBodyInfoIndicesByName;
+        for (int infoIndex = 0; infoIndex < (int)_vBodyInfos.size(); infoIndex++) {
+            const KinBody::KinBodyInfoPtr& pExistingBodyInfo = _vBodyInfos[infoIndex];
+            existingBodyInfoIndicesById.emplace(pExistingBodyInfo->_id, infoIndex);
+            existingBodyInfoIndicesByName.emplace(pExistingBodyInfo->_name, infoIndex);
         }
 
         // For each record in the input, check to see if we can map it to an existing body info
         for (int iInputBodyIndex = 0; iInputBodyIndex < (int)rBodies.Size(); ++iInputBodyIndex) {
             const rapidjson::Value& rKinBodyInfo = rBodies[iInputBodyIndex];
-            std::string id = orjson::GetStringJsonValueByKey(rKinBodyInfo, "id");
+            const string_view id = orjson::GetCStringViewJsonValueByKey(rKinBodyInfo, "id");
             bool isDeleted = orjson::GetJsonValueByKey<bool>(rKinBodyInfo, "__deleted__", false);
 
             // Do we have an explicit mapping for this body?
-            ssize_t existingBodyIndex = -1;
+            int existingBodyIndex = -1;
             if (iInputBodyIndex < (int)vInputToBodyInfoMapping.size() && vInputToBodyInfoMapping[iInputBodyIndex] >= 0) {
                 existingBodyIndex = vInputToBodyInfoMapping[iInputBodyIndex];
             }
 
             // Do we have an existing record with the same ID?
             else if (!id.empty()) {
-                const std::unordered_map<string_view, size_t>::const_iterator existingIdIt = existingBodyInfoIndicesById.find(id);
+                const std::unordered_map<string_view, int>::const_iterator existingIdIt = existingBodyInfoIndicesById.find(id);
                 if (existingIdIt != existingBodyInfoIndicesById.end()) {
                     existingBodyIndex = existingIdIt->second;
                 }
@@ -282,7 +283,7 @@ void EnvironmentBase::EnvironmentBaseInfo::DeserializeJSONWithMapping(const rapi
             else {
                 rapidjson::Value::ConstMemberIterator itName = rKinBodyInfo.FindMember("name");
                 if (itName != rKinBodyInfo.MemberEnd() && itName->value.IsString()) {
-                    const std::unordered_map<string_view, size_t>::const_iterator existingNameIt = existingBodyInfoIndicesByName.find(itName->value.GetString());
+                    const std::unordered_map<string_view, int>::const_iterator existingNameIt = existingBodyInfoIndicesByName.find(itName->value.GetString());
                     if (existingNameIt != existingBodyInfoIndicesByName.end()) {
                         existingBodyIndex = existingNameIt->second;
                     }
