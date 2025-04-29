@@ -1645,8 +1645,18 @@ public:
         // Add one to the active iterator count, and release our read when exiting.
         // This reader count allows us to catch abuses of the iterator API (mutation during iteration) that might otherwise cause undefined behaviour.
         _vecbodiesActiveReaders.fetch_add(1, std::memory_order::memory_order_acq_rel);
-        std::shared_ptr<void> __deferReleaseRead{
-            nullptr, [&](nullptr_t) { _vecbodiesActiveReaders.fetch_sub(1, std::memory_order::memory_order_acq_rel); }};
+        struct ReaderReleaser
+        {
+            ReaderReleaser(std::atomic<size_t>& counter)
+                : _counter(counter){};
+            ~ReaderReleaser()
+            {
+                _counter.fetch_sub(1, std::memory_order::memory_order_acq_rel);
+            }
+
+        private:
+            std::atomic<size_t>& _counter;
+        } __deferReleaseRead{_vecbodiesActiveReaders};
 
         // Map the provided function over all of the live bodies in the environment
         for (const KinBodyPtr& pBody : _vecbodies) {
