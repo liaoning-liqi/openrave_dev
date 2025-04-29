@@ -26,13 +26,17 @@
 #include <openrave/config.h>
 #include <openrave/geometry.h>
 
+#include <boost/assert.hpp>
+
+#include <rapidjson/document.h>
+
 // Forward declarations for md5 internals
 struct md5_state_s;
 typedef struct md5_state_s md5_state_t;
 
 namespace OpenRAVE {
 
-class HashContext
+class OPENRAVE_API HashContext
 {
 public:
     HashContext(const int precision = 4);
@@ -84,6 +88,64 @@ public:
             (*this) << v;
         }
         return (*this);
+    }
+
+    // Allow directly updating with rapidjson values
+    HashContext& operator<<(const rapidjson::Value& rValue)
+    {
+        switch (rValue.GetType()) {
+        // Don't count a null for anything
+        case rapidjson::kNullType: {
+            break;
+        }
+
+        // For true/false, treat them as a single byte boolean
+        case rapidjson::kFalseType: {
+            *this << (uint8_t)0;
+        }
+        case rapidjson::kTrueType: {
+            *this << (uint8_t)1;
+        }
+
+        // For strings, hash the underlying string data
+        case rapidjson::kStringType: {
+            _Append((const uint8_t*)rValue.GetString(), rValue.GetStringLength());
+        }
+
+        // For numbers, delegate to other overrides
+        case rapidjson::kNumberType: {
+            if (rValue.IsDouble()) {
+                *this << rValue.GetDouble();
+            }
+            else if (rValue.IsInt()) {
+                *this << rValue.GetInt();
+            }
+            else if (rValue.IsUint()) {
+                *this << rValue.GetUint();
+            }
+            else if (rValue.IsInt64()) {
+                *this << rValue.GetInt64();
+            }
+            else {
+                *this << rValue.GetUint64();
+            }
+        }
+
+        // For arrays, recurse on each element
+        case rapidjson::kArrayType: {
+            for (rapidjson::Value::ConstValueIterator valueIt = rValue.Begin(); valueIt != rValue.End(); valueIt++) {
+                *this << *valueIt;
+            }
+        }
+
+        // For objects, recurse for each k:v pair
+        case rapidjson::kObjectType: {
+            for (rapidjson::Value::ConstMemberIterator memberIt = rValue.MemberBegin(); memberIt != rValue.MemberEnd(); memberIt++) {
+                *this << memberIt->name << memberIt->value;
+            }
+        }
+        }
+        return *this;
     }
 
 private:
