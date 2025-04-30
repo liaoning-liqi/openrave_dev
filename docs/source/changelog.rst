@@ -3,10 +3,15 @@
 ChangeLog
 #########
 
-Version 0.164.1
+Version 0.165.1
 ===============
 
 - In `Check` function, correctly compute `fMinNextTimeStep` when `bComputeNewStep = false`.
+
+Version 0.165.0
+===============
+
+- Replace `serialize` used for hashing with `DigestHsah`
 
 Version 0.164.0
 ===============
