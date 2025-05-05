@@ -3,6 +3,17 @@
 ChangeLog
 #########
 
+Version 0.166.0
+===============
+
+- Ass support for `GetBodiesMatchingFilter`.
+- Allow fetching only bodies that have a certain readable.
+
+Version 0.165.0
+===============
+
+- Replace `serialize` used for hashing with `DigestHsah`
+
 Version 0.164.0
 ===============
 
