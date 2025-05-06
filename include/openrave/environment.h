@@ -26,6 +26,13 @@
 #include <mutex>
 
 namespace OpenRAVE {
+
+#if OPENRAVE_ENVIRONMENT_RECURSIVE_LOCK == 1
+using EnvironmentMutex = ::std::recursive_mutex;
+using EnvironmentLock  = ::std::unique_lock<std::recursive_mutex>;
+using defer_lock_t     = ::std::defer_lock_t;
+using try_to_lock_t    = ::std::try_to_lock_t;
+#elif OPENRAVE_ENVIRONMENT_RECURSIVE_LOCK == 2
 class OPENRAVE_API RecursiveMutexWithGILCheck
 {
 public:
@@ -37,14 +44,8 @@ private:
   std::recursive_mutex mutex;
   static thread_local uint64_t lockCounter;
 };
-#if true
 using EnvironmentMutex = RecursiveMutexWithGILCheck;
 using EnvironmentLock  = ::std::unique_lock<RecursiveMutexWithGILCheck>;
-using defer_lock_t     = ::std::defer_lock_t;
-using try_to_lock_t    = ::std::try_to_lock_t;
-#elif OPENRAVE_ENVIRONMENT_RECURSIVE_LOCK
-using EnvironmentMutex = ::std::recursive_mutex;
-using EnvironmentLock  = ::std::unique_lock<std::recursive_mutex>;
 using defer_lock_t     = ::std::defer_lock_t;
 using try_to_lock_t    = ::std::try_to_lock_t;
 #else
