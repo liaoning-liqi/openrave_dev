@@ -19,10 +19,6 @@
 #if OPENRAVE_ENVIRONMENT_RECURSIVE_LOCK == 2
 #include <Python.h>
 namespace OpenRAVE {
-RecursiveMutexWithGILCheck::RecursiveMutexWithGILCheck() : _initialThreadId(std::this_thread::get_id())
-{
-}
-
 void RecursiveMutexWithGILCheck::lock()
 {
     _UpdateIsMultiThreading();
@@ -58,11 +54,17 @@ bool RecursiveMutexWithGILCheck::try_lock()
 
 void RecursiveMutexWithGILCheck::_UpdateIsMultiThreading()
 {
-    if( !_isMultiThreading ) {
-        const bool isThisThreadSameWithInitialThread = _initialThreadId == std::this_thread::get_id();
-        if( !isThisThreadSameWithInitialThread ) {
-            _isMultiThreading = true;
-        }
+    if( _isMultiThreading ) {
+        return;                 // already known as multi threading
+    }
+
+    const std::thread::id current_id = std::this_thread::get_id();
+    std::lock_guard<std::mutex> lock(_mutexForInitialLockThreadId);
+    if( _initialLockThreadId == std::thread::id() ) {
+        _initialLockThreadId = current_id; // the current thread is the first thready trying to lock this recursive mutex.
+    }
+    else if ( _initialLockThreadId != current_id ) {
+        _isMultiThreading = true;
     }
 }
 

@@ -37,15 +37,16 @@ using try_to_lock_t    = ::std::try_to_lock_t;
 class OPENRAVE_API RecursiveMutexWithGILCheck
 {
 public:
-  RecursiveMutexWithGILCheck();
+  RecursiveMutexWithGILCheck() = default;
   void lock();
   void unlock();
   bool try_lock();
 private:
-  void _UpdateIsMultiThreading();
+  void _UpdateIsMultiThreading(); ///< set _initialLockThreadId to the thread id which locks this recursive mutex at first. set _isMultiThreading to true when another thread tries to lock this recursive mutex.
   bool _isMultiThreading = false; ///< set it true if another thread from _initialThreadId locks this mutex once so that this mutex does not check the locking order with GIL unnecessarily in single thread.
   std::recursive_mutex _mutex;
-  const std::thread::id _initialThreadId; ///< thread id for the first thread using this mutex.
+  std::mutex _mutexForInitialLockThreadId; ///< mutex for _initialLockThreadId
+  std::thread::id _initialLockThreadId; ///< thread id of the first thread trying to lock this recursive mutex when it is not std::thread::id(). Cannot set this at constructor because some uesrs create this mutex in a different thread from the one using this mutex for optimization. protected by _mutexForInitialLockThreadId.
   static thread_local uint64_t _lockCounter;
 };
 using EnvironmentMutex = RecursiveMutexWithGILCheck;
