@@ -19,36 +19,54 @@
 #if OPENRAVE_ENVIRONMENT_RECURSIVE_LOCK == 2
 #include <Python.h>
 namespace OpenRAVE {
+RecursiveMutexWithGILCheck::RecursiveMutexWithGILCheck() : _initialThreadId(std::this_thread::get_id())
+{
+}
+
 void RecursiveMutexWithGILCheck::lock()
 {
-    if( lockCounter == 0 ) {
-        if( Py_IsInitialized() ) {
-            const bool isGILLocked = PyGILState_Check();
-            if( isGILLocked ) {
-                throw openrave_exception("GIL is locked but this mutex is not locked by this thread yet. When locking this mutex for the first time from a Python thread, please release the GIL or use try_lock.");
+    _UpdateIsMultiThreading();
+    if( _isMultiThreading ) { // ensure that this mutex is used by multiple threads.
+        if( _lockCounter == 0 ) {
+            if( Py_IsInitialized() ) {
+                const bool isGILLocked = PyGILState_Check();
+                if( isGILLocked ) {
+                    throw openrave_exception("GIL is locked but this mutex is not locked by this thread yet. When locking this mutex for the first time from a Python thread, please release the GIL or use try_lock.");
+                }
             }
         }
     }
-    mutex.lock();
-    ++lockCounter;
+    _mutex.lock();
+    ++_lockCounter;
 }
 
 void RecursiveMutexWithGILCheck::unlock()
 {
-    --lockCounter;
-    mutex.unlock();
+    --_lockCounter;
+    _mutex.unlock();
 }
 
 bool RecursiveMutexWithGILCheck::try_lock()
 {
-    const bool bSuccess = mutex.try_lock();
+    _UpdateIsMultiThreading();
+    const bool bSuccess = _mutex.try_lock();
     if( bSuccess ) {
-        ++lockCounter;
+        ++_lockCounter;
     }
     return bSuccess;
 }
 
-thread_local uint64_t RecursiveMutexWithGILCheck::lockCounter = 0;
+void RecursiveMutexWithGILCheck::_UpdateIsMultiThreading()
+{
+    if( !_isMultiThreading ) {
+        const bool isThisThreadSameWithInitialThread = _initialThreadId == std::this_thread::get_id();
+        if( !isThisThreadSameWithInitialThread ) {
+            _isMultiThreading = true;
+        }
+    }
+}
+
+thread_local uint64_t RecursiveMutexWithGILCheck::_lockCounter = 0;
 }
 #endif
 
