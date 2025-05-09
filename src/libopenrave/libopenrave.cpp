@@ -15,6 +15,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "libopenrave.h"
+#include <pthread.h>
 
 #if OPENRAVE_ENVIRONMENT_RECURSIVE_LOCK == 2
 #include <Python.h>
@@ -27,7 +28,11 @@ void RecursiveMutexWithGILCheck::lock()
             if( Py_IsInitialized() ) {
                 const bool isGILLocked = PyGILState_Check();
                 if( isGILLocked ) {
-                    throw openrave_exception("GIL is locked but this mutex is not locked by this thread yet. When locking this mutex for the first time from a Python thread, please release the GIL or use try_lock.");
+                    char threadName[16];
+                    pthread_getname_np(pthread_self(), threadName, sizeof(threadName));
+                    const std::thread::id currentId = std::this_thread::get_id();
+                    std::lock_guard<std::mutex> lock(_mutexForInitialLockThreadId);
+                    throw openrave_exception(str(boost::format("GIL is locked but this mutex is not locked by this thread yet. When locking this mutex for the first time from a Python thread, please release the GIL or use try_lock. thread name=\"%s\" (id=%s). intialLockThreadId=%s")%threadName%currentId%_initialLockThreadId));
                 }
             }
         }
@@ -58,12 +63,15 @@ void RecursiveMutexWithGILCheck::_UpdateIsMultiThreading()
         return;                 // already known as multi threading
     }
 
-    const std::thread::id current_id = std::this_thread::get_id();
+    const std::thread::id currentId = std::this_thread::get_id();
     std::lock_guard<std::mutex> lock(_mutexForInitialLockThreadId);
     if( _initialLockThreadId == std::thread::id() ) {
-        _initialLockThreadId = current_id; // the current thread is the first thready trying to lock this recursive mutex.
+        char threadName[16];
+        pthread_getname_np(pthread_self(), threadName, sizeof(threadName));
+        RAVELOG_DEBUG_FORMAT("thread \"%s\" (id=%s) is the first to try to lock this mutex.", threadName % currentId);
+        _initialLockThreadId = currentId; // the current thread is the first thready trying to lock this recursive mutex.
     }
-    else if ( _initialLockThreadId != current_id ) {
+    else if ( _initialLockThreadId != currentId ) {
         _isMultiThreading = true;
     }
 }
