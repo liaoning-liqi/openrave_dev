@@ -1249,7 +1249,6 @@ CollisionAction PyEnvironmentBase::_CollisionCallback(object fncallback, Collisi
 
 PyEnvironmentBase::PyEnvironmentBase(int options)
 {
-    PythonThreadSaver saver;
     if( !RaveGlobalState() ) {
         RaveInitialize(true);
     }
@@ -1258,7 +1257,6 @@ PyEnvironmentBase::PyEnvironmentBase(int options)
 
 PyEnvironmentBase::PyEnvironmentBase(const std::string& name, int options)
 {
-    PythonThreadSaver saver;
     if( !RaveGlobalState() ) {
         RaveInitialize(true);
     }
@@ -1266,12 +1264,10 @@ PyEnvironmentBase::PyEnvironmentBase(const std::string& name, int options)
 }
 
 PyEnvironmentBase::PyEnvironmentBase(EnvironmentBasePtr penv) : _penv(penv) {
-    PythonThreadSaver saver;
 }
 
 PyEnvironmentBase::PyEnvironmentBase(const PyEnvironmentBase &pyenv)
 {
-    PythonThreadSaver saver;
     _penv = pyenv._penv;
 }
 
@@ -1283,7 +1279,6 @@ void PyEnvironmentBase::Reset() {
     _penv->Reset();
 }
 void PyEnvironmentBase::Destroy() {
-    PythonThreadSaver saver;
     ViewerManager::GetInstance().RemoveViewersOfEnvironment(_penv);
     _penv->Destroy();
 }
