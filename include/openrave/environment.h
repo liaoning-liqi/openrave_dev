@@ -53,6 +53,27 @@ using EnvironmentMutex = RecursiveMutexWithGILCheck;
 using EnvironmentLock  = ::std::unique_lock<RecursiveMutexWithGILCheck>;
 using defer_lock_t     = ::std::defer_lock_t;
 using try_to_lock_t    = ::std::try_to_lock_t;
+#elif OPENRAVE_ENVIRONMENT_RECURSIVE_LOCK == 3
+class OPENRAVE_API HierarchicalRecursiveMutexWithGILCheck
+{
+public:
+  explicit HierarchicalRecursiveMutexWithGILCheck(const uint64_t value);
+  void lock();
+  void unlock();
+  bool try_lock();
+private:
+  void checkForHierarchyViolation() const;
+  void updateHierarchyValue();
+  std::recursive_mutex _mutex;
+  const uint64_t _hierarchyValue;
+  thread_local static uint64_t _thisThreadHierarchyValue;
+  thread_local static uint64_t _previousHierarchyValue;
+  static thread_local uint64_t _lockCounter;
+};
+using EnvironmentMutex = HierarchicalRecursiveMutexWithGILCheck;
+using EnvironmentLock  = ::std::unique_lock<HierarchicalRecursiveMutexWithGILCheck>;
+using defer_lock_t     = ::std::defer_lock_t;
+using try_to_lock_t    = ::std::try_to_lock_t;
 #else
 using EnvironmentMutex = ::std::mutex;
 using EnvironmentLock  = ::std::unique_lock<std::mutex>;

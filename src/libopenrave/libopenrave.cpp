@@ -78,6 +78,57 @@ void RecursiveMutexWithGILCheck::_UpdateIsMultiThreading()
 
 thread_local uint64_t RecursiveMutexWithGILCheck::_lockCounter = 0;
 }
+#elif OPENRAVE_ENVIRONMENT_RECURSIVE_LOCK == 3
+namespace OpenRAVE {
+HierarchicalRecursiveMutexWithGILCheck::HierarchicalRecursiveMutexWithGILCheck(const uint64_t value) : _hierarchyValue(value)
+{
+}
+
+void HierarchicalRecursiveMutexWithGILCheck::lock()
+{
+    checkForHierarchyViolation();
+    _mutex.lock();
+    updateHierarchyValue();
+}
+
+void HierarchicalRecursiveMutexWithGILCheck::unlock()
+{
+    if (--_lockCounter == 0) {
+        _thisThreadHierarchyValue = _previousHierarchyValue;
+    }
+    _mutex.unlock();
+}
+
+bool HierarchicalRecursiveMutexWithGILCheck::try_lock()
+{
+    checkForHierarchyViolation();
+    if (!_mutex.try_lock()) {
+        return false;
+    }
+    updateHierarchyValue();
+    return true;
+}
+
+void HierarchicalRecursiveMutexWithGILCheck::checkForHierarchyViolation() const
+{
+    if (_thisThreadHierarchyValue <= _hierarchyValue) {
+        throw openrave_exception("mutex hierarchy violated");
+    }
+}
+
+void HierarchicalRecursiveMutexWithGILCheck::updateHierarchyValue()
+{
+    if (_lockCounter == 0) {
+        _previousHierarchyValue = _thisThreadHierarchyValue;
+        _thisThreadHierarchyValue = _hierarchyValue;
+    }
+    _lockCounter += 1;
+}
+
+thread_local uint64_t HierarchicalRecursiveMutexWithGILCheck::_thisThreadHierarchyValue{UINT64_MAX};
+thread_local uint64_t HierarchicalRecursiveMutexWithGILCheck::_previousHierarchyValue = 0;
+thread_local uint64_t HierarchicalRecursiveMutexWithGILCheck::_lockCounter = 0;
+}
 #endif
 
 #include <boost/scoped_ptr.hpp>
