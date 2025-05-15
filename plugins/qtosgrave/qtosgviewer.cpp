@@ -1687,8 +1687,8 @@ void QtOSGViewer::_DrawArrow(OSGSwitchPtr handle, const RaveVector<float>& p1, c
     const osg::Vec4f osgcolor(color.x, color.y, color.z, alpha);
 
     osg::ref_ptr<osg::Cone> cone = new osg::Cone();
-    cone->setRadius(fwidth);
-    cone->setHeight(fwidth);
+    cone->setRadius(1.5*fwidth);
+    cone->setHeight(2.0*fwidth);
     cone->setCenter(osg::Vec3(0, 0, fheight - (0.5 + cone->getBaseOffsetFactor())*fwidth));
     osg::ref_ptr<osg::ShapeDrawable> conesd = new osg::ShapeDrawable(cone.get());
     conesd->setColor(osgcolor);
