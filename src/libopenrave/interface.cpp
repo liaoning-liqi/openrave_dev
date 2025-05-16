@@ -315,6 +315,15 @@ void ReadablesContainer::ClearReadableInterface(const std::string& id) {
     __mapReadableInterfaces.erase(id);
 }
 
+void ReadablesContainer::DigestHash(HashContext& hash) const
+{
+    std::unique_lock<boost::shared_mutex> lock(_mutexInterface);
+    for (const READERSMAP::value_type& it : __mapReadableInterfaces) {
+        hash << it.first;
+        it.second->DigestHash(hash);
+    }
+}
+
 bool ReadablesContainer::UpdateReadableInterfaces(const std::map<std::string, ReadablePtr>& newReadableInterfaces) {
     std::unique_lock<boost::shared_mutex> lock(_mutexInterface);
     bool bChanged = false;
@@ -368,6 +377,14 @@ bool ReadablesContainer::UpdateReadableInterfaces(const std::map<std::string, Re
         }
     }
     return bChanged;
+}
+
+void Readable::DigestHash(HashContext& hash) const
+{
+    hash << GetXMLId();
+    rapidjson::Document doc;
+    SerializeJSON(doc, doc.GetAllocator(), 1.0, 0);
+    hash << doc;
 }
 
 }

@@ -268,6 +268,7 @@ class IkReturn;
 class IkFailureInfo;
 class IkFailureAccumulatorBase;
 class Readable;
+class HashContext;
 
 typedef boost::shared_ptr<CollisionReport> CollisionReportPtr;
 typedef boost::shared_ptr<CollisionReport const> CollisionReportConstPtr;
@@ -389,6 +390,9 @@ public:
 
     /// \return return a cloned copy of this readable
     virtual ReadablePtr CloneSelf() const = 0;
+
+    /// \brief Generate a digest of the given readable
+    virtual void DigestHash(HashContext& hash) const;
 
 private:
     std::string __xmlid;

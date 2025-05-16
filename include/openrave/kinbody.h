@@ -3612,6 +3612,26 @@ public:
     /// \brief Generate a hash of this structure into the provided hash context
     virtual void DigestHash(HashContext& hash, int options) const;
 
+    /// \brief Set a new readable interface and return the previously set interface if it exists. <b>[multi-thread safe]</b>
+    /// Overridden here so that we can invalidate our hash on readable data change
+    ReadablePtr SetReadableInterface(const std::string& id, ReadablePtr readable) override;
+
+    /// \brief sets a set of readable interfaces all at once. The pointers are copied
+    ///
+    /// \param mapReadables the readable interfaces to ste
+    /// \param bClearAllExisting if true, then clears the existing readables, if false, just updates the readables that are specified in mapReadables
+    /// Overridden here so that we can invalidate our hash on readable data change
+    void SetReadableInterfaces(const READERSMAP& mapReadables, bool bClearAllExisting) override;
+
+    /// \brief clears the readable interfaces
+    /// Overridden here so that we can invalidate our hash on readable data change
+    void ClearReadableInterfaces() override;
+    void ClearReadableInterface(const std::string& id) override;
+
+    /// \brief updates the readable interfaces. returns true if there are any changes
+    /// Overridden here so that we can invalidate our hash on readable data change
+    bool UpdateReadableInterfaces(const std::map<std::string, ReadablePtr>& newReadableInterfaces) override;
+
     inline KinBodyPtr shared_kinbody() {
         return boost::static_pointer_cast<KinBody>(shared_from_this());
     }

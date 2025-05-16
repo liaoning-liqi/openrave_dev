@@ -6147,6 +6147,38 @@ void KinBody::SetZeroConfiguration()
     }
 }
 
+ReadablePtr KinBody::SetReadableInterface(const std::string& id, ReadablePtr readable)
+{
+    ReadablePtr ret = ReadablesContainer::SetReadableInterface(id, readable);
+    __hashKinematicsGeometryDynamics.clear();
+    return ret;
+}
+
+void KinBody::SetReadableInterfaces(const READERSMAP& mapReadables, bool bClearAllExisting)
+{
+    ReadablesContainer::SetReadableInterfaces(mapReadables, bClearAllExisting);
+    __hashKinematicsGeometryDynamics.clear();
+}
+
+void KinBody::ClearReadableInterfaces()
+{
+    ReadablesContainer::ClearReadableInterfaces();
+    __hashKinematicsGeometryDynamics.clear();
+}
+
+void KinBody::ClearReadableInterface(const std::string& id)
+{
+    ReadablesContainer::ClearReadableInterface(id);
+    __hashKinematicsGeometryDynamics.clear();
+}
+
+bool KinBody::UpdateReadableInterfaces(const std::map<std::string, ReadablePtr>& newReadableInterfaces)
+{
+    const bool ret = ReadablesContainer::UpdateReadableInterfaces(newReadableInterfaces);
+    __hashKinematicsGeometryDynamics.clear();
+    return ret;
+}
+
 const std::string& KinBody::GetKinematicsGeometryHash() const
 {
     CHECK_INTERNAL_COMPUTATION;

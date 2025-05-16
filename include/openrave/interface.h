@@ -24,6 +24,8 @@
 
 #include <rapidjson/document.h>
 
+#include "openrave/hashcontext.h"
+
 namespace OpenRAVE {
 
 /// \brief options to pass into UpdateFromInfo that control what gets updated
@@ -109,6 +111,10 @@ public:
 
     /// \brief updates the readable interfaces. returns true if there are any changes
     virtual bool UpdateReadableInterfaces(const std::map<std::string, ReadablePtr>& newReadableInterfaces);
+
+    /// \brief generate the hash digest of all readables in the container
+    /// Thread-safe.
+    void DigestHash(HashContext& hash) const;
 
     boost::shared_mutex& GetReadableInterfaceMutex() const
     {
