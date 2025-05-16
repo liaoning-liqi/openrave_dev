@@ -1279,6 +1279,7 @@ void PyEnvironmentBase::Reset() {
     _penv->Reset();
 }
 void PyEnvironmentBase::Destroy() {
+    PythonThreadSaver saver;
     ViewerManager::GetInstance().RemoveViewersOfEnvironment(_penv);
     _penv->Destroy();
 }

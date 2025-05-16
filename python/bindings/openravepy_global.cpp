@@ -1033,6 +1033,7 @@ object pyRaveInvertFileLookup(const std::string& filename)
 
 void pyRaveDestroy()
 {
+    PythonThreadSaver saver;
     ViewerManager::GetInstance().Destroy(); // destroy the active viewers
     OpenRAVE::RaveDestroy();
 }
