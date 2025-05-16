@@ -6629,6 +6629,11 @@ UpdateFromInfoResult KinBody::UpdateFromKinBodyInfo(const KinBodyInfo& info)
         }
     }
 
+    // If we made changes, invalidate our cached geometry hash
+    if (updateFromInfoResult != UFIR_NoChange) {
+        __hashKinematicsGeometryDynamics.clear();
+    }
+
     return updateFromInfoResult;
 }
 
