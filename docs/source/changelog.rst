@@ -3,6 +3,11 @@
 ChangeLog
 #########
 
+Version 0.167.2
+===============
+
+- Avoid deadlock between GIL and env mutex on Destroy
+
 Version 0.167.1
 ===============
 
