@@ -91,7 +91,8 @@ public:
     }
 
     // Allow directly updating with rapidjson values
-    HashContext& operator<<(const rapidjson::Value& rValue)
+    template <typename EncodingT, typename AllocatorT>
+    HashContext& operator<<(const rapidjson::GenericValue<EncodingT, AllocatorT>& rValue)
     {
         switch (rValue.GetType()) {
         // Don't count a null for anything
