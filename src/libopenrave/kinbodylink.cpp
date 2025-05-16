@@ -675,6 +675,7 @@ AABB KinBody::Link::ComputeAABBForGeometryGroupFromTransform(const std::string& 
 void KinBody::Link::DigestHash(HashContext& hash, int options) const
 {
     hash << _index;
+    hash << _info._t;
     if (options & SO_Geometry) {
         hash << _vGeometries.size();
         FOREACHC(it, _vGeometries) {
