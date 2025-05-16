@@ -6184,6 +6184,7 @@ const std::string& KinBody::GetKinematicsGeometryHash() const
     CHECK_INTERNAL_COMPUTATION;
     if( __hashKinematicsGeometryDynamics.size() == 0 ) {
         HashContext hash;
+        ReadablesContainer::DigestHash(hash);
         // should add dynamics since that affects a lot how part is treated.
         DigestHash(hash, SO_Kinematics|SO_Geometry|SO_Dynamics);
         __hashKinematicsGeometryDynamics = hash.HexDigest();
