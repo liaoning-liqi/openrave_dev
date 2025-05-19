@@ -1906,9 +1906,9 @@ AABB KinBody::Geometry::ComputeAABB(const Transform& t) const
     return _info.ComputeAABB(t);
 }
 
-void KinBody::Geometry::DigestHash(HashContext& hash, int options) const
+void KinBody::Geometry::DigestHash(HashContext& hash, const Transform& tdelta, int options) const
 {
-    hash << _info._t;
+    hash << tdelta*_info._t;
     hash << static_cast<int>(_info._type);
     hash << _info._vRenderScale;
     if (_info._type == GT_TriMesh) {

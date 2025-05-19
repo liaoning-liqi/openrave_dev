@@ -6121,9 +6121,10 @@ void KinBody::Serialize(BaseXMLWriterPtr writer, int options) const
 
 void KinBody::DigestHash(HashContext& hash, int options) const
 {
+    Transform tbodyinv = GetTransform().inverse();
     hash << _veclinks.size();
     FOREACHC(it,_veclinks) {
-        (*it)->DigestHash(hash,options);
+        (*it)->DigestHash(hash,tbodyinv, options);
     }
     hash << _vecjoints.size();
     FOREACHC(it,_vecjoints) {

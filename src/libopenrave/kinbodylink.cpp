@@ -672,13 +672,18 @@ AABB KinBody::Link::ComputeAABBForGeometryGroupFromTransform(const std::string& 
     return AABB(tLink.trans, Vector(0, 0, 0));
 }
 
-void KinBody::Link::DigestHash(HashContext& hash, int options) const
+void KinBody::Link::DigestHash(HashContext& hash, const Transform& tbodyinv, int options) const
 {
     hash << _index;
     if (options & SO_Geometry) {
         hash << _vGeometries.size();
+        Transform tdelta;
+        if( _info._bStatic ) {
+            // when static, have to use the transform from the body
+            tdelta = tbodyinv * _info._t;
+        }
         FOREACHC(it, _vGeometries) {
-            (*it)->DigestHash(hash, options);
+            (*it)->DigestHash(hash, tdelta, options);
         }
     }
     if (options & SO_Dynamics) {

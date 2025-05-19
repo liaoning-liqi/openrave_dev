@@ -855,7 +855,9 @@ public:
         }
 
         /// \brief Generate a hash of this structure into the provided hash context
-        void DigestHash(HashContext& hash, int options) const;
+        ///
+        /// \param tdelta apply to _info._t before saving
+        void DigestHash(HashContext& hash, const Transform& tdelta, int options) const;
 
         /// \brief sets a new collision mesh and notifies every registered callback about it
         void SetCollisionMesh(const TriMesh& mesh);
@@ -1387,7 +1389,9 @@ public:
         void GetRigidlyAttachedLinks(std::vector<boost::shared_ptr<Link> >& vattachedlinks) const;
 
         /// \brief Generate a hash of this structure into the provided hash context
-        void DigestHash(HashContext& hash, int options) const;
+        ///
+        /// \param tbody the inverse of the transform of the body in the world
+        void DigestHash(HashContext& hash, const Transform& tbodyinv, int options) const;
 
         /// \brief return a map of custom float parameters
         inline const std::map<std::string, std::vector<dReal> >& GetFloatParameters() const {
