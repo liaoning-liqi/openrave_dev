@@ -678,7 +678,7 @@ void KinBody::Link::DigestHash(HashContext& hash, const Transform& tbodyinv, int
     if (options & SO_Geometry) {
         hash << _vGeometries.size();
         Transform tdelta;
-        if( _info._bStatic ) {
+        if( _info._bStatic || _vParentLinks.empty() ) {
             // when static, have to use the transform from the body
             tdelta = tbodyinv * _info._t;
         }
