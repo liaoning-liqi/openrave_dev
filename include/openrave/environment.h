@@ -591,14 +591,16 @@ public:
     ///
     /// This method allows for iterating over all of the bodies in the env without having to copy the list of bodies first.
     /// The environment interface mutex is locked internally.
-    /// The callback function must not call any methods that would cause bodies to be added or removed from the environment, as this would mutate the internal list of bodies while it is being iterated.
+    /// The callback function must not call any methods that would cause bodies to be added or removed from the environment,
+    /// as this would cause a deadlock attempting to exclusively lock the interface mutex while the thread already holds it in shared mode.
     virtual void IterateBodies(const std::function<void(const KinBodyPtr&)>& mapFunction) = 0;
 
     /// \brief Remove bodies from the environment based on some unary predicate. Thread-safe.
     ///
     /// Applies the predicate function to every body in the environment, and then removes all bodies for which the predicate returns true.
     /// Note that removal of bodies happens concurrently with body iteration.
-    /// The environment interface mutex is locked internally.
+    /// The environment interface mutex is locked internally in exclusive mode,
+    /// so the predicate must not make any calls that would also attempt to lock this mutex.
     virtual void FilterBodies(const std::function<bool(const KinBodyPtr&)>& predicate) = 0;
 
     /// \brief Fill an array with all robots loaded in the environment. <b>[multi-thread safe]</b>
