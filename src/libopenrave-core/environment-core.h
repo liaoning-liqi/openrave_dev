@@ -26,7 +26,6 @@
 #include <boost/filesystem/operations.hpp>
 #endif
 
-#include <atomic>
 #include <chrono>
 #include <mutex>
 #include <shared_mutex>
@@ -1649,26 +1648,33 @@ public:
 
     virtual void IterateBodies(const std::function<void(const KinBodyPtr&)>& mapFunction) override
     {
-        // Add one to the active iterator count, and release our read when exiting.
-        // This reader count allows us to catch abuses of the iterator API (mutation during iteration) that might otherwise cause undefined behaviour.
-        _vecbodiesActiveReaders.fetch_add(1, std::memory_order::memory_order_acq_rel);
-        struct ReaderReleaser
-        {
-            ReaderReleaser(std::atomic<size_t>& counter)
-                : _counter(counter){};
-            ~ReaderReleaser()
-            {
-                _counter.fetch_sub(1, std::memory_order::memory_order_acq_rel);
-            }
-
-        private:
-            std::atomic<size_t>& _counter;
-        } __deferReleaseRead{_vecbodiesActiveReaders};
+        // Lock the interface mutex before incrementing the reader count
+        // Only need a shared lock since we disallow mutation during iteration
+        EnvironmentLock lockenv(GetMutex());
+        SharedLock lockIterateBodies(_mutexInterfaces);
 
         // Map the provided function over all of the live bodies in the environment
         for (const KinBodyPtr& pBody : _vecbodies) {
             if (!!pBody) {
                 mapFunction(pBody);
+            }
+        }
+    }
+
+    virtual void FilterBodies(const std::function<bool(const KinBodyPtr&)>& predicate) override
+    {
+        // Iterate the bodies in the environment, and remove all bodies for which the predicate returns true
+        EnvironmentLock lockenv(GetMutex());
+        ExclusiveLock lockFilterBodies(_mutexInterfaces); // Need exclusive lock here since we may be modifying _vecbodies
+        for (const KinBodyPtr& pBody : _vecbodies) {
+            // Ignore body indices that are empty
+            if (!pBody) {
+                continue;
+            }
+
+            // If the predicate matches the body, invalidate it.
+            if (predicate(pBody)) {
+                _InvalidateKinBodyFromEnvBodyIndex(pBody->GetEnvironmentBodyIndex());
             }
         }
     }
@@ -3555,7 +3561,6 @@ protected:
     /// assumes environment and _mutexInterfaces are exclusively locked
     KinBodyPtr _InvalidateKinBodyFromEnvBodyIndex(int bodyIndex)
     {
-        OPENRAVE_ASSERT_OP(_vecbodiesActiveReaders.load(std::memory_order::memory_order_acquire), ==, 0); // We are modifying vecbodies, assert there are no concurrent reads
         KinBodyPtr& pbodyref = _vecbodies.at(bodyIndex);
         if (!pbodyref) {
             return KinBodyPtr();
@@ -4074,7 +4079,6 @@ protected:
     /// assuming _mutexInterfaces is exclusively locked
     inline void _AddKinBodyInternal(KinBodyPtr pbody, int envBodyIndex)
     {
-        OPENRAVE_ASSERT_OP(_vecbodiesActiveReaders.load(std::memory_order::memory_order_acquire), ==, 0); // We are modifying vecbodies, assert there are no concurrent reads
         EnsureVectorSize(_vecbodies, envBodyIndex+1);
         _vecbodies.at(envBodyIndex) = pbody;
 
@@ -4553,11 +4557,6 @@ protected:
     }
 
     std::vector<KinBodyPtr> _vecbodies;     ///< all objects that are collidable (includes robots) sorted by env body index ascending order. Note that some element can be nullptr, and size of _vecbodies should be kept unchanged when body is removed from env. protected by _mutexInterfaces. [0] should always be kept null since 0 means no assignment.
-
-    /// Number of active loops that are directly iterating the contents of _vecbodies
-    /// Any functions that might mutate the contents of _vecbodies should test this value, and throw if it is non-zero
-    /// This prevents accidental mutate-during-iterate if a caller performs an e.g. Add of a body during IterateBodies.
-    std::atomic<uint64_t> _vecbodiesActiveReaders{0};
 
     string_map<int> _mapBodyNameIndex; /// maps body name to env body index of bodies stored in _vecbodies sorted by name. used to lookup kin body by name. protected by _mutexInterfaces.
     string_map<int> _mapBodyIdIndex; /// maps body id to env body index of bodies stored in _vecbodies sorted by name. used to lookup kin body by name. protected by _mutexInterfaces
