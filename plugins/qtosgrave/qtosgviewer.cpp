@@ -1686,10 +1686,11 @@ void QtOSGViewer::_DrawArrow(OSGSwitchPtr handle, const RaveVector<float>& p1, c
     const float alpha = std::max<float>(0.0, std::min<float>(1.0f, 1.0f - transparency));
     const osg::Vec4f osgcolor(color.x, color.y, color.z, alpha);
 
+    const float coneheight = 2.0*fwidth;
     osg::ref_ptr<osg::Cone> cone = new osg::Cone();
     cone->setRadius(1.5*fwidth);
-    cone->setHeight(2.0*fwidth);
-    cone->setCenter(osg::Vec3(0, 0, fheight - (0.5 + cone->getBaseOffsetFactor())*fwidth));
+    cone->setHeight(coneheight);
+    cone->setCenter(osg::Vec3(0, 0, fheight - (0.5 + cone->getBaseOffsetFactor())*coneheight));
     osg::ref_ptr<osg::ShapeDrawable> conesd = new osg::ShapeDrawable(cone.get());
     conesd->setColor(osgcolor);
     geode->addDrawable(conesd);
@@ -1697,7 +1698,7 @@ void QtOSGViewer::_DrawArrow(OSGSwitchPtr handle, const RaveVector<float>& p1, c
     osg::ref_ptr<osg::Cylinder> cylinder = new osg::Cylinder();
     cylinder->setRadius(0.5*fwidth);
     cylinder->setHeight(fheight - fwidth);
-    cylinder->setCenter(osg::Vec3(0, 0, 0.5*fheight - 0.5*fwidth));
+    cylinder->setCenter(osg::Vec3(0, 0, 0.5*(fheight - 2.0*fwidth)));
     osg::ref_ptr<osg::ShapeDrawable> cylsd = new osg::ShapeDrawable(cylinder.get());
     cylsd->setColor(osgcolor);
     geode->addDrawable(cylsd);
