@@ -593,7 +593,7 @@ public:
     /// The environment interface mutex is locked internally.
     /// The callback function must not call any methods that would cause bodies to be added or removed from the environment,
     /// as this would cause a deadlock attempting to exclusively lock the interface mutex while the thread already holds it in shared mode.
-    virtual void IterateBodies(const std::function<void(const KinBodyPtr&)>& mapFunction) = 0;
+    virtual void IterateBodies(const std::function<void(KinBody&)>& mapFunction) = 0;
 
     /// \brief Remove bodies from the environment based on some unary predicate. Thread-safe.
     ///
@@ -601,7 +601,7 @@ public:
     /// Note that removal of bodies happens concurrently with body iteration.
     /// The environment interface mutex is locked internally in exclusive mode,
     /// so the predicate must not make any calls that would also attempt to lock this mutex.
-    virtual void FilterBodies(const std::function<bool(const KinBodyPtr&)>& predicate) = 0;
+    virtual void FilterBodies(const std::function<bool(const KinBody&)>& predicate) = 0;
 
     /// \brief Fill an array with all robots loaded in the environment. <b>[multi-thread safe]</b>
     ///

@@ -1646,7 +1646,7 @@ public:
         return _mutexEnvironment;
     }
 
-    virtual void IterateBodies(const std::function<void(const KinBodyPtr&)>& mapFunction) override
+    virtual void IterateBodies(const std::function<void(KinBody&)>& mapFunction) override
     {
         // Lock the interface mutex before incrementing the reader count
         // Only need a shared lock since we disallow mutation during iteration
@@ -1656,12 +1656,12 @@ public:
         // Map the provided function over all of the live bodies in the environment
         for (const KinBodyPtr& pBody : _vecbodies) {
             if (!!pBody) {
-                mapFunction(pBody);
+                mapFunction(*pBody);
             }
         }
     }
 
-    virtual void FilterBodies(const std::function<bool(const KinBodyPtr&)>& predicate) override
+    virtual void FilterBodies(const std::function<bool(const KinBody&)>& predicate) override
     {
         // Iterate the bodies in the environment, and remove all bodies for which the predicate returns true
         EnvironmentLock lockenv(GetMutex());
@@ -1673,7 +1673,7 @@ public:
             }
 
             // If the predicate matches the body, invalidate it.
-            if (predicate(pBody)) {
+            if (predicate(*pBody)) {
                 _InvalidateKinBodyFromEnvBodyIndex(pBody->GetEnvironmentBodyIndex());
             }
         }
