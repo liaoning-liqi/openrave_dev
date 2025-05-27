@@ -888,8 +888,26 @@ protected:
             }
         }
 
-        pNewKinBodyInfo->DeserializeJSON(rRefKinBodyInfo, fRefUnitScale, _deserializeOptions);
 
+        rapidjson::Value::ConstMemberIterator itEnvBodies = rEnvInfo.FindMember("bodies");
+        if ( itEnvBodies != rEnvInfo.MemberEnd() && itEnvBodies->value.IsArray() && itEnvBodies->value.Size() > 0 ) {
+            const rapidjson::Value& rEnvBodies = itEnvBodies->value;
+            rapidjson::Value::ConstValueIterator it = rEnvBodies.Begin();
+            for (; it != rEnvBodies.End(); it++) {
+                std::string id = orjson::GetJsonValueByKey<std::string>(*it, "id", "");
+                if (id == originBodyId) {
+                    break;
+                }
+            }
+            if (it != rEnvBodies.End() && orjson::GetJsonValueByKey<bool>(*it, "__isPartial__", true)) {
+                pNewKinBodyInfo->DeserializeJSON(*it, fRefUnitScale, _deserializeOptions);
+            } else {
+                pNewKinBodyInfo->DeserializeJSON(rRefKinBodyInfo, fRefUnitScale, _deserializeOptions);
+            }
+        } else {
+            pNewKinBodyInfo->DeserializeJSON(rRefKinBodyInfo, fRefUnitScale, _deserializeOptions);
+        }
+        
         if( !originBodyId.empty() ) {
             pNewKinBodyInfo->_id = originBodyId;
         }
