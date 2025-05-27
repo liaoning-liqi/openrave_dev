@@ -888,7 +888,7 @@ protected:
             }
         }
 
-
+        const bool isPartial = orjson::GetJsonValueByKey<bool>(rEnvInfo, "__isPartial__", false);
         rapidjson::Value::ConstMemberIterator itEnvBodies = rEnvInfo.FindMember("bodies");
         if ( itEnvBodies != rEnvInfo.MemberEnd() && itEnvBodies->value.IsArray() && itEnvBodies->value.Size() > 0 ) {
             const rapidjson::Value& rEnvBodies = itEnvBodies->value;
@@ -899,7 +899,7 @@ protected:
                     break;
                 }
             }
-            if (it != rEnvBodies.End() && orjson::GetJsonValueByKey<bool>(*it, "__isPartial__", true)) {
+            if (it != rEnvBodies.End() && isPartial) {
                 pNewKinBodyInfo->DeserializeJSON(*it, fRefUnitScale, _deserializeOptions);
             } else {
                 pNewKinBodyInfo->DeserializeJSON(rRefKinBodyInfo, fRefUnitScale, _deserializeOptions);
