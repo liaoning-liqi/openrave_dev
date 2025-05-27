@@ -241,45 +241,77 @@ public:
 
     /// Uses cpp_function's return_value_policy by default
     template <typename ... Extra>
-    PyOpenRAVEException &def_property_static(const char *name, const py::cpp_function &fget, const py::cpp_function &fset, const Extra& ... extra) {
+    PyOpenRAVEException &def_property_static(const char *name,
+                                             const py::cpp_function &fget,
+                                             const py::cpp_function &fset,
+                                             const Extra &...extra) {
+        static_assert(0 == py::detail::constexpr_sum(std::is_base_of<py::arg, Extra>::value...),
+                      "Argument annotations are not allowed for properties");
         auto rec_fget = get_function_record(fget), rec_fset = get_function_record(fset);
-        char *doc_prev = rec_fget->doc; /* 'extra' field may include a property-specific documentation string */
-        py::detail::process_attributes<Extra ...>::init(extra ..., rec_fget);
-        if (rec_fget->doc && rec_fget->doc != doc_prev) {
-            free(doc_prev);
-            rec_fget->doc = strdup(rec_fget->doc);
-        }
-        if (rec_fset) {
-            doc_prev = rec_fset->doc;
-            py::detail::process_attributes<Extra ...>::init(extra ..., rec_fset);
-            if (rec_fset->doc && rec_fset->doc != doc_prev) {
-                free(doc_prev);
-                rec_fset->doc = strdup(rec_fset->doc);
+        auto *rec_active = rec_fget;
+        if (rec_fget) {
+            char *doc_prev = rec_fget->doc; /* 'extra' field may include a property-specific
+                                               documentation string */
+            py::detail::process_attributes<Extra...>::init(extra..., rec_fget);
+            if (rec_fget->doc && rec_fget->doc != doc_prev) {
+                std::free(doc_prev);
+                rec_fget->doc = PYBIND11_COMPAT_STRDUP(rec_fget->doc);
             }
         }
-        def_property_static_impl(name, fget, fset, rec_fget);
+        if (rec_fset) {
+            char *doc_prev = rec_fset->doc;
+            py::detail::process_attributes<Extra...>::init(extra..., rec_fset);
+            if (rec_fset->doc && rec_fset->doc != doc_prev) {
+                std::free(doc_prev);
+                rec_fset->doc = PYBIND11_COMPAT_STRDUP(rec_fset->doc);
+            }
+            if (!rec_active) {
+                rec_active = rec_fset;
+            }
+        }
+        def_property_static_impl(name, fget, fset, rec_active);
         return *this;
     }
 
 private:
     static py::detail::function_record *get_function_record(handle h) {
         h = py::detail::get_function(h);
-        return h ? (py::detail::function_record *) py::reinterpret_borrow<py::capsule>(PyCFunction_GET_SELF(h.ptr()))
-               : nullptr;
+        if (!h) {
+            return nullptr;
+        }
+
+        handle func_self = PyCFunction_GET_SELF(h.ptr());
+        if (!func_self) {
+            throw py::error_already_set();
+        }
+
+#if PYBIND11_VERSION_MAJOR < 3
+        if (!py::isinstance<py::capsule>(func_self)) {
+            return nullptr;
+        }
+        auto cap = py::reinterpret_borrow<py::capsule>(func_self);
+        // if (!py::detail::is_function_record_capsule(cap)) {
+        //     return nullptr;
+        // }
+        return cap.get_pointer<py::detail::function_record>();
+#else
+        return py::detail::function_record_ptr_from_PyObject(func_self.ptr());
+#endif
     }
 
     void def_property_static_impl(const char *name,
-                                  py::handle fget, py::handle fset,
-                                  py::detail::function_record *rec_fget) {
-        const auto is_static = !(rec_fget->is_method && rec_fget->scope);
-        const auto has_doc = rec_fget->doc && pybind11::options::show_user_defined_docstrings();
-
-        auto property = handle((PyObject *) (is_static ? py::detail::get_internals().static_property_type
-                                             : &PyProperty_Type));
+                                  handle fget,
+                                  handle fset,
+                                  py::detail::function_record *rec_func) {
+        const auto is_static = (rec_func != nullptr) && !(rec_func->is_method && rec_func->scope);
+        const auto has_doc = (rec_func != nullptr) && (rec_func->doc != nullptr)
+                             && pybind11::options::show_user_defined_docstrings();
+        auto property = py::handle(
+            (PyObject *) (is_static ? py::detail::get_internals().static_property_type : &PyProperty_Type));
         attr(name) = property(fget.ptr() ? fget : py::none(),
                               fset.ptr() ? fset : py::none(),
                               /*deleter*/ py::none(),
-                              pybind11::str(has_doc ? rec_fget->doc : ""));
+                              pybind11::str(has_doc ? rec_func->doc : ""));
     }
 };
 
