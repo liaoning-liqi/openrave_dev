@@ -1318,7 +1318,18 @@ public:
             // Make sure the last configuration ends at the desired value.
             for (size_t idof = 0; idof < ndof; ++idof) {
                 if( RaveFabs(curPos[idof] - q1[idof]) + g_fEpsilon > RampOptimizer::g_fRampEpsilon ) {
-                    RAVELOG_WARN_FORMAT("env=%d, discrepancy at the last configuration: curPos[%d] (%.15e) != q1[%d] (%.15e)", _environmentid%idof%curPos[idof]%idof%q1[idof]);
+                    _sslog.str(""); _sslog.clear();
+                    _sslog << std::setprecision(std::numeric_limits<dReal>::digits10 + 1);
+                    _sslog << "x0=[";
+                    SerializeValues(_sslog, q0);
+                    _sslog << "]; x1=[";
+                    SerializeValues(_sslog, q1);
+                    _sslog << "]; v0=[";
+                    SerializeValues(_sslog, dq0);
+                    _sslog << "]; v1=[";
+                    SerializeValues(_sslog, dq1);
+                    _sslog << "]; deltatime=" << timeElapsed;
+                    RAVELOG_WARN_FORMAT("env=%d, discrepancy at the last configuration: curPos[%d] (%.15e) != q1[%d] (%.15e). %s", _environmentid%idof%curPos[idof]%idof%q1[idof]%_sslog.str());
                     return RampOptimizer::CheckReturn(CFO_FinalValuesNotReached);
                 }
             }
