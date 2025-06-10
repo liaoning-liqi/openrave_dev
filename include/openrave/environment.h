@@ -601,7 +601,7 @@ public:
     /// Note that removal of bodies happens concurrently with body iteration.
     /// The environment interface mutex is locked internally in exclusive mode,
     /// so the predicate must not make any calls that would also attempt to lock this mutex.
-    virtual void FilterBodies(const std::function<bool(const KinBody&)>& predicate) = 0;
+    virtual void RemoveBodiesIf(const std::function<bool(const KinBody&)>& predicate) = 0;
 
     /// \brief Fill an array with all robots loaded in the environment. <b>[multi-thread safe]</b>
     ///

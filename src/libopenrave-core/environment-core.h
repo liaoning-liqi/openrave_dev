@@ -1648,8 +1648,7 @@ public:
 
     virtual void IterateBodies(const std::function<void(KinBody&)>& mapFunction) override
     {
-        // Lock the interface mutex before incrementing the reader count
-        // Only need a shared lock since we disallow mutation during iteration
+        // Ensure we take both the environment and interface mutexes before iterating
         EnvironmentLock lockenv(GetMutex());
         SharedLock lockIterateBodies(_mutexInterfaces);
 
@@ -1661,11 +1660,11 @@ public:
         }
     }
 
-    virtual void FilterBodies(const std::function<bool(const KinBody&)>& predicate) override
+    virtual void RemoveBodiesIf(const std::function<bool(const KinBody&)>& predicate) override
     {
         // Iterate the bodies in the environment, and remove all bodies for which the predicate returns true
         EnvironmentLock lockenv(GetMutex());
-        ExclusiveLock lockFilterBodies(_mutexInterfaces); // Need exclusive lock here since we may be modifying _vecbodies
+        ExclusiveLock lockRemoveBodies(_mutexInterfaces); // Need exclusive lock here since we may be modifying _vecbodies
         for (const KinBodyPtr& pBody : _vecbodies) {
             // Ignore body indices that are empty
             if (!pBody) {
