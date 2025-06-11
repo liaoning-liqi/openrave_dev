@@ -3,6 +3,11 @@
 ChangeLog
 #########
 
+Version 0.167.4
+===============
+
+- Revive robust hash computation logic at the `serialize` -> `DigestHash` migration.
+
 Version 0.167.3
 ===============
 
