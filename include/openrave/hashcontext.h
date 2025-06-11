@@ -56,12 +56,9 @@ public:
     template <typename FloatT>
     typename std::enable_if<std::is_floating_point<FloatT>::value, HashContext&>::type operator<<(FloatT value)
     {
-        FloatT result;
-        if (value > -1e-4f && value < 1e-4f ) {
-            result = static_cast<FloatT>(0);
-        }
-        else {
-            result = round(value * _roundingScale) / _roundingScale;
+        FloatT result = round(value * _roundingScale) / _roundingScale;
+        if (result == -0) {     // don't want to disinguish -0.00001 and 0, so set it to 0.
+            result = 0;
         }
         _Append(reinterpret_cast<const uint8_t*>(&result), sizeof(FloatT));
         return *this;
