@@ -3,10 +3,15 @@
 ChangeLog
 #########
 
-Version 0.167.4
+Version 0.167.5
 ===============
 
 - Add support for `CheckCollision(link, link, report)` pybind interface back. It was unexpectedly removed in Version 0.167.2
+
+Version 0.167.4
+===============
+
+- Revive robust hash computation logic at the `serialize` -> `DigestHash` migration.
 
 Version 0.167.3
 ===============
