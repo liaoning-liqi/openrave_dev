@@ -67,17 +67,13 @@ set_target_properties(libopenrave PROPERTIES OUTPUT_NAME openrave${OPENRAVE_LIBR
                                   COMPILE_FLAGS "${LIBOPENRAVE_COMPILE_FLAGS} ${FPARSER_CXX_FLAGS} -DOPENRAVE_DLL_EXPORTS -DOPENRAVE_DLL"
                                   LINK_FLAGS "${LIBOPENRAVE_LINK_FLAGS} ${FPARSER_LINK_FLAGS}")
 target_compile_definitions(libopenrave PRIVATE "OPENRAVE_STATIC_PLUGINS=${OPENRAVE_STATIC_PLUGINS}")
+target_link_libraries(libopenrave
+  PRIVATE boost_assertion_failed static_plugins openrave-md5 ${openrave_static_libraries} openrave-msgpack
+  PUBLIC LibXml2::LibXml2 Boost::filesystem Boost::thread ${CMAKE_DL_LIBS} ${openrave_libraries}
+)
 if (OPT_ENVIRONMENT_RECURSIVE_LOCK_WITH_GIL_CHECK)
-  target_link_libraries(libopenrave
-    PRIVATE boost_assertion_failed static_plugins openrave-md5 ${openrave_static_libraries} openrave-msgpack
-    PUBLIC LibXml2::LibXml2 Boost::filesystem Boost::thread ${CMAKE_DL_LIBS} ${openrave_libraries} ${Python3_LIBRARIES}
-  )
+  target_link_libraries(libopenrave PUBLIC ${Python3_LIBRARIES})
   target_include_directories(libopenrave PUBLIC ${Python3_INCLUDE_DIRS})
-else()
-  target_link_libraries(libopenrave
-    PRIVATE boost_assertion_failed static_plugins openrave-md5 ${openrave_static_libraries} openrave-msgpack
-    PUBLIC LibXml2::LibXml2 Boost::filesystem Boost::thread ${CMAKE_DL_LIBS} ${openrave_libraries}
-  )
 endif()
 
 install(TARGETS libopenrave

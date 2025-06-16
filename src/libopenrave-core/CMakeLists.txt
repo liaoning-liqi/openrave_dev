@@ -77,13 +77,9 @@ endif()
 link_directories(${OPENRAVE_LINK_DIRS})
 
 add_library(libopenrave-core SHARED ${openrave_core_SOURCES})
+target_include_directories(libopenrave-core PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 if (OPT_ENVIRONMENT_RECURSIVE_LOCK_WITH_GIL_CHECK)
-  target_include_directories(libopenrave-core
-    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
-    PUBLIC ${Python3_INCLUDE_DIRS})
-else()
-  target_include_directories(libopenrave-core
-    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+  target_include_directories(libopenrave-core PUBLIC ${Python3_INCLUDE_DIRS})
 endif()
 
 set_target_properties(libopenrave-core PROPERTIES OUTPUT_NAME openrave${OPENRAVE_LIBRARY_SUFFIX}-core
@@ -91,16 +87,12 @@ set_target_properties(libopenrave-core PROPERTIES OUTPUT_NAME openrave${OPENRAVE
                                   VERSION ${OPENRAVE_VERSION}
                                   COMPILE_FLAGS "${LIBOPENRAVE_COMPILE_FLAGS} -DOPENRAVE_CORE_DLL_EXPORTS -DOPENRAVE_CORE_DLL"
                                   LINK_FLAGS "${LIBOPENRAVE_LINK_FLAGS}")
+target_link_libraries(libopenrave-core
+  PRIVATE boost_assertion_failed ${IVCON_LIBRARY} ${OPENRAVE_CORE_STATIC_LIBRARIES} openrave_gpgme
+  PUBLIC libopenrave ${OPENRAVE_CORE_LIBRARIES}
+)
 if (OPT_ENVIRONMENT_RECURSIVE_LOCK_WITH_GIL_CHECK)
-  target_link_libraries(libopenrave-core
-    PRIVATE boost_assertion_failed ${IVCON_LIBRARY} ${OPENRAVE_CORE_STATIC_LIBRARIES} openrave_gpgme
-    PUBLIC libopenrave ${OPENRAVE_CORE_LIBRARIES} ${Python3_LIBRARIES}
-  )
-else()
-  target_link_libraries(libopenrave-core
-    PRIVATE boost_assertion_failed ${IVCON_LIBRARY} ${OPENRAVE_CORE_STATIC_LIBRARIES} openrave_gpgme
-    PUBLIC libopenrave ${OPENRAVE_CORE_LIBRARIES}
-  )
+  target_link_libraries(libopenrave-core PUBLIC ${Python3_LIBRARIES})
 endif()
 
 install(TARGETS libopenrave-core
