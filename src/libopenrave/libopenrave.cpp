@@ -15,9 +15,9 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "libopenrave.h"
-#include <pthread.h>
 
 #if OPENRAVE_ENVIRONMENT_RECURSIVE_LOCK == 2
+#include <pthread.h>
 #include <Python.h>
 namespace OpenRAVE {
 void RecursiveMutexWithGILCheck::lock()
