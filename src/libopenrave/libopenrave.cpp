@@ -16,7 +16,7 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "libopenrave.h"
 
-#if OPENRAVE_ENVIRONMENT_RECURSIVE_LOCK == 2
+#if OPENRAVE_ENVIRONMENT_RECURSIVE_LOCK == 1 && OPENRAVE_ENVIRONMENT_RECURSIVE_LOCK_WITH_GIL_CHECK == 1
 #include <pthread.h>
 #include <Python.h>
 namespace OpenRAVE {

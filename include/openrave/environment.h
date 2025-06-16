@@ -27,12 +27,7 @@
 
 namespace OpenRAVE {
 
-#if OPENRAVE_ENVIRONMENT_RECURSIVE_LOCK == 1
-using EnvironmentMutex = ::std::recursive_mutex;
-using EnvironmentLock  = ::std::unique_lock<std::recursive_mutex>;
-using defer_lock_t     = ::std::defer_lock_t;
-using try_to_lock_t    = ::std::try_to_lock_t;
-#elif OPENRAVE_ENVIRONMENT_RECURSIVE_LOCK == 2
+#if OPENRAVE_ENVIRONMENT_RECURSIVE_LOCK == 1 && OPENRAVE_ENVIRONMENT_RECURSIVE_LOCK_WITH_GIL_CHECK == 1
 /// \brief recursive mutex with the functionality to predict a potential deadlock at runtime. Under multi threadings, when 1. the current thread has not locked this recursive mutex yet and 2. the Python interpreter has been initialized, the GIL must be locked before locking this recursive mutex. The lock function of this class checks this condition, and raises an exception when the user violates the locking order.
 class OPENRAVE_API RecursiveMutexWithGILCheck
 {
@@ -50,15 +45,14 @@ private:
   static thread_local uint64_t _lockCounter;
 };
 using EnvironmentMutex = RecursiveMutexWithGILCheck;
-using EnvironmentLock  = ::std::unique_lock<RecursiveMutexWithGILCheck>;
-using defer_lock_t     = ::std::defer_lock_t;
-using try_to_lock_t    = ::std::try_to_lock_t;
-#else
+#elif OPENRAVE_ENVIRONMENT_RECURSIVE_LOCK == 1
+using EnvironmentMutex = ::std::recursive_mutex;
+#else  // OPENRAVE_ENVIRONMENT_RECURSIVE_LOCK == 0
 using EnvironmentMutex = ::std::mutex;
-using EnvironmentLock  = ::std::unique_lock<std::mutex>;
+#endif
+using EnvironmentLock  = ::std::unique_lock<EnvironmentMutex>;
 using defer_lock_t     = ::std::defer_lock_t;
 using try_to_lock_t    = ::std::try_to_lock_t;
-#endif // OPENRAVE_ENVIRONMENT_RECURSIVE_LOCK
 
 /// \brief used when adding interfaces to the environment
 enum InterfaceAddMode
