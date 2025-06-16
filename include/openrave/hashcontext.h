@@ -57,6 +57,9 @@ public:
     typename std::enable_if<std::is_floating_point<FloatT>::value, HashContext&>::type operator<<(FloatT value)
     {
         FloatT result = round(value * _roundingScale) / _roundingScale;
+        if (result == -0) {     // don't want to disinguish -0.00001 and 0, so set it to 0.
+            result = 0;
+        }
         _Append(reinterpret_cast<const uint8_t*>(&result), sizeof(FloatT));
         return *this;
     }

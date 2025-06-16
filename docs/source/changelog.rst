@@ -3,6 +3,16 @@
 ChangeLog
 #########
 
+Version 0.167.4
+===============
+
+- Revive robust hash computation logic at the `serialize` -> `DigestHash` migration.
+
+Version 0.167.3
+===============
+
+- Optimize link checkCollision not to synchronize unnecessary links.
+
 Version 0.167.2
 ===============
 
