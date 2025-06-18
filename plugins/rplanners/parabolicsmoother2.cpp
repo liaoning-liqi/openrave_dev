@@ -3638,6 +3638,34 @@ protected:
     ///        all vectors in arguments have same size and order config, like _parameters->_vConfigVelocityLimit.
     /// \param[out/in] vAccelLimits : resultant acceleration limits. expected to have the initial acceleration limits in it and this function updates them.
     /// \param[in] vVelocityLimits : just in case, clamp velocity by velocity limits, since dynamic limit might be ill-condition.
+    /// \param[in] xVect, vVect : boundary conditions of positions and velocities. Same size and order as _parameters->_vConfigVelocityLimit.
+    /// \param[in] usedBody : used kinbody, which should support GetDOFDynamicAccelerationJerkLimits API.
+    inline void _UpdateLimitsByDynamicLimitsAtBoundary(std::vector<dReal>& vAccelLimits,
+                                                       const std::vector<dReal>& vVelocityLimits,
+                                                       const std::vector<dReal>& xVect, const std::vector<dReal>& vVect,
+                                                       const KinBody& usedBody)
+
+    {
+        constexpr double fMargin = 0.9999; // margin from the dynamic acceleration limits. even for the case that respecting acceleration limits at t0 and t1 is theoretically enough, there might be numerical error in Check function in DynamicsCollisionConstraint.
+        for(int iDOF = 0; iDOF < (int)_dynamicLimitInfo.vUsedDOFIndices.size(); ++iDOF) {
+            _dynamicLimitInfo.vFullDOFPositions[_dynamicLimitInfo.vUsedDOFIndices[iDOF]] = xVect[iDOF];
+            _dynamicLimitInfo.vFullDOFVelocities[_dynamicLimitInfo.vUsedDOFIndices[iDOF]] = max(-vVelocityLimits[iDOF], min(vVect[iDOF], vVelocityLimits[iDOF]));
+        }
+        usedBody.GetDOFDynamicAccelerationJerkLimits(_dynamicLimitInfo.vFullDOFAccelerationLimits, _dynamicLimitInfo.vFullDOFJerkLimits,
+                                                     _dynamicLimitInfo.vFullDOFPositions, _dynamicLimitInfo.vFullDOFVelocities);
+        for(int iDOF = 0; iDOF < (int)_dynamicLimitInfo.vUsedDOFIndices.size(); ++iDOF) {
+            if( _dynamicLimitInfo.vFullDOFAccelerationLimits[_dynamicLimitInfo.vUsedDOFIndices[iDOF]] < g_fEpsilon ) { // if dynamic limits are close to zero, this dof does not suppot dynamic limit. so, skip.
+                continue;
+            }
+            vAccelLimits[iDOF] = min(_dynamicLimitInfo.vFullDOFAccelerationLimits[_dynamicLimitInfo.vUsedDOFIndices[iDOF]]*fMargin, vAccelLimits[iDOF]);
+        }
+    }
+
+    /// \brief update limits by dynamic limits. for now, update only acceleration limits.
+    ///        acceleration limits should at least satisfy the dynamic acceleration limits at t0 and t1, which are start/end boundary conditions of trajectory segment.
+    ///        all vectors in arguments have same size and order config, like _parameters->_vConfigVelocityLimit.
+    /// \param[out/in] vAccelLimits : resultant acceleration limits. expected to have the initial acceleration limits in it and this function updates them.
+    /// \param[in] vVelocityLimits : just in case, clamp velocity by velocity limits, since dynamic limit might be ill-condition.
     /// \param[in] x0Vect, v0Vect, x1Vect, v1Vect : boundary conditions of positions and velocities at t0 and t1. Same size and order as _parameters->_vConfigVelocityLimit.
     /// \param[in] usedBody : used kinbody, which should support GetDOFDynamicAccelerationJerkLimits API.
     void _UpdateLimitsByDynamicLimits(std::vector<dReal>& vAccelLimits,
@@ -3646,33 +3674,10 @@ protected:
                                       const std::vector<dReal>& v0Vect, const std::vector<dReal>& v1Vect,
                                       const KinBody& usedBody)
     {
-        const double fMargin = 0.9999; // margin from the dynamic acceleration limits. even for the case that respecting acceleration limits at t0 and t1 is theoretically enough, there might be numerical error in Check function in DynamicsCollisionConstraint.
-        // check dynamic acceleration limit at x0
-        for(int iDOF = 0; iDOF < (int)_dynamicLimitInfo.vUsedDOFIndices.size(); ++iDOF) {
-            _dynamicLimitInfo.vFullDOFPositions[_dynamicLimitInfo.vUsedDOFIndices[iDOF]] = x0Vect[iDOF];
-            _dynamicLimitInfo.vFullDOFVelocities[_dynamicLimitInfo.vUsedDOFIndices[iDOF]] = max(-vVelocityLimits[iDOF], min(v0Vect[iDOF], vVelocityLimits[iDOF]));
-        }
-        usedBody.GetDOFDynamicAccelerationJerkLimits(_dynamicLimitInfo.vFullDOFAccelerationLimits, _dynamicLimitInfo.vFullDOFJerkLimits,
-                                                     _dynamicLimitInfo.vFullDOFPositions, _dynamicLimitInfo.vFullDOFVelocities);
-        for(int iDOF = 0; iDOF < (int)_dynamicLimitInfo.vUsedDOFIndices.size(); ++iDOF) {
-            if( _dynamicLimitInfo.vFullDOFAccelerationLimits[_dynamicLimitInfo.vUsedDOFIndices[iDOF]] < g_fEpsilon ) { // if dynamic limits are close to zero, this dof does not suppot dynamic limit. so, skip.
-                continue;
-            }
-            vAccelLimits[iDOF] = min(_dynamicLimitInfo.vFullDOFAccelerationLimits[_dynamicLimitInfo.vUsedDOFIndices[iDOF]]*fMargin, vAccelLimits[iDOF]);
-        }
-        // check dynamic acceleration limit at x1
-        for(int iDOF = 0; iDOF < (int)_dynamicLimitInfo.vUsedDOFIndices.size(); ++iDOF) {
-            _dynamicLimitInfo.vFullDOFPositions[_dynamicLimitInfo.vUsedDOFIndices[iDOF]] = x1Vect[iDOF];
-            _dynamicLimitInfo.vFullDOFVelocities[_dynamicLimitInfo.vUsedDOFIndices[iDOF]] = max(-vVelocityLimits[iDOF], min(v1Vect[iDOF], vVelocityLimits[iDOF]));
-        }
-        usedBody.GetDOFDynamicAccelerationJerkLimits(_dynamicLimitInfo.vFullDOFAccelerationLimits, _dynamicLimitInfo.vFullDOFJerkLimits,
-                                                     _dynamicLimitInfo.vFullDOFPositions, _dynamicLimitInfo.vFullDOFVelocities);
-        for(int iDOF = 0; iDOF < (int)_dynamicLimitInfo.vUsedDOFIndices.size(); ++iDOF) {
-            if( _dynamicLimitInfo.vFullDOFAccelerationLimits[_dynamicLimitInfo.vUsedDOFIndices[iDOF]] < g_fEpsilon ) { // if dynamic limits are close to zero, this dof does not suppot dynamic limit. so, skip.
-                continue;
-            }
-            vAccelLimits[iDOF] = min(_dynamicLimitInfo.vFullDOFAccelerationLimits[_dynamicLimitInfo.vUsedDOFIndices[iDOF]]*fMargin, vAccelLimits[iDOF]);
-        }
+        // check and update dynamic acceleration limit at x0
+        _UpdateLimitsByDynamicLimitsAtBoundary(vAccelLimits, vVelocityLimits, x0Vect, v0Vect, usedBody);
+        // check and update dynamic acceleration limit at x1
+        _UpdateLimitsByDynamicLimitsAtBoundary(vAccelLimits, vVelocityLimits, x1Vect, v1Vect, usedBody);
     }
 
     /// Members
