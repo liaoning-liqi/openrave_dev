@@ -3655,6 +3655,9 @@ protected:
         usedBody.GetDOFDynamicAccelerationJerkLimits(_dynamicLimitInfo.vFullDOFAccelerationLimits, _dynamicLimitInfo.vFullDOFJerkLimits,
                                                      _dynamicLimitInfo.vFullDOFPositions, _dynamicLimitInfo.vFullDOFVelocities);
         for(int iDOF = 0; iDOF < (int)_dynamicLimitInfo.vUsedDOFIndices.size(); ++iDOF) {
+            if( _dynamicLimitInfo.vFullDOFAccelerationLimits[_dynamicLimitInfo.vUsedDOFIndices[iDOF]] < g_fEpsilon ) { // if dynamic limits are close to zero, this dof does not suppot dynamic limit. so, skip.
+                continue;
+            }
             vAccelLimits[iDOF] = min(_dynamicLimitInfo.vFullDOFAccelerationLimits[_dynamicLimitInfo.vUsedDOFIndices[iDOF]]*fMargin, vAccelLimits[iDOF]);
         }
         // check dynamic acceleration limit at x1
@@ -3665,6 +3668,9 @@ protected:
         usedBody.GetDOFDynamicAccelerationJerkLimits(_dynamicLimitInfo.vFullDOFAccelerationLimits, _dynamicLimitInfo.vFullDOFJerkLimits,
                                                      _dynamicLimitInfo.vFullDOFPositions, _dynamicLimitInfo.vFullDOFVelocities);
         for(int iDOF = 0; iDOF < (int)_dynamicLimitInfo.vUsedDOFIndices.size(); ++iDOF) {
+            if( _dynamicLimitInfo.vFullDOFAccelerationLimits[_dynamicLimitInfo.vUsedDOFIndices[iDOF]] < g_fEpsilon ) { // if dynamic limits are close to zero, this dof does not suppot dynamic limit. so, skip.
+                continue;
+            }
             vAccelLimits[iDOF] = min(_dynamicLimitInfo.vFullDOFAccelerationLimits[_dynamicLimitInfo.vUsedDOFIndices[iDOF]]*fMargin, vAccelLimits[iDOF]);
         }
     }
