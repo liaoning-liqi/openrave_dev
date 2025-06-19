@@ -540,26 +540,24 @@ public:
         // compute DynamicLimitInfo if necessary
         _bHasDynamicLimits = false;
         FOREACH(itbody, vusedbodies) {
-            if( !(*itbody) ) {
+            if( !(*itbody) || !(*itbody)->IsRobot() ) {
                 continue;
             }
-            KinBody& body = *(*itbody);
-            if( body.IsRobot() ) {
-                std::vector<int> vUsedDOFIndices, vUsedConfigIndices;
-                posSpec.ExtractUsedIndices(KinBodyConstPtr(*itbody), vUsedDOFIndices, vUsedConfigIndices);
-                if( vUsedDOFIndices.size() == _parameters->_vConfigVelocityLimit.size() ) {
-                    std::vector<dReal>& vFullDOFPositions = _cacheX0Vect, &vFullDOFVelocities = _cacheX1Vect, &vFullDOFAccelerationLimits = _cacheV0Vect, &vFullDOFJerkLimits = _cacheV1Vect;
-                    DynamicLimitInfo::InitializeCachedVectors(vFullDOFPositions, vFullDOFVelocities, vFullDOFAccelerationLimits, vFullDOFJerkLimits, body.GetDOF());
-                    _bHasDynamicLimits = body.GetDOFDynamicAccelerationJerkLimits(vFullDOFAccelerationLimits, vFullDOFJerkLimits, vFullDOFPositions, vFullDOFVelocities);
-                    if( _bHasDynamicLimits ) {
-                        if( !_pDynamicLimitInfo ) {
-                            _pDynamicLimitInfo.reset(new DynamicLimitInfo());
-                        }
-                        _pDynamicLimitInfo->Init(*itbody, vUsedDOFIndices);
-                    }
-                    break;
-                }
+            std::vector<int> vUsedDOFIndices, vUsedConfigIndices;
+            posSpec.ExtractUsedIndices(KinBodyConstPtr(*itbody), vUsedDOFIndices, vUsedConfigIndices);
+            if( vUsedDOFIndices.size() != _parameters->_vConfigVelocityLimit.size() ) {
+                continue;
             }
+            std::vector<dReal>& vFullDOFPositions = _cacheX0Vect, &vFullDOFVelocities = _cacheX1Vect, &vFullDOFAccelerationLimits = _cacheV0Vect, &vFullDOFJerkLimits = _cacheV1Vect;
+            DynamicLimitInfo::InitializeCachedVectors(vFullDOFPositions, vFullDOFVelocities, vFullDOFAccelerationLimits, vFullDOFJerkLimits, (*itbody)->GetDOF());
+            _bHasDynamicLimits = (*itbody)->GetDOFDynamicAccelerationJerkLimits(vFullDOFAccelerationLimits, vFullDOFJerkLimits, vFullDOFPositions, vFullDOFVelocities);
+            if( _bHasDynamicLimits ) {
+                if( !_pDynamicLimitInfo ) {
+                    _pDynamicLimitInfo.reset(new DynamicLimitInfo());
+                }
+                _pDynamicLimitInfo->Init(*itbody, vUsedDOFIndices);
+            }
+            break;
         }
 
         // Retrieve waypoints
