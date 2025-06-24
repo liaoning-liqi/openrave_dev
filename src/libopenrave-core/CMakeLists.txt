@@ -78,6 +78,10 @@ link_directories(${OPENRAVE_LINK_DIRS})
 
 add_library(libopenrave-core SHARED ${openrave_core_SOURCES})
 target_include_directories(libopenrave-core PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+if (OPT_ENVIRONMENT_RECURSIVE_LOCK_WITH_GIL_CHECK)
+  target_include_directories(libopenrave-core PUBLIC ${Python3_INCLUDE_DIRS})
+endif()
+
 set_target_properties(libopenrave-core PROPERTIES OUTPUT_NAME openrave${OPENRAVE_LIBRARY_SUFFIX}-core
                                   SOVERSION 0 # always have it 0 since we're including the soversion as part of the library name
                                   VERSION ${OPENRAVE_VERSION}
@@ -87,6 +91,10 @@ target_link_libraries(libopenrave-core
   PRIVATE boost_assertion_failed ${IVCON_LIBRARY} ${OPENRAVE_CORE_STATIC_LIBRARIES} openrave_gpgme
   PUBLIC libopenrave ${OPENRAVE_CORE_LIBRARIES}
 )
+if (OPT_ENVIRONMENT_RECURSIVE_LOCK_WITH_GIL_CHECK)
+  target_link_libraries(libopenrave-core PUBLIC ${Python3_LIBRARIES})
+endif()
+
 install(TARGETS libopenrave-core
   EXPORT openrave-targets
   INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${OPENRAVE_INCLUDE_INSTALL_DIR}
