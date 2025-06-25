@@ -3,6 +3,11 @@
 ChangeLog
 #########
 
+Version 0.167.5
+===============
+
+- Add OPT_ENVIRONMENT_RECURSIVE_LOCK_WITH_GIL_CHECK to enable a Environment mutex that can predict potential deadlocks between Environment lock and GIL.
+
 Version 0.167.4
 ===============
 
