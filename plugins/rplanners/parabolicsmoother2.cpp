@@ -3743,17 +3743,18 @@ protected:
             _UpdateLimitsByDynamicLimitsAtBoundary(vAccelLimits, vVelocityLimits, x1Vect, v1Vect, usedBody);
         }
 
-        /// \brief initialize cached vector.
-        static void InitializeCachedVectors(std::vector<OpenRAVE::dReal>& vFullDOFPositions,
+        /// \brief initialize cached vectors.
+        static void InitializeCachedVectors(const OpenRAVE::KinBodyConstPtr& pBody,
+                                            std::vector<OpenRAVE::dReal>& vFullDOFPositions,
                                             std::vector<OpenRAVE::dReal>& vFullDOFVelocities,
                                             std::vector<OpenRAVE::dReal>& vFullDOFAccelerationLimits,
-                                            std::vector<OpenRAVE::dReal>& vFullDOFJerkLimits,
-                                            const int nDOF)
+                                            std::vector<OpenRAVE::dReal>& vFullDOFJerkLimits)
         {
-            vFullDOFPositions.assign(nDOF, 0.0);
-            vFullDOFVelocities.assign(nDOF, 0.0);
-            vFullDOFAccelerationLimits.resize(nDOF);
-            vFullDOFJerkLimits.resize(nDOF);
+            pBody->GetDOFValues(vFullDOFPositions);
+            const int nFullDOF = pBody->GetDOF();
+            vFullDOFVelocities.assign(nFullDOF, 0.0);
+            vFullDOFAccelerationLimits.resize(nFullDOF);
+            vFullDOFJerkLimits.resize(nFullDOF);
         }
 
     protected:
