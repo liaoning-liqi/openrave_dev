@@ -3779,7 +3779,7 @@ protected:
             usedBody.GetDOFDynamicAccelerationJerkLimits(_vFullDOFAccelerationLimits, _vFullDOFJerkLimits,
                                                          _vFullDOFPositions, _vFullDOFVelocities);
             for(int iDOF = 0; iDOF < (int)_vUsedDOFIndices.size(); ++iDOF) {
-                if( _vFullDOFAccelerationLimits[_vUsedDOFIndices[iDOF]] < g_fEpsilon ) { // if dynamic limits are close to zero, this dof does not suppot dynamic limit. so, skip.
+                if( _vFullDOFAccelerationLimits[_vUsedDOFIndices[iDOF]] < g_fEpsilon ) { // if dynamic limits are zero, this dof does not suppot dynamic limit. so skipping.
                     continue;
                 }
                 vAccelLimits[iDOF] = min(_vFullDOFAccelerationLimits[_vUsedDOFIndices[iDOF]]*fMargin, vAccelLimits[iDOF]);
