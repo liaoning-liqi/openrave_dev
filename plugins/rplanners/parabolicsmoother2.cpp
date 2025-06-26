@@ -3791,7 +3791,7 @@ protected:
         OpenRAVE::KinBodyConstPtr _pUsedBody; ///< used kinbody.
     };
     boost::shared_ptr<DynamicLimitInfo> _pDynamicLimitInfo; ///< ptr of info for dynamic limit computation.
-    bool _bHasDynamicLimits = false; ///< true if the used kinbody has dynamic limits and this parabolicsmoother2 needs to compute it.
+    bool _bHasDynamicLimits = false; ///< true if the used kinbody has dynamic limits (accel/jerk limits that change based on the current dof values and velocities) and this parabolicsmoother2 needs to compute it.
 
 }; // end class ParabolicSmoother2
 
