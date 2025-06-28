@@ -549,7 +549,7 @@ public:
                 continue;
             }
             std::vector<dReal>& vFullDOFPositions = _cacheX0Vect, &vFullDOFVelocities = _cacheX1Vect, &vFullDOFAccelerationLimits = _cacheV0Vect, &vFullDOFJerkLimits = _cacheV1Vect;
-            DynamicLimitInfo::InitializeCachedVectors(vFullDOFPositions, vFullDOFVelocities, vFullDOFAccelerationLimits, vFullDOFJerkLimits, (*itbody)->GetDOF());
+            DynamicLimitInfo::InitializeCachedVectors((*itbody), vFullDOFPositions, vFullDOFVelocities, vFullDOFAccelerationLimits, vFullDOFJerkLimits);
             _bHasDynamicLimits = (*itbody)->GetDOFDynamicAccelerationJerkLimits(vFullDOFAccelerationLimits, vFullDOFJerkLimits, vFullDOFPositions, vFullDOFVelocities);
             if( _bHasDynamicLimits ) {
                 if( !_pDynamicLimitInfo ) {
@@ -3721,7 +3721,7 @@ protected:
         {
             _pUsedBody = pUsedBody;
             _vUsedDOFIndices = vUsedDOFIndices;
-            InitializeCachedVectors(_vFullDOFPositions, _vFullDOFVelocities, _vFullDOFAccelerationLimits, _vFullDOFJerkLimits, _pUsedBody->GetDOF());
+            InitializeCachedVectors(_pUsedBody, _vFullDOFPositions, _vFullDOFVelocities, _vFullDOFAccelerationLimits, _vFullDOFJerkLimits);
         }
 
         /// \brief update limits by dynamic limits. for now, update only acceleration limits.
