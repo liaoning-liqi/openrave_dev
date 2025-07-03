@@ -43,16 +43,21 @@ static void _DecryptDocument(OpenRAVE::JSONDownloadContextPtr pContext)
 
 static void _ParseDocument(OpenRAVE::JSONDownloadContextPtr pContext)
 {
-    if (StringEndsWith(pContext->uri, ".json")) {
+    size_t hashIndex = pContext->uri.rfind('#');
+    if (hashIndex == std::string::npos) {
+        hashIndex = pContext->uri.size();
+    }
+    const string_view uri(pContext->uri.data(), hashIndex);
+    if (StringEndsWith(uri, ".json")) {
         rapidjson::ParseResult ok = pContext->pDoc->Parse<rapidjson::kParseFullPrecisionFlag>(pContext->buffer.data(), pContext->buffer.size());
         if (!ok) {
             throw OPENRAVE_EXCEPTION_FORMAT("failed to parse json document \"%s\"", pContext->uri, ORE_CurlInvalidResponse);
         }
     }
-    else if (StringEndsWith(pContext->uri, ".msgpack")) {
+    else if (StringEndsWith(uri, ".msgpack")) {
         MsgPack::ParseMsgPack(*(pContext->pDoc), pContext->buffer.data(), pContext->buffer.size());
     }
-    else if (StringEndsWith(pContext->uri, ".gpg")) {
+    else if (StringEndsWith(uri, ".gpg")) {
         _DecryptDocument(pContext);
     }
     else {
@@ -258,6 +263,10 @@ void JSONDownloaderScope::_QueueDownloadURI(const char* pUri, rapidjson::Documen
     else if (std::find(_downloader._vOpenRAVESchemeAliases.begin(), _downloader._vOpenRAVESchemeAliases.end(), scheme) != _downloader._vOpenRAVESchemeAliases.end()) {
         url = _downloader._remoteUrl + path;
         canonicalUri = scheme + ":" + path;
+        if (!fragment.empty()) {
+            url += "%23" + fragment;
+            canonicalUri += "#" + fragment;
+        }
     }
     else {
         RAVELOG_WARN_FORMAT("unable to handle uri \"%s\"", pUri);
