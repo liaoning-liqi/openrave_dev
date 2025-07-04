@@ -263,9 +263,13 @@ void JSONDownloaderScope::_QueueDownloadURI(const char* pUri, rapidjson::Documen
     else if (std::find(_downloader._vOpenRAVESchemeAliases.begin(), _downloader._vOpenRAVESchemeAliases.end(), scheme) != _downloader._vOpenRAVESchemeAliases.end()) {
         url = _downloader._remoteUrl + path;
         canonicalUri = scheme + ":" + path;
-        if (!fragment.empty()) {
-            url += "%23" + fragment;
-            canonicalUri += "#" + fragment;
+        if (!fragment.empty() && StringStartsWith(_downloader._remoteUrl, "http") ) { // http download may support fragment to target bodyId.
+            url.reserve(3 + fragment.size());
+            url += "%23";  // escaped '#' for http address.
+            url += fragment;
+            canonicalUri.reserve(1 + fragment.size());
+            canonicalUri += "#"
+            canonicalUri += fragment;
         }
     }
     else {
