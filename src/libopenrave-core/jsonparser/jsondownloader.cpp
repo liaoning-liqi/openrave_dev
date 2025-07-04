@@ -264,11 +264,11 @@ void JSONDownloaderScope::_QueueDownloadURI(const char* pUri, rapidjson::Documen
         url = _downloader._remoteUrl + path;
         canonicalUri = scheme + ":" + path;
         if (!fragment.empty() && StringStartsWith(_downloader._remoteUrl, "http") ) { // http download may support fragment to target bodyId.
-            url.reserve(3 + fragment.size());
+            url.reserve(url.size() + 3 + fragment.size());
             url += "%23";  // escaped '#' for http address.
             url += fragment;
-            canonicalUri.reserve(1 + fragment.size());
-            canonicalUri += "#"
+            canonicalUri.reserve(canonicalUri.size() + 1 + fragment.size());
+            canonicalUri += "#";
             canonicalUri += fragment;
         }
     }
