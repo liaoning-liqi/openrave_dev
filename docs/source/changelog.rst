@@ -3,6 +3,11 @@
 ChangeLog
 #########
 
+Version 0.167.6
+===============
+
+- Optimize `ReadKinBodyURI` and `LoadURI` by passing `#bodyid` to URL to download a single body from a scene that has multiple bodies via http.
+
 Version 0.167.5
 ===============
 
