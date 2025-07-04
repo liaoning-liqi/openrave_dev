@@ -268,7 +268,7 @@ void JSONDownloaderScope::_QueueDownloadURI(const char* pUri, rapidjson::Documen
             url += "%23";  // escaped '#' for http address.
             url += fragment;
             canonicalUri.reserve(1 + fragment.size());
-            canonicalUri += "#"
+            canonicalUri += "#";
             canonicalUri += fragment;
         }
     }
