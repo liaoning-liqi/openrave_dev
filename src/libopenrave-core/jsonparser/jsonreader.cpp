@@ -315,7 +315,7 @@ public:
                 }
             }
 
-            boost::shared_ptr<const rapidjson::Document> prReferenceEnvInfo = _GetDocumentFromFilename(fullFilename);
+            boost::shared_ptr<const rapidjson::Document> prReferenceEnvInfo = _GetDocumentFromFilename(fullFilename, fragment);
             if (!prReferenceEnvInfo || !prReferenceEnvInfo->IsObject() ) {
                 RAVELOG_WARN_FORMAT("env=%d, failed to load referenced body from filename '%s'", _penv->GetId()%fullFilename);
                 if (_bMustResolveURI) {
@@ -611,9 +611,15 @@ public:
 #endif
     }
 
-    boost::shared_ptr<const rapidjson::Document> OpenCachedDocument(const std::string resourceId, std::function<void(const std::string&, rapidjson::Document&)> loaderFunction)
+    boost::shared_ptr<const rapidjson::Document> OpenCachedDocument(const std::string resourceId, std::function<void(const std::string&, rapidjson::Document&)> loaderFunction, const std::string& fragment=std::string(""))
     {
         // Is this document in cache?
+        if( !fragment.empty() ) {
+            EnvironmentLoadContextJSON::MapRapidJsonDocuments::iterator documentIt = _loadContext.rapidjsonDocuments.find(resourceId + "#" + fragment);
+            if (documentIt != _loadContext.rapidjsonDocuments.end()) {
+                return documentIt->second;
+            }
+        }
         EnvironmentLoadContextJSON::MapRapidJsonDocuments::iterator documentIt = _loadContext.rapidjsonDocuments.find(resourceId);
         if (documentIt != _loadContext.rapidjsonDocuments.end()) {
             return documentIt->second;
@@ -647,9 +653,9 @@ protected:
         return false;
     }
 
-    boost::shared_ptr<const rapidjson::Document> _GetDocumentFromFilename(const std::string& fullFilename)
+    boost::shared_ptr<const rapidjson::Document> _GetDocumentFromFilename(const std::string& fullFilename, const std::string& fragment)
     {
-        return OpenCachedDocument(fullFilename, OpenDocumentFromFilename);
+        return OpenCachedDocument(fullFilename, OpenDocumentFromFilename, fragment);
     }
 
     void _ProcessEnvInfoBodies(EnvironmentBase::EnvironmentBaseInfo& envInfo, const rapidjson::Value& rEnvInfo, rapidjson::Document::AllocatorType& alloc, const char* pCurrentUri, const std::string& currentFilename, std::map<RobotBase::ConnectedBodyInfoPtr, std::string>& mapProcessedConnectedBodyUris)
@@ -800,7 +806,7 @@ protected:
 
             uint64_t beforeOpenStampUS = utils::GetMonotonicTime();
 
-            boost::shared_ptr<const rapidjson::Document> pReferenceScene = _GetDocumentFromFilename(fullFilename);
+            boost::shared_ptr<const rapidjson::Document> pReferenceScene = _GetDocumentFromFilename(fullFilename, fragment);
             if (!pReferenceScene || !pReferenceScene->IsObject() ) {
                 RAVELOG_ERROR_FORMAT("referenced document from file '%s' cannot be loaded.", fullFilename);
                 return -1;
