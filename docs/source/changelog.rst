@@ -3,10 +3,15 @@
 ChangeLog
 #########
 
-Version 0.167.6
+Version 0.167.7
 ===============
 
 - Add support for `CheckCollision(link, link, report)` pybind interface back. It was unexpectedly removed in Version 0.167.2
+
+Version 0.167.6
+===============
+
+- Optimize `ReadKinBodyURI` and `LoadURI` by passing `#bodyid` to URL to download a single body from a scene that has multiple bodies via http.
 
 Version 0.167.5
 ===============
