@@ -3,6 +3,21 @@
 ChangeLog
 #########
 
+Version 0.167.6
+===============
+
+- Optimize `ReadKinBodyURI` and `LoadURI` by passing `#bodyid` to URL to download a single body from a scene that has multiple bodies via http.
+
+Version 0.167.5
+===============
+
+- Add OPT_ENVIRONMENT_RECURSIVE_LOCK_WITH_GIL_CHECK to enable a Environment mutex that can predict potential deadlocks between Environment lock and GIL.
+
+Version 0.167.4
+===============
+
+- Revive robust hash computation logic at the `serialize` -> `DigestHash` migration.
+
 Version 0.167.3
 ===============
 

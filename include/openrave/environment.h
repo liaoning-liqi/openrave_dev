@@ -27,17 +27,32 @@
 
 namespace OpenRAVE {
 
-#if OPENRAVE_ENVIRONMENT_RECURSIVE_LOCK
+#if OPENRAVE_ENVIRONMENT_RECURSIVE_LOCK == 1 && OPENRAVE_ENVIRONMENT_RECURSIVE_LOCK_WITH_GIL_CHECK == 1
+/// \brief recursive mutex with the functionality to predict a potential deadlock at runtime. Under multi threadings, when 1. the current thread has not locked this recursive mutex yet and 2. the Python interpreter has been initialized, the GIL must be locked before locking this recursive mutex. The lock function of this class checks this condition, and raises an exception when the user violates the locking order.
+class OPENRAVE_API RecursiveMutexWithGILCheck
+{
+public:
+  RecursiveMutexWithGILCheck() = default;
+  void lock();
+  void unlock();
+  bool try_lock();
+private:
+  void _UpdateIsMultiThreading(); ///< set _initialLockThreadId to the thread id which locks this recursive mutex at first. set _isMultiThreading to true when another thread tries to lock this recursive mutex.
+  bool _isMultiThreading = false; ///< set it true if another thread from _initialThreadId locks this mutex once so that this mutex does not check the locking order with GIL unnecessarily in single thread.
+  std::recursive_mutex _mutex;
+  std::mutex _mutexForInitialLockThreadId; ///< mutex for _initialLockThreadId
+  std::thread::id _initialLockThreadId; ///< thread id of the first thread trying to lock this recursive mutex when it is not std::thread::id(). Cannot set this at constructor because some uesrs create this mutex in a different thread from the one using this mutex for optimization. protected by _mutexForInitialLockThreadId.
+  static thread_local uint64_t _lockCounter;
+};
+using EnvironmentMutex = RecursiveMutexWithGILCheck;
+#elif OPENRAVE_ENVIRONMENT_RECURSIVE_LOCK == 1
 using EnvironmentMutex = ::std::recursive_mutex;
-using EnvironmentLock  = ::std::unique_lock<std::recursive_mutex>;
-using defer_lock_t     = ::std::defer_lock_t;
-using try_to_lock_t    = ::std::try_to_lock_t;
-#else
+#else  // OPENRAVE_ENVIRONMENT_RECURSIVE_LOCK == 0
 using EnvironmentMutex = ::std::mutex;
-using EnvironmentLock  = ::std::unique_lock<std::mutex>;
+#endif
+using EnvironmentLock  = ::std::unique_lock<EnvironmentMutex>;
 using defer_lock_t     = ::std::defer_lock_t;
 using try_to_lock_t    = ::std::try_to_lock_t;
-#endif // OPENRAVE_ENVIRONMENT_RECURSIVE_LOCK
 
 /// \brief used when adding interfaces to the environment
 enum InterfaceAddMode
