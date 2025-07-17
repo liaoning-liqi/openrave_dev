@@ -1646,7 +1646,7 @@ public:
         return _mutexEnvironment;
     }
 
-    virtual void IterateBodies(const std::function<void(KinBody&)>& mapFunction) override
+    virtual void IterateBodies(const std::function<void(const KinBodyPtr&)>& mapFunction) override
     {
         // Ensure we take both the environment and interface mutexes before iterating
         EnvironmentLock lockenv(GetMutex());
@@ -1655,7 +1655,7 @@ public:
         // Map the provided function over all of the live bodies in the environment
         for (const KinBodyPtr& pBody : _vecbodies) {
             if (!!pBody) {
-                mapFunction(*pBody);
+                mapFunction(pBody);
             }
         }
     }
