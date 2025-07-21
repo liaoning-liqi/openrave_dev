@@ -32,9 +32,11 @@ namespace rplanners {
 
 namespace RampOptimizer = RampOptimizerInternal;
 
-class ParabolicSmoother2 : public PlannerBase, public RampOptimizer::FeasibilityCheckerBase, public RampOptimizer::RandomNumberGeneratorBase {
+class ParabolicSmoother2 : public PlannerBase, public RampOptimizer::FeasibilityCheckerBase, public RampOptimizer::RandomNumberGeneratorBase
+{
 
-    class MyRampNDFeasibilityChecker : public RampOptimizer::RampNDFeasibilityChecker {
+    class MyRampNDFeasibilityChecker : public RampOptimizer::RampNDFeasibilityChecker
+    {
 public:
         MyRampNDFeasibilityChecker(RampOptimizer::FeasibilityCheckerBase* feas_) : RampOptimizer::RampNDFeasibilityChecker(feas_) {
             _bHasParameters = false;
@@ -3713,7 +3715,7 @@ protected:
     /// \brief info to compute better constraints or heuristics for planning based on dynamic limits.
     class DynamicLimitInfo
     {
-    public:
+public:
         /// \brief initialize dynamic limit info.
         /// \param[in] pUsedBody : used kinbody.
         /// \param[in] vUsedDOFIndices : used dof indices for config.
@@ -3757,7 +3759,7 @@ protected:
             vFullDOFJerkLimits.resize(nFullDOF);
         }
 
-    protected:
+protected:
         /// \brief update limits by dynamic limits. for now, update only acceleration limits.
         ///        acceleration limits should at least satisfy the dynamic acceleration limits at t0 and t1, which are start/end boundary conditions of trajectory segment.
         ///        all vectors in arguments have same size and order config, like _parameters->_vConfigVelocityLimit.
@@ -3771,7 +3773,7 @@ protected:
                                                            const KinBody& usedBody)
 
         {
-            constexpr double fMargin = 0.9999; // margin from the dynamic acceleration limits. even for the case that respecting acceleration limits at t0 and t1 is theoretically enough, there might be numerical error in Check function in DynamicsCollisionConstraint.
+            constexpr dReal fMargin = 0.9999; // margin from the dynamic acceleration limits. even for the case that respecting acceleration limits at t0 and t1 is theoretically enough, there might be numerical error in Check function in DynamicsCollisionConstraint.
             for(int iDOF = 0; iDOF < (int)_vUsedDOFIndices.size(); ++iDOF) {
                 _vFullDOFPositions[_vUsedDOFIndices[iDOF]] = xVect[iDOF];
                 _vFullDOFVelocities[_vUsedDOFIndices[iDOF]] = max(-vVelocityLimits[iDOF], min(vVect[iDOF], vVelocityLimits[iDOF]));
@@ -3779,7 +3781,7 @@ protected:
             usedBody.GetDOFDynamicAccelerationJerkLimits(_vFullDOFAccelerationLimits, _vFullDOFJerkLimits,
                                                          _vFullDOFPositions, _vFullDOFVelocities);
             for(int iDOF = 0; iDOF < (int)_vUsedDOFIndices.size(); ++iDOF) {
-                if( _vFullDOFAccelerationLimits[_vUsedDOFIndices[iDOF]] < g_fEpsilon ) { // if dynamic limits are zero, this dof does not suppot dynamic limit. so skipping.
+                if( _vFullDOFAccelerationLimits[_vUsedDOFIndices[iDOF]] <= g_fEpsilon ) { // if dynamic limits are zero, this dof does not suppot dynamic limit. so skipping.
                     continue;
                 }
                 vAccelLimits[iDOF] = min(_vFullDOFAccelerationLimits[_vUsedDOFIndices[iDOF]]*fMargin, vAccelLimits[iDOF]);
