@@ -3,10 +3,15 @@
 ChangeLog
 #########
 
-Version 0.167.6
+Version 0.167.7
 ===============
 
 - Improve `parabolicsmoother2` computation for the robot with dynamic limits by considering the better initial guess of acceleration limits based on the dynamic acceleration limits at boundaries.
+  
+Version 0.167.6
+===============
+
+- Optimize `ReadKinBodyURI` and `LoadURI` by passing `#bodyid` to URL to download a single body from a scene that has multiple bodies via http.
 
 Version 0.167.5
 ===============
