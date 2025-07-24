@@ -66,6 +66,10 @@ enum GeometryType : uint8_t
 
 OPENRAVE_API const char* GetGeometryTypeString(GeometryType geometryType);
 
+OPENRAVE_API inline std::string format_as(GeometryType geomtype){
+    return GetGeometryTypeString(geomtype);
+}
+
 enum DynamicsConstraintsType : int8_t
 {
     DC_Unknown = -1, ///< constraints type is not set.
