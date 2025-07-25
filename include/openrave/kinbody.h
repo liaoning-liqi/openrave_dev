@@ -66,7 +66,7 @@ enum GeometryType : uint8_t
 
 OPENRAVE_API const char* GetGeometryTypeString(GeometryType geometryType);
 
-OPENRAVE_API inline std::string format_as(GeometryType geomtype){
+OPENRAVE_API inline const char* format_as(GeometryType geomtype){
     return GetGeometryTypeString(geomtype);
 }
 
