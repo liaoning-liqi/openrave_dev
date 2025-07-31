@@ -28,11 +28,10 @@
 
 #include <chrono>
 #include <mutex>
+#include <regex>
 #include <shared_mutex>
 #include <thread>
 #include <unordered_map>
-
-#include <pcrecpp.h>
 
 #define CHECK_INTERFACE(pinterface) { \
         if( (pinterface)->GetEnv() != shared_from_this() ) { \
@@ -4427,11 +4426,20 @@ protected:
 
     static bool _IsURI(const std::string& uri, std::string& path)
     {
-        string scheme, authority, query, fragment;
-        string s1, s3, s6, s8;
-        static pcrecpp::RE re("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
-        bool bmatch = re.FullMatch(uri, &s1, &scheme, &s3, &authority, &path, &s6, &query, &s8, &fragment);
-        return bmatch && !scheme.empty();
+        // URI regex, with groups s1, scheme, s3, authority, path, s6, query, s8, fragment
+        static const std::regex re("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
+
+        // Attempt to match regex against our URI
+        std::smatch match;
+        std::regex_match(uri, match, re);
+
+        // If we failed to match, not a URI
+        if (match.empty()) {
+            return false;
+        }
+
+        const std::string& scheme = match[1];
+        return !scheme.empty();
     }
 
     static bool _IsColladaFile(const std::string& filename)
