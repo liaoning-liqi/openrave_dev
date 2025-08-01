@@ -4438,6 +4438,13 @@ protected:
             return false;
         }
 
+        // Should have matched all 9 match groups
+        OPENRAVE_ASSERT_OP_FORMAT(match.size(), ==, 9, "expected 9 match groups but got %d for URI \"%s\"", match.size() % uri, ORE_InvalidArguments);
+
+        // Export the path
+        path = match[4];
+
+        // Consider a URI valid if it has a scheme
         const std::string& scheme = match[1];
         return !scheme.empty();
     }
