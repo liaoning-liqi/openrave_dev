@@ -123,10 +123,10 @@ include(GNUInstallDirs)
 
 find_package(PkgConfig) # pkg_check_modules
 
-check_cxx_source_compiles(" 
-#include <string_view> 
-int main() 
-{ 
+check_cxx_source_compiles("
+#include <string_view>
+int main()
+{
     std::string_view view;
     return 0;
 }"
@@ -394,17 +394,17 @@ endif()
 
 if( ASSIMP_FOUND )
   message(STATUS "assimp version ${ASSIMP_VERSION}, ${ASSIMP_PACKAGE_VERSION}, ${ASSIMP_INCLUDE_DIRS}")
-  # For older versions of libassimp2, 
-  # like the one in Ubuntu 12.04 
-  set(CMAKE_REQUIRED_LIBRARIES assimp) 
-  check_cxx_source_compiles(" 
-  #include <assimp/Logger.h> 
-  int main() 
-  { 
+  # For older versions of libassimp2,
+  # like the one in Ubuntu 12.04
+  set(CMAKE_REQUIRED_LIBRARIES assimp)
+  check_cxx_source_compiles("
+  #include <assimp/Logger.h>
+  int main()
+  {
       Assimp::Logger::WARN;
       return 0;
-  }" 
-  IS_ASSIMP_PRE_R896 
+  }"
+  IS_ASSIMP_PRE_R896
   )
   set(CMAKE_REQUIRED_LIBRARIES)
   if( ${ASSIMP_VERSION} STRGREATER "2.0.0" )
@@ -510,7 +510,7 @@ if( OPT_COLLADA )
       set(COLLADA_SUPPORT_WRITE_MEMORY 1)
     endif()
   endif()
-  
+
   find_package(ZLIB)
   if( NOT ZLIB_FOUND )
     message(STATUS "compiling zlib from souces")
@@ -1001,7 +1001,7 @@ if(CMAKE_CPACK_COMMAND AND UNIX AND OPT_BUILD_PACKAGES)
     set(CPACK_COMPONENT_OPENRAVE-MINIMAL_DESCRIPTION "Uninstall this package to remove all OpenRAVE installations")
     set(CPACK_COMPONENTS_ALL ${CPACK_COMPONENTS_ALL} openrave openrave-minimal openrave-python-minimal)
   endif()
-  
+
   #TODO: extra robot CAD model files from: https://openrave.svn.sourceforge.net/svnroot/openrave/data/robots
 
   set(DPUT_HOST "ppa:openrave/testing" CACHE STRING "PPA repository to upload the debian sources")
