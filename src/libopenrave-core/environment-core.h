@@ -4426,7 +4426,7 @@ protected:
 
     static bool _IsURI(const std::string& uri, std::string& path)
     {
-        // URI regex, with groups s1, scheme, s3, authority, path, s6, query, s8, fragment
+        // URI regex, with sub groups s1, scheme, s3, authority, path, s6, query, s8, fragment
         static const std::regex re("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
 
         // Attempt to match regex against our URI
@@ -4438,14 +4438,14 @@ protected:
             return false;
         }
 
-        // Should have matched all 9 match groups
-        OPENRAVE_ASSERT_OP_FORMAT(match.size(), ==, 9, "expected 9 match groups but got %d for URI \"%s\"", match.size() % uri, ORE_InvalidArguments);
+        // Zero'th match is always the full matched sequence, so should that plus nine match groups -> 10 entries
+        OPENRAVE_ASSERT_OP_FORMAT(match.size(), ==, 10, "expected 10 match groups but got %d for URI \"%s\"", match.size() % uri, ORE_InvalidArguments);
 
         // Export the path
-        path = match[4];
+        path = match[5];
 
         // Consider a URI valid if it has a scheme
-        const std::string& scheme = match[1];
+        const std::string& scheme = match[2];
         return !scheme.empty();
     }
 
