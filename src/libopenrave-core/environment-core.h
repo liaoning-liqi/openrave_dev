@@ -4438,7 +4438,7 @@ protected:
             return false;
         }
 
-        // Zero'th match is always the full matched sequence, so should that plus nine match groups -> 10 entries
+        // Zero'th match is always the full matched sequence, so should have that plus nine match groups -> 10 entries
         OPENRAVE_ASSERT_OP_FORMAT(match.size(), ==, 10, "expected 10 match groups but got %d for URI \"%s\"", match.size() % uri, ORE_InvalidArguments);
 
         // Export the path
