@@ -289,7 +289,8 @@ private:
         if (!py::isinstance<py::capsule>(func_self)) {
             return nullptr;
         }
-        auto cap = py::reinterpret_borrow<py::capsule>(func_self);
+        py::capsule cap = py::reinterpret_borrow<py::capsule>(func_self);
+        // Better check, but need pybind11 2.10.2
         // if (!py::detail::is_function_record_capsule(cap)) {
         //     return nullptr;
         // }

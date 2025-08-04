@@ -3,6 +3,11 @@
 ChangeLog
 #########
 
+Version 0.167.7
+===============
+
+- Add support for `CheckCollision(link, link, report)` pybind interface back. It was unexpectedly removed in Version 0.167.2
+
 Version 0.167.6
 ===============
 
