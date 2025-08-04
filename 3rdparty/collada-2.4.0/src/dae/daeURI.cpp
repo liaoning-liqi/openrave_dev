@@ -137,7 +137,7 @@ namespace {
 
         // The following implementation cannot handle paths like this:
         // /tmp/se.3/file
-        //static pcrecpp::RE re("(.*/)?([^.]*)?(\\..*)?");
+        //static std::regex re("(.*/)?([^.]*)?(\\..*)?");
 		//dir = baseName = extension = "";
 		//re.FullMatch(path, &dir, &baseName, &extension);
 
@@ -157,8 +157,8 @@ namespace {
         }
 
         // Otherwise, attempt to re-match on the file to get the base / extension
-        dir = pathMatch.at(1);
-        const std::string& filename = pathMatch.at(2);
+        dir = pathMatch[1];
+        const std::string& filename = pathMatch[2];
         std::smatch extMatch;
         std::regex_search(filename, extMatch, findExtRegex);
 
@@ -168,8 +168,8 @@ namespace {
         }
 
         // Extract the base / extension
-        basename = extMatch.at(1);
-        extension = extMatch.at(2);
+        baseName = extMatch[1];
+        extension = extMatch[2];
 	}
 }
 
@@ -726,14 +726,28 @@ bool cdom::parseUriRef(const string& uriRef,
                        string& path,
                        string& query,
                        string& fragment) {
-	// This regular expression for parsing URI references comes from the URI spec:
-	//   http://tools.ietf.org/html/rfc3986#appendix-B
-	static pcrecpp::RE re("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
-	string s1, s3, s6, s8;
-	if (re.FullMatch(uriRef, &s1, &scheme, &s3, &authority, &path, &s6, &query, &s8, &fragment))
-		return true;
+    // This regular expression for parsing URI references comes from the URI spec:
+    //   http://tools.ietf.org/html/rfc3986#appendix-B
+    static const std::regex re("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
 
-	return false;
+    // Attempt to match regex against our URI
+    std::smatch match;
+    std::regex_match(uriRef, match, re);
+
+    // If we failed to match, not a URI
+    if (match.empty()) {
+        return false;
+    }
+
+    // Copy out the relevant match groups
+    // Note that the zero'th match is the full matched string
+    scheme = match[2];
+    authority = match[4];
+    path = match[5];
+    query = match[7];
+    fragment = match[9];
+
+    return true;
 }
 
 namespace {
