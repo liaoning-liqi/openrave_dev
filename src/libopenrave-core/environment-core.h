@@ -28,11 +28,10 @@
 
 #include <chrono>
 #include <mutex>
+#include <regex>
 #include <shared_mutex>
 #include <thread>
 #include <unordered_map>
-
-#include <pcrecpp.h>
 
 #define CHECK_INTERFACE(pinterface) { \
         if( (pinterface)->GetEnv() != shared_from_this() ) { \
@@ -4427,11 +4426,27 @@ protected:
 
     static bool _IsURI(const std::string& uri, std::string& path)
     {
-        string scheme, authority, query, fragment;
-        string s1, s3, s6, s8;
-        static pcrecpp::RE re("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
-        bool bmatch = re.FullMatch(uri, &s1, &scheme, &s3, &authority, &path, &s6, &query, &s8, &fragment);
-        return bmatch && !scheme.empty();
+        // URI regex, with sub groups s1, scheme, s3, authority, path, s6, query, s8, fragment
+        static const std::regex re("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
+
+        // Attempt to match regex against our URI
+        std::smatch match;
+        std::regex_match(uri, match, re);
+
+        // If we failed to match, not a URI
+        if (match.empty()) {
+            return false;
+        }
+
+        // Zero'th match is always the full matched sequence, so should have that plus nine match groups -> 10 entries
+        OPENRAVE_ASSERT_OP_FORMAT(match.size(), ==, 10, "expected 10 match groups but got %d for URI \"%s\"", match.size() % uri, ORE_InvalidArguments);
+
+        // Export the path
+        path = match[5];
+
+        // Consider a URI valid if it has a scheme
+        const std::string& scheme = match[2];
+        return !scheme.empty();
     }
 
     static bool _IsColladaFile(const std::string& filename)
