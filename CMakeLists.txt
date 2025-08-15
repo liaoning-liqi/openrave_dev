@@ -5,7 +5,7 @@ set( CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS TRUE )
 # Define here the needed parameters
 set (OPENRAVE_VERSION_MAJOR 0)
 set (OPENRAVE_VERSION_MINOR 167)
-set (OPENRAVE_VERSION_PATCH 7)
+set (OPENRAVE_VERSION_PATCH 8)
 set (OPENRAVE_VERSION ${OPENRAVE_VERSION_MAJOR}.${OPENRAVE_VERSION_MINOR}.${OPENRAVE_VERSION_PATCH})
 set (OPENRAVE_SOVERSION ${OPENRAVE_VERSION_MAJOR}.${OPENRAVE_VERSION_MINOR})
 message(STATUS "Compiling OpenRAVE Version ${OPENRAVE_VERSION}, soversion=${OPENRAVE_SOVERSION}")
@@ -123,10 +123,10 @@ include(GNUInstallDirs)
 
 find_package(PkgConfig) # pkg_check_modules
 
-check_cxx_source_compiles(" 
-#include <string_view> 
-int main() 
-{ 
+check_cxx_source_compiles("
+#include <string_view>
+int main()
+{
     std::string_view view;
     return 0;
 }"
@@ -394,17 +394,17 @@ endif()
 
 if( ASSIMP_FOUND )
   message(STATUS "assimp version ${ASSIMP_VERSION}, ${ASSIMP_PACKAGE_VERSION}, ${ASSIMP_INCLUDE_DIRS}")
-  # For older versions of libassimp2, 
-  # like the one in Ubuntu 12.04 
-  set(CMAKE_REQUIRED_LIBRARIES assimp) 
-  check_cxx_source_compiles(" 
-  #include <assimp/Logger.h> 
-  int main() 
-  { 
+  # For older versions of libassimp2,
+  # like the one in Ubuntu 12.04
+  set(CMAKE_REQUIRED_LIBRARIES assimp)
+  check_cxx_source_compiles("
+  #include <assimp/Logger.h>
+  int main()
+  {
       Assimp::Logger::WARN;
       return 0;
-  }" 
-  IS_ASSIMP_PRE_R896 
+  }"
+  IS_ASSIMP_PRE_R896
   )
   set(CMAKE_REQUIRED_LIBRARIES)
   if( ${ASSIMP_VERSION} STRGREATER "2.0.0" )
@@ -474,25 +474,6 @@ if (NOT (Qt5Gui_FOUND AND Qt5Core_FOUND AND Qt5Widgets_FOUND AND Qt5OpenGL_FOUND
   endif()
 endif ()
 
-# always include libpcrecpp since we need it for URL parsing
-pkg_check_modules(libpcrecpp libpcrecpp)
-if( libpcrecpp_FOUND )
-  set(CMAKE_REQUIRED_INCLUDES ${libpcrecpp_INCLUDE_DIRS} ${REQUIRED_INCLUDES})
-  check_include_file_cxx(pcrecpp.h HAVE_PCRECPP_H)
-  set(CMAKE_REQUIRED_INCLUDES)
-  if( NOT HAVE_PCRECPP_H )
-    set(libpcrecpp_FOUND 0)
-  endif()
-endif()
-
-if( NOT libpcrecpp_FOUND )
-  message(STATUS "System pcre not found, using local from sources")
-  # include the local pcre
-  add_subdirectory(3rdparty/pcre-8.02)
-
-  set(libpcrecpp_FOUND 1)
-endif()
-
 if( OPT_COLLADA )
   if( MSVC )
     # MSVC has prepackaged collada libraries
@@ -510,7 +491,7 @@ if( OPT_COLLADA )
       set(COLLADA_SUPPORT_WRITE_MEMORY 1)
     endif()
   endif()
-  
+
   find_package(ZLIB)
   if( NOT ZLIB_FOUND )
     message(STATUS "compiling zlib from souces")
@@ -1001,7 +982,7 @@ if(CMAKE_CPACK_COMMAND AND UNIX AND OPT_BUILD_PACKAGES)
     set(CPACK_COMPONENT_OPENRAVE-MINIMAL_DESCRIPTION "Uninstall this package to remove all OpenRAVE installations")
     set(CPACK_COMPONENTS_ALL ${CPACK_COMPONENTS_ALL} openrave openrave-minimal openrave-python-minimal)
   endif()
-  
+
   #TODO: extra robot CAD model files from: https://openrave.svn.sourceforge.net/svnroot/openrave/data/robots
 
   set(DPUT_HOST "ppa:openrave/testing" CACHE STRING "PPA repository to upload the debian sources")
