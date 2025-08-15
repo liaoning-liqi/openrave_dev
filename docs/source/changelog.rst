@@ -3,6 +3,11 @@
 ChangeLog
 #########
 
+Version 0.167.8
+===============
+
+- Change regular expression implementation from pcrecpp to std::regex
+
 Version 0.167.7
 ===============
 
