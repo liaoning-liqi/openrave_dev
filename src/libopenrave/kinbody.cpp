@@ -2695,8 +2695,13 @@ bool KinBody::GetChain(int linkindex1, int linkindex2, std::vector<LinkPtr>& vli
 bool KinBody::IsDOFInChain(int linkindex1, int linkindex2, int dofindex) const
 {
     CHECK_INTERNAL_COMPUTATION0;
-    int jointindex = _vDOFIndices.at(dofindex);
-    return (DoesAffect(jointindex,linkindex1)==0) != (DoesAffect(jointindex,linkindex2)==0);
+    const int jointindex = _vDOFIndices.at(dofindex);
+    const int numlinks = _veclinks.size();
+    OPENRAVE_ASSERT_FORMAT(jointindex >= 0 && jointindex < (int)_vecjoints.size(), "body %s jointindex %d invalid (num joints %d)", GetName()%jointindex%_vecjoints.size(), ORE_InvalidArguments);
+    OPENRAVE_ASSERT_FORMAT(linkindex1 >= 0 && linkindex1 < numlinks, "body %s linkindex %d invalid (num links %d)", GetName()%linkindex1%numlinks, ORE_InvalidArguments);
+    OPENRAVE_ASSERT_FORMAT(linkindex2 >= 0 && linkindex2 < numlinks, "body %s linkindex %d invalid (num links %d)", GetName()%linkindex2%numlinks, ORE_InvalidArguments);
+    const int jointindexoffset = jointindex*numlinks;
+    return (_vJointsAffectingLinks.at(jointindexoffset + linkindex1) == 0) != (_vJointsAffectingLinks.at(jointindexoffset + linkindex2) == 0);
 }
 
 int KinBody::GetJointIndex(const std::string& jointname) const
