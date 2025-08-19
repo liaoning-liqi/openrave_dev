@@ -5645,21 +5645,21 @@ void KinBody::_ResetInternalCollisionCache()
 bool CompareNonAdjacentFarthest(int pair0, int pair1)
 {
     // order so that farthest links are first. if equal, then prioritize links that are furthest down the chain.
-    int pair0link0 = (pair0&0xffff);
-    int pair0link1 = ((pair0>>16)&0xffff);
-    int dist0 = pair0link1 - pair0link0; // link1 > link0
-    int pair1link0 = (pair1&0xffff);
-    int pair1link1 = ((pair1>>16)&0xffff);
-    int dist1 = pair1link1 - pair1link0; // link1 > link0
-    if( dist0 == dist1 ) {
-        if( pair0link1 == pair1link1 ) {
-            return pair0link0 > pair1link0;
-        }
-        else {
-            return pair0link1 > pair1link1;
-        }
-    }
-    return dist0 > dist1;
+    const uint32_t p0 = static_cast<uint32_t>(pair0);
+    const uint32_t p1 = static_cast<uint32_t>(pair1);
+
+    const uint32_t pair0link0 = p0 & 0xffffu;
+    const uint32_t pair0link1 = (p0 >> 16) & 0xffffu;
+    const uint32_t pair1link0 = p1 & 0xffffu;
+    const uint32_t pair1link1 = (p1 >> 16) & 0xffffu;
+
+    const uint32_t dist0 = pair0link1 - pair0link0; // ok because linkindex1 > linkindex0
+    const uint32_t dist1 = pair1link1 - pair1link0;
+
+    // Pack everything into one 64-bit key: (dist, link1, link0).
+    const uint64_t key0 = (static_cast<uint64_t>(dist0) << 32) | (pair0link1 << 16) | pair0link0;
+    const uint64_t key1 = (static_cast<uint64_t>(dist1) << 32) | (pair1link1 << 16) | pair1link0;
+    return key0 > key1;
 }
 
 const std::vector<int>& KinBody::GetNonAdjacentLinks(int adjacentoptions) const
