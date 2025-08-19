@@ -5716,10 +5716,11 @@ private:
         // find out what needs to computed
         if( requestedoptions & AO_Enabled ) {
             _vNonAdjacentLinks.at(AO_Enabled).resize(0);
-            FOREACHC(itset, _vNonAdjacentLinks[0]) {
-                KinBody::LinkConstPtr plink1(_veclinks.at(*itset&0xffff)), plink2(_veclinks.at(*itset>>16));
-                if( plink1->IsEnabled() && plink2->IsEnabled() ) {
-                    _vNonAdjacentLinks[AO_Enabled].push_back(*itset);
+            for( const int pair : _vNonAdjacentLinks[0] ) {
+                const int linkindex1 = pair & 0xffff;
+                const int linkindex2 = pair >> 16;
+                if( _veclinks.at(linkindex1)->IsEnabled() && _veclinks.at(linkindex2)->IsEnabled() ) {
+                    _vNonAdjacentLinks[AO_Enabled].push_back(pair);
                 }
             }
             _nNonAdjacentLinkCache |= AO_Enabled;

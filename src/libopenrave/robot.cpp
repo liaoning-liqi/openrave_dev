@@ -2121,10 +2121,11 @@ const std::vector<int>& RobotBase::GetNonAdjacentLinks(int adjacentoptions) cons
         }
         if( compute.at(AO_Enabled|AO_ActiveDOFs) ) {
             _vNonAdjacentLinks.at(AO_Enabled|AO_ActiveDOFs).resize(0);
-            FOREACHC(itset, _vNonAdjacentLinks[AO_ActiveDOFs]) {
-                KinBody::LinkConstPtr plink1(_veclinks.at(*itset&0xffff)), plink2(_veclinks.at(*itset>>16));
-                if( plink1->IsEnabled() && plink2->IsEnabled() ) {
-                    _vNonAdjacentLinks[AO_Enabled|AO_ActiveDOFs].push_back(*itset);
+            for( const int pair : _vNonAdjacentLinks[AO_ActiveDOFs] ) {
+                const int linkindex1 = pair & 0xffff;
+                const int linkindex2 = pair >> 16;
+                if( _veclinks.at(linkindex1)->IsEnabled() && _veclinks.at(linkindex2)->IsEnabled() ) {
+                    _vNonAdjacentLinks[AO_Enabled|AO_ActiveDOFs].push_back(pair);
                 }
             }
             std::sort(_vNonAdjacentLinks[AO_Enabled|AO_ActiveDOFs].begin(), _vNonAdjacentLinks[AO_Enabled|AO_ActiveDOFs].end(), CompareNonAdjacentFarthest);
