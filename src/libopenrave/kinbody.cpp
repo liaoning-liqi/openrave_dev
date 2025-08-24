@@ -1347,6 +1347,8 @@ void KinBody::SetDOFLimits(const std::vector<dReal>& lower, const std::vector<dR
 
 void KinBody::SetDOFVelocityLimits(const std::vector<dReal>& v)
 {
+    OPENRAVE_ASSERT_OP_FORMAT((int)v.size(),>=,GetDOF(), "env=%s, body '%s' not enough values %d<%d for setting velocity", GetEnv()->GetNameId()%GetName()%v.size()%GetDOF(),ORE_InvalidArguments);
+
     std::vector<dReal>::const_iterator itv = v.begin();
     FOREACHC(it, _vDOFOrderedJoints) {
         std::copy(itv,itv+(*it)->GetDOF(), (*it)->_info._vmaxvel.begin());
@@ -2211,7 +2213,7 @@ void KinBody::SetDOFValues(const dReal* pJointValues, int dof, uint32_t checklim
         return;
     }
     int expecteddof = dofindices.size() > 0 ? (int)dofindices.size() : GetDOF();
-    OPENRAVE_ASSERT_OP_FORMAT((int)dof,>=,expecteddof, "env=%s, not enough values %d<%d", GetEnv()->GetNameId()%dof%GetDOF(),ORE_InvalidArguments);
+    OPENRAVE_ASSERT_OP_FORMAT((int)dof,>=,expecteddof, "env=%s, body '%s' not enough values %d<%d", GetEnv()->GetNameId()%GetName()%dof%GetDOF(),ORE_InvalidArguments);
 
     GetDOFValues(_vTempJoints);
     if( dofindices.size() > 0 ) {
