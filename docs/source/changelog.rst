@@ -3,11 +3,16 @@
 ChangeLog
 #########
 
-Version 0.167.7
+Version 0.167.8
 ===============
 
 - Improve `parabolicsmoother2` computation for the robot with dynamic limits by considering the better initial guess of acceleration limits based on the dynamic acceleration limits at boundaries.
-  
+
+Version 0.167.7
+===============
+
+- Add support for `CheckCollision(link, link, report)` pybind interface back. It was unexpectedly removed in Version 0.167.2
+
 Version 0.167.6
 ===============
 
