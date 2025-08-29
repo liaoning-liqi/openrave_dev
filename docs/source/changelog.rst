@@ -3,10 +3,15 @@
 ChangeLog
 #########
 
-Version 0.167.8
+Version 0.167.9
 ===============
 
 - Improve `parabolicsmoother2` computation for the robot with dynamic limits by considering the better initial guess of acceleration limits based on the dynamic acceleration limits at boundaries.
+
+Version 0.167.8
+===============
+
+- Change regular expression implementation from pcrecpp to std::regex
 
 Version 0.167.7
 ===============
