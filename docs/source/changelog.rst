@@ -3,6 +3,11 @@
 ChangeLog
 #########
 
+Version 0.167.10
+===============
+
+- Fix timing of SetTransform inside `KinBody::InitFromKinBodyInfo` to prevent miscalculation of base link transform
+
 Version 0.167.9
 ===============
 
