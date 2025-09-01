@@ -3,6 +3,11 @@
 ChangeLog
 #########
 
+Version 0.167.9
+===============
+
+- Fix issue when calling ExtractOne where a body without a transform referencing a body _with_ a transform would instead be transformed to the origin
+
 Version 0.167.8
 ===============
 
