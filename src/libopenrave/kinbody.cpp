@@ -859,7 +859,6 @@ bool KinBody::InitFromKinBodyInfo(const KinBodyInfo& info)
     _id = info._id;
     _name = info._name;
     _referenceUri = info._referenceUri;
-    SetTransform(info._transform);
     if( info._vLinkInfos.size() > 0 ) {
         _baseLinkInBodyTransform = info._vLinkInfos[0]->GetTransform();
         _invBaseLinkInBodyTransform = _baseLinkInBodyTransform.inverse();
@@ -867,6 +866,7 @@ bool KinBody::InitFromKinBodyInfo(const KinBodyInfo& info)
     else {
         _baseLinkInBodyTransform = _invBaseLinkInBodyTransform = Transform();
     }
+    SetTransform(info._transform);
 
     FOREACH(it, info._mReadableInterfaces) {
         SetReadableInterface(it->first, it->second);
