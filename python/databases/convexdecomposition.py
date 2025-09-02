@@ -136,7 +136,7 @@ class ConvexDecompositionModel(DatabaseGenerator):
         return self.linkgeometry is not None and len(self.linkgeometry)==len(self.robot.GetLinks())
     
     def getversion(self):
-        return 5
+        return 6
     
     def save(self):
         try:
@@ -184,11 +184,16 @@ class ConvexDecompositionModel(DatabaseGenerator):
                     ghulls = glinkhulls.create_group('hulls')
                     for j, hull in enumerate(geometryhulls):
                         ghull = ghulls.create_group(str(j))
-                        for name,values in izip(['vertices','indices','planes'],hull):
+                        dataLengths = [
+                            3, # vertices
+                            3, # indices
+                            4, # planes
+                        ]
+                        for name,values,dataLength in izip(['vertices','indices','planes'],hull,dataLengths):
                             if len(values) == 0:
-                                ghull.create_dataset(name,[],dtype=values.dtype)
+                                ghull.create_dataset(name,shape=(0, dataLength),maxshape=(None, dataLength),dtype=values.dtype,fletcher32=True)
                             else:
-                                ghull[name] = values
+                                ghull.create_dataset(name,data=values,dtype=values.dtype,fletcher32=True)
         finally:
             f.close()
 
@@ -231,6 +236,11 @@ class ConvexDecompositionModel(DatabaseGenerator):
                     ghulls = glinkhulls['hulls']
                     geometryhulls = []
                     for j, ghull in ghulls.items():
+                        for datasetName in ghull:
+                            filterList = ghull[datasetName].id.get_create_plist()
+                            if not any([filterList.get_filter(filterIndex)[0] == h5py.h5z.FLETCHER32 for filterIndex in range(filterList.get_nfilters())]):
+                                log.error('fletcher32 checksum not enabled for dataset %s in file %s! Will not use this file.', datasetName, filename)
+                                return False
                         if 'vertices' in ghull and len(ghull['vertices'].shape) == 2 and 'indices' in ghull and len(ghull['indices'].shape\
 ) == 2 and 'planes' in ghull and len(ghull['planes'].shape) == 2:
                             hull = [ghull['vertices'].value, ghull['indices'].value, ghull['planes'].value]
