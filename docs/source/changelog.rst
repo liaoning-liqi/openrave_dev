@@ -3,6 +3,11 @@
 ChangeLog
 #########
 
+Version 0.167.11
+===============
+
+- Add copy/deepcopy python implementations to KinBodyInfo and RobotBaseInfo
+
 Version 0.167.10
 ===============
 
