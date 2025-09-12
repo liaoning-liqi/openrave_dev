@@ -3,6 +3,11 @@
 ChangeLog
 #########
 
+Version 0.167.12
+===============
+
+- Guard list of plugins with mutex also when reading
+
 Version 0.167.11
 ===============
 
