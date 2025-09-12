@@ -21,25 +21,17 @@ namespace OpenRAVE {
 
 void RaveDatabase::Destroy()
 {
-    std::vector<PluginPtr> vPlugins;
-    {
-        std::lock_guard<std::mutex> lock(_mutex);
-        vPlugins = std::move(_vPlugins); // Move
-    }
-    while (!vPlugins.empty()) {
-        vPlugins.back()->Destroy();
-        vPlugins.pop_back();
+    std::lock_guard<std::mutex> lock(_mutex);
+    while (!_vPlugins.empty()) {
+        _vPlugins.back()->Destroy();
+        _vPlugins.pop_back();
     }
 }
 
 void RaveDatabase::OnRaveInitialized()
 {
-    std::vector<PluginPtr> vPlugins;
-    {
-        std::lock_guard<std::mutex> lock(_mutex);
-        vPlugins = _vPlugins; // Copy
-    }
-    for (const PluginPtr& pluginPtr : vPlugins) {
+    std::lock_guard<std::mutex> lock(_mutex);
+    for (const PluginPtr& pluginPtr : _vPlugins) {
         if (pluginPtr) {
             pluginPtr->OnRaveInitialized();
         }
@@ -48,12 +40,8 @@ void RaveDatabase::OnRaveInitialized()
 
 void RaveDatabase::OnRavePreDestroy()
 {
-    std::vector<PluginPtr> vPlugins;
-    {
-        std::lock_guard<std::mutex> lock(_mutex);
-        vPlugins = _vPlugins; // Copy
-    }
-    for (const PluginPtr& pluginPtr : vPlugins) {
+    std::lock_guard<std::mutex> lock(_mutex);
+    for (const PluginPtr& pluginPtr : _vPlugins) {
         if (pluginPtr) {
             pluginPtr->OnRavePreDestroy();
         }
@@ -62,12 +50,8 @@ void RaveDatabase::OnRavePreDestroy()
 
 bool RaveDatabase::HasInterface(InterfaceType type, const std::string& interfacename) const
 {
-    std::vector<PluginPtr> vPlugins;
-    {
-        std::lock_guard<std::mutex> lock(_mutex);
-        vPlugins = _vPlugins; // Copy
-    }
-    for (const PluginPtr& plugin : vPlugins) {
+    std::lock_guard<std::mutex> lock(_mutex);
+    for (const PluginPtr& plugin : _vPlugins) {
         if (plugin->HasInterface(type, interfacename)) {
             return true;
         }
@@ -77,12 +61,8 @@ bool RaveDatabase::HasInterface(InterfaceType type, const std::string& interface
 
 void RaveDatabase::GetPluginInfo(std::list< std::pair<std::string, PLUGININFO> >& pluginInfo) const
 {
-    std::vector<PluginPtr> vPlugins;
-    {
-        std::lock_guard<std::mutex> lock(_mutex);
-        vPlugins = _vPlugins; // Copy
-    }
-    for (const PluginPtr& entry : vPlugins) {
+    std::lock_guard<std::mutex> lock(_mutex);
+    for (const PluginPtr& entry : _vPlugins) {
         PLUGININFO info;
         info.interfacenames = entry->GetInterfaces();
         info.version = entry->GetOpenRAVEVersion();
@@ -93,12 +73,8 @@ void RaveDatabase::GetPluginInfo(std::list< std::pair<std::string, PLUGININFO> >
 void RaveDatabase::GetLoadedInterfaces(std::map<InterfaceType, std::vector<std::string>>& interfacenames) const
 {
     interfacenames.clear();
-    std::vector<PluginPtr> vPlugins;
-    {
-        std::lock_guard<std::mutex> lock(_mutex);
-        vPlugins = _vPlugins; // Copy
-    }
-    for (const PluginPtr& plugin : vPlugins) {
+    std::lock_guard<std::mutex> lock(_mutex);
+    for (const PluginPtr& plugin : _vPlugins) {
         const RavePlugin::InterfaceMap& interfaces = plugin->GetInterfaces();
         for (const std::pair<const InterfaceType, std::vector<std::string>>& entry : interfaces) {
             interfacenames[entry.first].insert(interfacenames[entry.first].end(), entry.second.begin(), entry.second.end());
