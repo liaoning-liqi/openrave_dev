@@ -1271,6 +1271,8 @@ void KinBody::GeometryInfo::SerializeJSON(rapidjson::Value& rGeometryInfo, rapid
     if( !_bModifiable ) { // default is true
         orjson::SetJsonValueByKey(rGeometryInfo, "modifiable", _bModifiable, allocator);
     }
+
+    orjson::SetJsonValueByKey(rGeometryInfo, "friction", _friction, allocator);
 }
 
 void KinBody::GeometryInfo::DeserializeJSON(const rapidjson::Value &value, const dReal fUnitScale, int options)
@@ -1661,6 +1663,10 @@ void KinBody::GeometryInfo::DeserializeJSON(const rapidjson::Value &value, const
     orjson::LoadJsonValueByKey(value, "diffuseColor", _vDiffuseColor);
     orjson::LoadJsonValueByKey(value, "ambientColor", _vAmbientColor);
     orjson::LoadJsonValueByKey(value, "modifiable", _bModifiable);
+
+    if (value.HasMember("friction")) {
+        orjson::LoadJsonValueByKey(value, "friction", _friction);
+    }
 
     _CheckValidityOfMeshCollisionIndices( _meshcollision.vertices,  _meshcollision.indices, _name, _id, _type, __FUNCTION__);
 }
