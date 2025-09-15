@@ -128,6 +128,10 @@ public:
                 _ss >> _physics->_visualizeContact;
                 RAVELOG_DEBUG_FORMAT("visualizeContact flags: %d", _physics->_visualizeContact);
             }
+            else if( name == "usePerSurfaceFrictions" ) {
+                _ss >> _physics->_usePerSurfaceFrictions;
+                RAVELOG_DEBUG_FORMAT("usePerSurfaceFrictions flags: %d", _physics->_usePerSurfaceFrictions);
+            }
             else if( name == "contact" ) {         // check out http://www.ode.org/ode-latest-userguide.html#sec_7_3_7
 
             }
@@ -228,6 +232,7 @@ The possible properties that can be set are: ";
         _contactCfm = 1e-5;
         _num_iterations = 20;
         _visualizeContact = false;
+        _usePerSurfaceFrictions = false;
         //Default to openrave 0.6.6 behavior, but this really should default to
         //enable the friction pyramid model.
         _surface_mode = 0;
@@ -339,6 +344,7 @@ The possible properties that can be set are: ";
         _contactCfm = r->_contactCfm;
         _contactErp = r->_contactErp;
         _visualizeContact = r->_visualizeContact;
+        _usePerSurfaceFrictions = r->_usePerSurfaceFrictions;
         _surface_mode = r->_surface_mode;
         _num_iterations = r->_num_iterations;
         if( !!_odespace && _odespace->IsInitialized() ) {
@@ -666,17 +672,27 @@ private:
         }
 
         // get frictions before processing collisions.
-        // we assume that a friction is a property of a link and hence every geom in a link has the same friction value.
-        // hence we can just take the friction of the first geom GetGeometry(0).
-        float friction1 = pkb1->GetGeometry(0)->GetInfo().GetFriction();
-        float friction2 = pkb2->GetGeometry(0)->GetInfo().GetFriction();
+        float combinedFriction;
+        if (_usePerSurfaceFrictions) {
+            // we assume that a friction is a property of a link and hence every geom in a link has the same friction value.
+            // hence we can just take the friction of the first geom GetGeometry(0).
+            float friction1 = pkb1->GetGeometry(0)->GetInfo().GetFriction();
+            float friction2 = pkb2->GetGeometry(0)->GetInfo().GetFriction();
+            combinedFriction = min(friction1, friction2);
+        }
 
         // process collisions
         for (int i=0; i<n; i++) {
             contact[i].surface.mode = _surface_mode | dContactSoftERP | dContactSoftCFM;
-            // take the lower value of the friction to not oerestimate grip
-            contact[i].surface.mu = (dReal)(min(friction1, friction2));
-            contact[i].surface.mu2 = (dReal)(min(friction1, friction2));
+            if (_usePerSurfaceFrictions) {
+                // take the lower value of the friction to not oerestimate grip
+                contact[i].surface.mu = (dReal)combinedFriction;
+                contact[i].surface.mu2 = (dReal)combinedFriction;
+            }
+            else  {
+                contact[i].surface.mu = (dReal)_globalfriction;
+                contact[i].surface.mu2 = (dReal)_globalfriction;
+            }
             //        contact[i].surface.slip1 = 0.7;
             //        contact[i].surface.slip2 = 0.7;
             //        contact[i].surface.mode = dContactSoftERP | dContactSoftCFM | dContactApprox1 | dContactSlip1 | dContactSlip2;
@@ -737,6 +753,7 @@ private:
     dReal _globalfriction, _globalcfm, _globalerp;
     dReal _contactCfm, _contactErp;
     bool _visualizeContact;
+    bool _usePerSurfaceFrictions;
 
     /**
      * _surface_mode stores global surface settings in dSurfaceParameters.
