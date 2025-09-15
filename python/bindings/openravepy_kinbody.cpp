@@ -453,6 +453,7 @@ void PyGeometryInfo::FillGeometryInfo(KinBody::GeometryInfo& info)
     info._fTransparency = _fTransparency;
     info._bVisible = _bVisible;
     info._bModifiable = _bModifiable;
+    info._friction = _friction;
     if (info._type == GT_CalibrationBoard) {
 #ifdef USE_PYBIND11_PYTHON_BINDINGS
 #define has_key contains
@@ -5162,6 +5163,7 @@ void init_openravepy_kinbody()
                           .def_readwrite("_vPositiveCropContainerMargins", &PyGeometryInfo::_vPositiveCropContainerMargins)
                           .def_readwrite("_vNegativeCropContainerEmptyMargins", &PyGeometryInfo::_vNegativeCropContainerEmptyMargins)
                           .def_readwrite("_vPositiveCropContainerEmptyMargins", &PyGeometryInfo::_vPositiveCropContainerEmptyMargins)
+                          .def_readwrite("_friction", &PyGeometryInfo::_friction)
                           .def("ComputeInnerEmptyVolume",&PyGeometryInfo::ComputeInnerEmptyVolume, DOXY_FN(GeomeryInfo,ComputeInnerEmptyVolume))
                           .def("ComputeAABB",&PyGeometryInfo::ComputeAABB, PY_ARGS("transform") DOXY_FN(GeomeryInfo,ComputeAABB))
                           .def("ConvertUnitScale",&PyGeometryInfo::ConvertUnitScale, PY_ARGS("unitScale") DOXY_FN(GeomeryInfo,ConvertUnitScale))

@@ -665,11 +665,18 @@ private:
             }
         }
 
+        // get frictions before processing collisions.
+        // we assume that a friction is a property of a link and hence every geom in a link has the same friction value.
+        // hence we can just take the friction of the first geom GetGeometry(0).
+        float friction1 = pkb1->GetGeometry(0)->GetInfo().GetFriction();
+        float friction2 = pkb2->GetGeometry(0)->GetInfo().GetFriction();
+
         // process collisions
         for (int i=0; i<n; i++) {
             contact[i].surface.mode = _surface_mode | dContactSoftERP | dContactSoftCFM;
-            contact[i].surface.mu = (dReal)_globalfriction;
-            contact[i].surface.mu2 = (dReal)_globalfriction;
+            // take the lower value of the friction to not oerestimate grip
+            contact[i].surface.mu = (dReal)(min(friction1, friction2));
+            contact[i].surface.mu2 = (dReal)(min(friction1, friction2));
             //        contact[i].surface.slip1 = 0.7;
             //        contact[i].surface.slip2 = 0.7;
             //        contact[i].surface.mode = dContactSoftERP | dContactSoftCFM | dContactApprox1 | dContactSlip1 | dContactSlip2;

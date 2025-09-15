@@ -111,6 +111,8 @@ public:
     py::list _vSideWalls;
     py::list _vAxialSlices;
     py::dict _calibrationBoardParameters;
+
+    float _friction = 0.0;
 };
 
 typedef OPENRAVE_SHARED_PTR<PyGeometryInfo> PyGeometryInfoPtr;

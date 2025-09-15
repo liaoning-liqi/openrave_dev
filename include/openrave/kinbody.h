@@ -385,7 +385,8 @@ public:
                    && _vNegativeCropContainerMargins == other._vNegativeCropContainerMargins
                    && _vPositiveCropContainerMargins == other._vPositiveCropContainerMargins
                    && _vNegativeCropContainerEmptyMargins == other._vNegativeCropContainerEmptyMargins
-                   && _vPositiveCropContainerEmptyMargins == other._vPositiveCropContainerEmptyMargins;
+                   && _vPositiveCropContainerEmptyMargins == other._vPositiveCropContainerEmptyMargins
+                   && _friction == other._friction;
         }
         bool operator!=(const GeometryInfo& other) const {
             return !operator==(other);
@@ -488,6 +489,14 @@ public:
             _vGeomData2 = innerExtents;
         }
 
+        inline const float GetFriction() const {
+            return _friction;
+        }
+
+        inline void SetFriction(const float& friction) {
+            _friction = friction;
+        }
+
         ///< for sphere it is radius
         ///< for cylinder, first 2 values are radius and height
         ///< for trimesh, none
@@ -548,6 +557,8 @@ public:
         GeometryType _type = GT_None; ///< the type of geometry primitive
         std::string _id;   ///< unique id of the geometry
         std::string _name; ///< the name of the geometry
+
+        float _friction; ///< friction of the geometry (used for simulations to set per-surface friction)
 
         /// \brief filename for render model (optional)
         ///
