@@ -489,7 +489,7 @@ public:
             _vGeomData2 = innerExtents;
         }
 
-        inline float& GetFriction() const {
+        inline float GetFriction() const {
             return _friction;
         }
 
