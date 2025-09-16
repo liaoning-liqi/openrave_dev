@@ -345,7 +345,7 @@ void PyGeometryInfo::Init(const KinBody::GeometryInfo& info) {
         calibrationBoardParameters["bigDotDiameterDistanceRatio"] = parameters.bigDotDiameterDistanceRatio;
     }
     _calibrationBoardParameters = calibrationBoardParameters;
-    _friction = info._friction
+    _friction = info._friction;
 }
 
 object PyGeometryInfo::ComputeInnerEmptyVolume()

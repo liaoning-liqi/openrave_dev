@@ -378,7 +378,7 @@ bool GeometryInfoReader::endElement(const std::string& xmlname)
         _ss >> _pgeom->_name;
     }
     else if( xmlname == "friction" ) {
-        -ss >> _pgeom->_friction;
+        _ss >> _pgeom->_friction;
     }
     else {
         // could be type specific features
