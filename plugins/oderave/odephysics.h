@@ -128,7 +128,7 @@ public:
                 _ss >> _physics->_visualizeContact;
                 RAVELOG_DEBUG_FORMAT("visualizeContact flags: %d", _physics->_visualizeContact);
             }
-            else if( name == "usePerSurfaceFrictions" ) {
+            else if( name == "usepersurfacefrictions" ) {
                 _ss >> _physics->_usePerSurfaceFrictions;
                 RAVELOG_DEBUG_FORMAT("usePerSurfaceFrictions flags: %d", _physics->_usePerSurfaceFrictions);
             }
@@ -188,8 +188,8 @@ public:
             }
         }
 
-        static const boost::array<string, 14>& GetTags() {
-            static const boost::array<string, 14> tags = {{"friction","selfcollision", "gravity", "contact", "erp", "cfm", "elastic_reduction_parameter", "constraint_force_mixing", "contacterp", "contactcfm", "visualizecontact", "dcontactapprox", "numiterations", "surfacelayer" }};
+        static const boost::array<string, 15>& GetTags() {
+            static const boost::array<string, 15> tags = {{"friction","selfcollision", "gravity", "contact", "erp", "cfm", "elastic_reduction_parameter", "constraint_force_mixing", "contacterp", "contactcfm", "visualizecontact", "usepersurfacefrictions", "dcontactapprox", "numiterations", "surfacelayer" }};
             return tags;
         }
 
