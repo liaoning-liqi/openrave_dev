@@ -6133,7 +6133,7 @@ void KinBodyInitializer::init_openravepy_kinbody()
         kinbody.def("GetAdjacentLinks",&PyKinBody::GetAdjacentLinks, DOXY_FN(KinBody,GetAdjacentLinks));
         kinbody.def("GetManageData",&PyKinBody::GetManageData, DOXY_FN(KinBody,GetManageData));
         kinbody.def("GetUpdateStamp",&PyKinBody::GetUpdateStamp, DOXY_FN(KinBody,GetUpdateStamp));
-        kinbody.def("DigestHash",&PyKinBody::DigestHash,PY_ARGS("options") DOXY_FN(KinBody,serialize))
+        kinbody.def("DigestHash",&PyKinBody::DigestHash,PY_ARGS("options") DOXY_FN(KinBody,serialize));
         kinbody.def("UpdateFromKinBodyInfo",&PyKinBody::UpdateFromKinBodyInfo,PY_ARGS("info") DOXY_FN(KinBody,UpdateFromKinBodyInfo));
         kinbody.def("GetKinematicsGeometryHash",&PyKinBody::GetKinematicsGeometryHash, DOXY_FN(KinBody,GetKinematicsGeometryHash));
         kinbody.def("GetAssociatedFileEntries",&PyKinBody::GetAssociatedFileEntries, DOXY_FN(KinBody,GetAssociatedFileEntries));
