@@ -3069,9 +3069,9 @@ void RobotBaseInitializer::init_openravepy_robot()
         robot.def("CalculateActiveJacobian",&PyRobotBase::CalculateActiveJacobian, PY_ARGS("linkindex","offset") DOXY_FN(RobotBase,CalculateActiveJacobian "int; const Vector; std::vector"));
         robot.def("CalculateActiveRotationJacobian",&PyRobotBase::CalculateActiveRotationJacobian, PY_ARGS("linkindex","quat") DOXY_FN(RobotBase,CalculateActiveRotationJacobian "int; const Vector; std::vector"));
         robot.def("CalculateActiveAngularVelocityJacobian",&PyRobotBase::CalculateActiveAngularVelocityJacobian, PY_ARGS("linkindex") DOXY_FN(RobotBase,CalculateActiveAngularVelocityJacobian "int; std::vector"));
-        robot.def("Grab",pgrab1, PY_ARGS("body") DOXY_FN(RobotBase,Grab "KinBodyPtr"));
-        robot.def("Grab",pgrab3, PY_ARGS("body","grablink") DOXY_FN(RobotBase,Grab "KinBodyPtr; LinkPtr"));
-        robot.def("Grab",pgrab5, PY_ARGS("body","grablink","linkstoignore","grabbedUserData") DOXY_FN(RobotBase,Grab "KinBodyPtr; LinkPtr; Linkptr; rapidjson::Document"));
+        robot.def("Grab",pgrab1, PY_ARGS("body") py::arg("grippername")="", DOXY_FN(RobotBase,Grab "KinBodyPtr"));
+        robot.def("Grab",pgrab3, PY_ARGS("body","grablink") py::arg("grippername")="", DOXY_FN(RobotBase,Grab "KinBodyPtr; LinkPtr"));
+        robot.def("Grab",pgrab5, PY_ARGS("body","grablink","linkstoignore","grabbedUserData") py::arg("grippername")="", DOXY_FN(RobotBase,Grab "KinBodyPtr; LinkPtr; Linkptr; rapidjson::Document"));
 #ifdef USE_PYBIND11_PYTHON_BINDINGS
         robot.def("CheckLinkSelfCollision", &PyRobotBase::CheckLinkSelfCollision,
                   "linkindex"_a,
