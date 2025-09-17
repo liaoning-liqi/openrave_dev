@@ -81,6 +81,7 @@ static void _GetOneGrabbedInfo(KinBody::GrabbedInfo& outputinfo,
 {
     outputinfo._grabbedname = pgrabbedbody->GetName();
     outputinfo._robotlinkname = pgrabbed->_pGrabbingLink->GetName();
+    outputinfo._grippername = pgrabbed->_grippername;
     outputinfo._trelative = pgrabbed->_tRelative;
     outputinfo._setIgnoreRobotLinkNames.clear();
     CopyRapidJsonDoc(pgrabbed->_rGrabbedUserData, outputinfo._rGrabbedUserData);
@@ -118,17 +119,29 @@ Grabbed::Grabbed(KinBodyPtr pGrabbedBody, KinBody::LinkPtr pGrabbingLink)
     _pGrabbedBody = pGrabbedBody;
     _pGrabbingLink = pGrabbingLink;
     _pGrabbingLink->GetRigidlyAttachedLinks(_vAttachedToGrabbingLink);
+
+    // If the grabbing body has no joints, then it is effectively a rigid body.
+    // When calculating non-colliding links, we exclude all links rigidly attached to the grabbing link.
+    // Since for fully rigid bodies _all_ links are attached, we effectively exclude all links.
+    // We can therefore skip the non-colliding calculation, along with generating the associated state savers.
+    KinBodyPtr pGrabber(pGrabbingLink->GetParent());
+    if (pGrabber->GetJoints().size() + pGrabber->GetPassiveJoints().size() == 0) {
+        // This body is fully rigid: all links are excluded from the non colliding link set, so just flag that the list is valid (empty) and return.
+        _listNonCollidingIsValid = true;
+        return;
+    }
+
+    // if this body is not rigid, then we need to save the current state of the grabber/grabbee so that we can roll back to it when computing the non-colliding links
     _listNonCollidingIsValid = false;
     const bool bDisableRestoreOnDestructor = true; // This is very important! These saver are used only in ComputeListNonCollidingLinks and we don't want to restore on destructor.
+    static const int saverOptions = KinBody::Save_LinkTransformation | KinBody::Save_LinkEnable | KinBody::Save_JointLimits;
     _CreateSaverForGrabbedAndGrabber(_pGrabbedSaver,
                                      pGrabbedBody,
-                                     KinBody::Save_LinkTransformation|KinBody::Save_LinkEnable|KinBody::Save_JointLimits,
+                                     saverOptions,
                                      bDisableRestoreOnDestructor);
-
-    KinBodyPtr pGrabber = RaveInterfaceCast<KinBody>(_pGrabbingLink->GetParent());
     _CreateSaverForGrabbedAndGrabber(_pGrabberSaver,
                                      pGrabber,
-                                     KinBody::Save_LinkTransformation|KinBody::Save_LinkEnable|KinBody::Save_JointLimits|KinBody::Save_LinkVelocities, // Need to save link velocities of the grabber since will be used for computing link velocities of the grabbed bodies.
+                                     saverOptions,
                                      bDisableRestoreOnDestructor);
 } // end Grabbed
 
@@ -162,7 +175,7 @@ void Grabbed::ComputeListNonCollidingLinks()
     KinBodyPtr pGrabbedBody(_pGrabbedBody);
     KinBodyPtr pGrabber = RaveInterfaceCast<KinBody>(_pGrabbingLink->GetParent());
     KinBody::KinBodyStateSaverPtr pCurrentGrabbedSaver, pCurrentGrabberSaver;
-    const int defaultSaveOptions = KinBody::Save_LinkTransformation|KinBody::Save_LinkEnable|KinBody::Save_LinkVelocities|KinBody::Save_JointLimits;
+    const int defaultSaveOptions = KinBody::Save_LinkTransformation|KinBody::Save_LinkEnable|KinBody::Save_JointLimits;
     const bool bDisableRestoreOnDestructor = false;
     _CreateSaverForGrabbedAndGrabber(pCurrentGrabbedSaver, pGrabbedBody, defaultSaveOptions, bDisableRestoreOnDestructor);
     _CreateSaverForGrabbedAndGrabber(pCurrentGrabberSaver, pGrabber, defaultSaveOptions, bDisableRestoreOnDestructor);
@@ -309,7 +322,7 @@ void Grabbed::_UpdateMapListNonCollidingInterGrabbedLinkPairs(KinBodyPtr& pGrabb
     }
 }
 
-bool KinBody::Grab(KinBodyPtr pGrabbedBody, LinkPtr pGrabbingLink, const rapidjson::Value& rGrabbedUserData)
+bool KinBody::Grab(KinBodyPtr pGrabbedBody, LinkPtr pGrabbingLink, const rapidjson::Value& rGrabbedUserData, const std::string& grippername)
 {
     // always ignore links that are statically attached to plink (ie assume they are always colliding with the body)
     std::set<int> setGrabberLinksToIgnore;
@@ -318,24 +331,27 @@ bool KinBody::Grab(KinBodyPtr pGrabbedBody, LinkPtr pGrabbingLink, const rapidjs
     FOREACHC(itAttachedLink, vAttachedToGrabbingLink) {
         setGrabberLinksToIgnore.insert((*itAttachedLink)->GetIndex());
     }
-    return Grab(pGrabbedBody, pGrabbingLink, setGrabberLinksToIgnore, rGrabbedUserData);
+    return Grab(pGrabbedBody, pGrabbingLink, setGrabberLinksToIgnore, rGrabbedUserData, grippername);
 }
 
-bool KinBody::Grab(KinBodyPtr pGrabbedBody, LinkPtr pGrabbingLink, const std::set<std::string>& setIgnoreGrabberLinkNames, const rapidjson::Value& rGrabbedUserData)
+bool KinBody::Grab(KinBodyPtr pGrabbedBody, LinkPtr pGrabbingLink, const std::set<std::string>& setIgnoreGrabberLinkNames, const rapidjson::Value& rGrabbedUserData, const std::string& grippername)
 {
     std::set<int> setGrabberLinksToIgnore;
     FOREACHC(itLinkName, setIgnoreGrabberLinkNames) {
         setGrabberLinksToIgnore.insert(GetLink(*itLinkName)->GetIndex());
     }
-    return Grab(pGrabbedBody, pGrabbingLink, setGrabberLinksToIgnore, rGrabbedUserData);
+    return Grab(pGrabbedBody, pGrabbingLink, setGrabberLinksToIgnore, rGrabbedUserData, grippername);
 }
 
-bool KinBody::Grab(KinBodyPtr pGrabbedBody, LinkPtr pGrabbingLink, const std::set<int>& setGrabberLinksToIgnore, const rapidjson::Value& rGrabbedUserData)
+bool KinBody::Grab(KinBodyPtr pGrabbedBody, LinkPtr pGrabbingLink, const std::set<int>& setGrabberLinksToIgnore, const rapidjson::Value& rGrabbedUserData, const std::string& grippername)
 {
     OPENRAVE_ASSERT_FORMAT(!!pGrabbedBody, "env=%s, body to be grabbed by body '%s' is invalid", GetEnv()->GetNameId()%GetName(), ORE_InvalidArguments);
     OPENRAVE_ASSERT_FORMAT(!!pGrabbingLink, "env=%s, pGrabbingLink of body '%s' for grabbing body '%s' is invalid", GetEnv()->GetNameId()%GetName()%pGrabbedBody->GetName(), ORE_InvalidArguments);
     OPENRAVE_ASSERT_FORMAT(pGrabbingLink->GetParent().get() == this, "env=%s, pGrabbingLink name='%s' for grabbing '%s' is not part of body '%s'", GetEnv()->GetNameId()%pGrabbingLink->GetName()%pGrabbedBody->GetName()%GetName(), ORE_InvalidArguments);
     OPENRAVE_ASSERT_FORMAT(pGrabbedBody.get() != this, "env=%s, body '%s' cannot grab itself", GetEnv()->GetNameId()%pGrabbedBody->GetName(), ORE_InvalidArguments);
+
+    // Flag that the body we're grabbing has been grabbed and may be tracked by more collision checkers than just the env checker
+    pGrabbedBody->_wasEverGrabbed = true;
 
     // If pGrabbedBody has previously been grabbed, check if the grabbing condition is the same
     GrabbedPtr pPreviouslyGrabbed;
@@ -398,6 +414,7 @@ bool KinBody::Grab(KinBodyPtr pGrabbedBody, LinkPtr pGrabbingLink, const std::se
     }
 
     GrabbedPtr pGrabbed(new Grabbed(pGrabbedBody, pGrabbingLink));
+    pGrabbed->_grippername = grippername;
     pGrabbed->_tRelative = tGrabbingLink.inverse() * tGrabbedBody;
     pGrabbed->_setGrabberLinkIndicesToIgnore = setGrabberLinksToIgnore;
 
@@ -564,6 +581,7 @@ void KinBody::RegrabAll()
         }
 
         GrabbedPtr pNewGrabbed(new Grabbed(pBody, pGrabbed->_pGrabbingLink));
+        pGrabbed->_grippername = pGrabbed->_grippername;
         pNewGrabbed->_tRelative = pGrabbed->_tRelative;
         pNewGrabbed->_setGrabberLinkIndicesToIgnore = pGrabbed->_setGrabberLinkIndicesToIgnore;
         CopyRapidJsonDoc(pGrabbed->_rGrabbedUserData, pNewGrabbed->_rGrabbedUserData);
@@ -746,6 +764,7 @@ bool KinBody::GrabbedInfo::operator==(const GrabbedInfo& other) const
     return _id == other._id
        && _grabbedname == other._grabbedname
        && _robotlinkname == other._robotlinkname
+       && _grippername == other._grippername
        && _trelative == other._trelative
        && _setIgnoreRobotLinkNames == other._setIgnoreRobotLinkNames
        && _rGrabbedUserData == other._rGrabbedUserData;
@@ -756,6 +775,7 @@ KinBody::GrabbedInfo& KinBody::GrabbedInfo::operator=(const GrabbedInfo& other)
     _id = other._id;
     _grabbedname = other._grabbedname;
     _robotlinkname = other._robotlinkname;
+    _grippername = other._grippername;
     _trelative = other._trelative;
     _setIgnoreRobotLinkNames = other._setIgnoreRobotLinkNames;
     _rGrabbedUserData = rapidjson::Document(); // reset allocator
@@ -768,6 +788,7 @@ void KinBody::GrabbedInfo::Reset()
     _id.clear();
     _grabbedname.clear();
     _robotlinkname.clear();
+    _grippername.clear();
     _trelative = Transform();
     _setIgnoreRobotLinkNames.clear();
     _rGrabbedUserData.SetNull();
@@ -780,6 +801,7 @@ void KinBody::GrabbedInfo::SerializeJSON(rapidjson::Value& value, rapidjson::Doc
     }
     orjson::SetJsonValueByKey(value, "grabbedName", _grabbedname, allocator);
     orjson::SetJsonValueByKey(value, "robotLinkName", _robotlinkname, allocator);
+    orjson::SetJsonValueByKey(value, "grippername", _grippername, allocator);
     Transform transform = _trelative;
     transform.trans *= fUnitScale;
     orjson::SetJsonValueByKey(value, "transform", transform, allocator);
@@ -796,6 +818,7 @@ void KinBody::GrabbedInfo::DeserializeJSON(const rapidjson::Value& value, dReal 
     orjson::LoadJsonValueByKey(value, "id", _id);
     orjson::LoadJsonValueByKey(value, "grabbedName", _grabbedname);
     orjson::LoadJsonValueByKey(value, "robotLinkName", _robotlinkname);
+    orjson::LoadJsonValueByKey(value, "grippername", _grippername);
     if (value.HasMember("transform")) {
         orjson::LoadJsonValueByKey(value, "transform", _trelative);
         _trelative.trans *= fUnitScale;
@@ -810,27 +833,25 @@ void KinBody::GrabbedInfo::DeserializeJSON(const rapidjson::Value& value, dReal 
     }
 }
 
-void KinBody::GrabbedInfo::serialize(std::ostream& os) const
+void KinBody::GrabbedInfo::DigestHash(HashContext& hash) const
 {
-    os << _grabbedname << " ";
-    os << _robotlinkname << " ";
-    SerializeRound(os, _trelative);
-    for( std::set<std::string>::const_iterator it = _setIgnoreRobotLinkNames.begin(); it != _setIgnoreRobotLinkNames.end(); ++it ) {
-        os << (*it) << " ";
+    hash << _grabbedname;
+    hash << _robotlinkname;
+    hash << _grippername;
+    hash << _trelative;
+    for (std::set<std::string>::const_iterator it = _setIgnoreRobotLinkNames.begin(); it != _setIgnoreRobotLinkNames.end(); ++it) {
+        hash << (*it);
     }
-    if( _rGrabbedUserData.IsNull() ) {
-        // using 'void DumpJson(Value, ostream, unsigned int)' to let rapidjson::OStreamWrapper to handle std::ostream
-        OpenRAVE::orjson::DumpJson(_rGrabbedUserData, os);
-        os << " ";
+    if (!_rGrabbedUserData.IsNull()) {
+        hash << _rGrabbedUserData;
     }
 }
 
 std::string KinBody::GrabbedInfo::GetGrabbedInfoHash() const
 {
-    std::ostringstream ss;
-    ss << std::fixed << std::setprecision(SERIALIZATION_PRECISION);
-    serialize(ss);
-    return utils::GetMD5HashString(ss.str());
+    HashContext hashContext;
+    DigestHash(hashContext);
+    return hashContext.HexDigest();
 }
 
 void KinBody::ResetGrabbed(const std::vector<KinBody::GrabbedInfoConstPtr>& vGrabbedInfos)
@@ -899,6 +920,9 @@ void KinBody::ResetGrabbed(const std::vector<KinBody::GrabbedInfoConstPtr>& vGra
         KinBodyPtr pBody = GetEnv()->GetKinBody(pGrabbedInfo->_grabbedname);
         OPENRAVE_ASSERT_FORMAT(!!pBody, "env=%s, body '%s' grabs invalid grab body '%s'", GetEnv()->GetNameId()%GetName()%pGrabbedInfo->_grabbedname, ORE_InvalidArguments);
 
+        // Flag that the body we're grabbing has been grabbed and may be tracked by more collision checkers than just the env checker
+        pBody->_wasEverGrabbed = true;
+
         // Check that the specified grab link is also real
         KinBody::LinkPtr pGrabbingLink = GetLink(pGrabbedInfo->_robotlinkname);
         if (!pGrabbingLink) {
@@ -943,6 +967,7 @@ void KinBody::ResetGrabbed(const std::vector<KinBody::GrabbedInfoConstPtr>& vGra
 
         // Update the grab object with the ancillary grab info
         GrabbedPtr& pGrabbed = existingGrabIt->second;
+        pGrabbed->_grippername = pGrabbedInfo->_grippername;
         pGrabbed->_tRelative = pGrabbedInfo->_trelative;
         FOREACHC(itLinkName, pGrabbedInfo->_setIgnoreRobotLinkNames) {
             pGrabbed->_setGrabberLinkIndicesToIgnore.insert(GetLink(*itLinkName)->GetIndex());
@@ -996,11 +1021,11 @@ void KinBody::_UpdateGrabbedBodies()
         if( !!pGrabbedBody ) {
             const Transform& tGrabbingLink = pgrabbed->_pGrabbingLink->GetTransform();
             tGrabbedBody = tGrabbingLink * pgrabbed->_tRelative;
-            pGrabbedBody->SetTransform(tGrabbedBody);
-            // set the correct velocity
             pgrabbed->_pGrabbingLink->GetVelocity(velocity.first, velocity.second);
             velocity.first += velocity.second.cross(tGrabbedBody.trans - tGrabbingLink.trans);
-            pGrabbedBody->SetVelocity(velocity.first, velocity.second);
+            // Set the transform and velocity in one go so that we only cause one update of the grab sub-tree of this body
+            // If we update them separately, we duplicate work / can cause exponential wasted time for deeply nested grabs
+            pGrabbedBody->SetTransformAndVelocity(tGrabbedBody, velocity.first, velocity.second);
             ++grabIt;
         }
         else {

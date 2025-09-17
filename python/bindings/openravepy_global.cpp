@@ -1038,6 +1038,7 @@ object RaveGlobalState()
 
 void pyRaveDestroy()
 {
+    PythonThreadSaver saver;
     ViewerManager::GetInstance().Destroy(); // destroy the active viewers
     OpenRAVE::RaveDestroy();
 }

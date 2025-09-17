@@ -116,6 +116,7 @@ void KinBody::_RestoreGrabbedBodiesFromSavedData(const KinBody& savedBody,
                     // _listNonCollidingLinksWhenGrabbed (in case it is not yet computed).
                     KinBody::LinkPtr pNewGrabbingLink = GetLinks().at(pGrabbingLink->GetIndex());
                     GrabbedPtr pNewGrabbed(new Grabbed(pNewGrabbedBody, pNewGrabbingLink));
+                    pNewGrabbed->_grippername = pGrabbed->_grippername;
                     pNewGrabbed->_tRelative = pGrabbed->_tRelative;
                     pNewGrabbed->_setGrabberLinkIndicesToIgnore = savedGrabbedData.setGrabberLinkIndicesToIgnore;
                     if( savedGrabbedData.listNonCollidingIsValid ) {
@@ -212,7 +213,7 @@ void KinBody::_RestoreGrabbedBodiesFromSavedData(const KinBody& savedBody,
                 }
                 listNonCollidingLinkPairs.emplace_back(pFirst->GetLinks()[linkIndexFirst], pSecond->GetLinks()[linkIndexSecond]);
             }
-            if( listNonCollidingLinkPairs.size() > 0 ){
+            if( listNonCollidingLinkPairs.size() > 0 ) {
                 const uint64_t key = _ComputeEnvironmentBodyIndicesPair(envBodyIndexFirst, envBodyIndexSecond);
                 _mapListNonCollidingInterGrabbedLinkPairsWhenGrabbed.emplace(key, std::move(listNonCollidingLinkPairs));
             }
@@ -224,7 +225,7 @@ void KinBody::_RestoreGrabbedBodiesFromSavedData(const KinBody& savedBody,
         _UpdateGrabbedBodies();
     }
 }
-    
+
 void KinBody::_SaveKinBodySavedGrabbedData(std::unordered_map<int, SavedGrabbedData>& savedGrabbedDataByEnvironmentIndex) const
 {
     savedGrabbedDataByEnvironmentIndex.clear();
@@ -300,61 +301,79 @@ void KinBody::KinBodyStateSaver::_RestoreKinBody(boost::shared_ptr<KinBody> pbod
     if( !pbody ) {
         return;
     }
-    if( pbody->GetEnvironmentBodyIndex() == 0 ) {
-        RAVELOG_WARN_FORMAT("env=%d, body %s not added to environment, skipping restore", pbody->GetEnv()->GetId()%pbody->GetName());
-        return;
-    }
-    if( _options & Save_JointLimits ) {
-        pbody->SetDOFLimits(_vDOFLimits[0], _vDOFLimits[1]);
-    }
-    // restoring grabbed bodies has to happen first before link transforms can be restored since _UpdateGrabbedBodies can be called with the old grabbed bodies.
-    if( _options & Save_GrabbedBodies ) {
-        pbody->_RestoreGrabbedBodiesFromSavedData(*_pbody, _options, _grabbedDataByEnvironmentIndex, _mapListNonCollidingInterGrabbedLinkPairsWhenGrabbed);
-    }
-    if( _options & Save_LinkTransformation ) {
-        pbody->SetLinkTransformations(_vLinkTransforms, _vdoflastsetvalues);
-//        if( IS_DEBUGLEVEL(Level_Warn) ) {
-//            stringstream ss; ss << std::setprecision(std::numeric_limits<dReal>::digits10+1);
-//            ss << "restoring kinbody " << pbody->GetName() << " to values=[";
-//            std::vector<dReal> values;
-//            pbody->GetDOFValues(values);
-//            FOREACH(it,values) {
-//                ss << *it << ", ";
-//            }
-//            ss << "]";
-//            RAVELOG_WARN(ss.str());
-//        }
-    }
-    if( _options & Save_LinkEnable ) {
-        // should first enable before calling the parameter callbacks
-        bool bchanged = false;
-        for(size_t i = 0; i < _vEnabledLinks.size(); ++i) {
-            if( pbody->GetLinks().at(i)->IsEnabled() != !!_vEnabledLinks[i] ) {
-                pbody->GetLinks().at(i)->_Enable(!!_vEnabledLinks[i]);
-                bchanged = true;
+    int progress = 0;
+    try {
+        if( pbody->GetEnvironmentBodyIndex() == 0 ) {
+            RAVELOG_WARN_FORMAT("env=%d, body %s not added to environment, skipping restore", pbody->GetEnv()->GetId()%pbody->GetName());
+            return;
+        }
+        if( _options & Save_JointLimits ) {
+            progress=1;
+            pbody->SetDOFLimits(_vDOFLimits[0], _vDOFLimits[1]);
+        }
+        // restoring grabbed bodies has to happen first before link transforms can be restored since _UpdateGrabbedBodies can be called with the old grabbed bodies.
+        if( _options & Save_GrabbedBodies ) {
+            progress=2;
+            pbody->_RestoreGrabbedBodiesFromSavedData(*_pbody, _options, _grabbedDataByEnvironmentIndex, _mapListNonCollidingInterGrabbedLinkPairsWhenGrabbed);
+        }
+        if( _options & Save_LinkTransformation ) {
+            progress=3;
+            pbody->SetLinkTransformations(_vLinkTransforms, _vdoflastsetvalues);
+            //        if( IS_DEBUGLEVEL(Level_Warn) ) {
+            //            stringstream ss; ss << std::setprecision(std::numeric_limits<dReal>::digits10+1);
+            //            ss << "restoring kinbody " << pbody->GetName() << " to values=[";
+            //            std::vector<dReal> values;
+            //            pbody->GetDOFValues(values);
+            //            FOREACH(it,values) {
+            //                ss << *it << ", ";
+            //            }
+            //            ss << "]";
+            //            RAVELOG_WARN(ss.str());
+            //        }
+        }
+        if( _options & Save_LinkEnable ) {
+            progress=4;
+            // should first enable before calling the parameter callbacks
+            bool bchanged = false;
+            for(size_t i = 0; i < _vEnabledLinks.size(); ++i) {
+                if( pbody->GetLinks().at(i)->IsEnabled() != !!_vEnabledLinks[i] ) {
+                    pbody->GetLinks().at(i)->_Enable(!!_vEnabledLinks[i]);
+                    bchanged = true;
+                }
+            }
+            if( bchanged ) {
+                pbody->_nNonAdjacentLinkCache &= ~AO_Enabled;
+                progress=5;
+                pbody->_PostprocessChangedParameters(Prop_LinkEnable);
             }
         }
-        if( bchanged ) {
-            pbody->_nNonAdjacentLinkCache &= ~AO_Enabled;
-            pbody->_PostprocessChangedParameters(Prop_LinkEnable);
+        if( _options & Save_JointMaxVelocityAndAcceleration ) {
+            progress=6;
+            pbody->SetDOFVelocityLimits(_vMaxVelocities);
+            progress=7;
+            pbody->SetDOFAccelerationLimits(_vMaxAccelerations);
+            progress=8;
+            pbody->SetDOFJerkLimits(_vMaxJerks);
+        }
+        if( _options & Save_LinkVelocities ) {
+            progress=9;
+            pbody->SetLinkVelocities(_vLinkVelocities);
+        }
+        if( _options & Save_JointWeights ) {
+            progress=10;
+            pbody->SetDOFWeights(_vDOFWeights);
+        }
+        if( _options & Save_JointResolutions ) {
+            progress=11;
+            pbody->SetDOFResolutions(_vDOFResolutions);
         }
     }
-    if( _options & Save_JointMaxVelocityAndAcceleration ) {
-        pbody->SetDOFVelocityLimits(_vMaxVelocities);
-        pbody->SetDOFAccelerationLimits(_vMaxAccelerations);
-        pbody->SetDOFJerkLimits(_vMaxJerks);
-    }
-    if( _options & Save_LinkVelocities ) {
-        pbody->SetLinkVelocities(_vLinkVelocities);
-    }
-    if( _options & Save_JointWeights ) {
-        pbody->SetDOFWeights(_vDOFWeights);
-    }
-    if( _options & Save_JointResolutions ) {
-        pbody->SetDOFResolutions(_vDOFResolutions);
+    catch (const std::exception& ex) {
+        // throw might abort the process since _RestoreKinBody tends to be called in destructors, so log a warning
+        RAVELOG_WARN_FORMAT("env=%s, failed to restore body '%s' progress=%d with saveoptions=0x%x: %s", pbody->GetEnv()->GetNameId()%pbody->GetName()%progress%_options%ex.what());
+        throw;
     }
 }
-
 
 KinBody::KinBodyStateSaverRef::KinBodyStateSaverRef(KinBody& body, int options) : _body(body), _options(options), _bRestoreOnDestructor(true), _bReleased(false)
 {
