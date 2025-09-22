@@ -292,6 +292,7 @@ public:
     void SetPositiveCropContainerEmptyMargins(object positiveCropContainerEmptyMargins);
     void SetRenderFilename(const string& filename);
     void SetName(const std::string& name);
+    void SetFriction(const float& friction);
     bool IsDraw();
     bool IsVisible();
     bool IsModifiable();
@@ -316,6 +317,7 @@ public:
     object GetRenderFilename() const;
     std::string GetId() const;
     object GetName() const;
+    float GetFriction() const;
     float GetTransparency() const;
     object GetDiffuseColor() const;
     object GetAmbientColor() const;
