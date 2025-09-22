@@ -128,10 +128,6 @@ public:
                 _ss >> _physics->_visualizeContact;
                 RAVELOG_DEBUG_FORMAT("visualizeContact flags: %d", _physics->_visualizeContact);
             }
-            else if( name == "usepersurfacefrictions" ) {
-                _ss >> _physics->_usePerSurfaceFrictions;
-                RAVELOG_DEBUG_FORMAT("usePerSurfaceFrictions flags: %d", _physics->_usePerSurfaceFrictions);
-            }
             else if( name == "contact" ) {         // check out http://www.ode.org/ode-latest-userguide.html#sec_7_3_7
 
             }
@@ -188,8 +184,8 @@ public:
             }
         }
 
-        static const boost::array<string, 15>& GetTags() {
-            static const boost::array<string, 15> tags = {{"friction","selfcollision", "gravity", "contact", "erp", "cfm", "elastic_reduction_parameter", "constraint_force_mixing", "contacterp", "contactcfm", "visualizecontact", "usepersurfacefrictions", "dcontactapprox", "numiterations", "surfacelayer" }};
+        static const boost::array<string, 14>& GetTags() {
+            static const boost::array<string, 14> tags = {{"friction","selfcollision", "gravity", "contact", "erp", "cfm", "elastic_reduction_parameter", "constraint_force_mixing", "contacterp", "contactcfm", "visualizecontact", "dcontactapprox", "numiterations", "surfacelayer" }};
             return tags;
         }
 
@@ -232,7 +228,6 @@ The possible properties that can be set are: ";
         _contactCfm = 1e-5;
         _num_iterations = 20;
         _visualizeContact = false;
-        _usePerSurfaceFrictions = false;
         //Default to openrave 0.6.6 behavior, but this really should default to
         //enable the friction pyramid model.
         _surface_mode = 0;
@@ -344,7 +339,6 @@ The possible properties that can be set are: ";
         _contactCfm = r->_contactCfm;
         _contactErp = r->_contactErp;
         _visualizeContact = r->_visualizeContact;
-        _usePerSurfaceFrictions = r->_usePerSurfaceFrictions;
         _surface_mode = r->_surface_mode;
         _num_iterations = r->_num_iterations;
         if( !!_odespace && _odespace->IsInitialized() ) {
@@ -671,28 +665,29 @@ private:
             }
         }
 
-        // get frictions before processing collisions.
-        float combinedFriction;
-        if (_usePerSurfaceFrictions) {
-            // we assume that a friction is a property of a link and hence every geom in a link has the same friction value.
-            // hence we can just take the friction of the first geom GetGeometry(0).
-            float friction1 = pkb1->GetGeometry(0)->GetInfo().GetFriction();
-            float friction2 = pkb2->GetGeometry(0)->GetInfo().GetFriction();
-            combinedFriction = min(friction1, friction2);
+        // Get frictions before processing collisions.
+        // Friction is a property of a contact surface in ODE which is linked to ODE geoms.
+        // Hence _friction is stored on the geom level in OpenRAVE.
+        // We assume that OpenRAVE link has a uniform material, therefore every geom in a link has the same _friction value.
+        // Hence we can just take the friction of the first geom GetGeometry(0).
+        float friction1 = pkb1->GetGeometry(0)->GetInfo().GetFriction();
+        float friction2 = pkb2->GetGeometry(0)->GetInfo().GetFriction();
+        // If custom friction wasn't set - use _globalfriction as default
+        if (friction1 < 0){
+            friction1 = _globalfriction;
         }
+        if (friction2 < 0){
+            friction2 = _globalfriction;
+        }
+        // take the lower value of the friction to not overestimate grip
+        float combinedFriction = min(friction1, friction2);
 
         // process collisions
         for (int i=0; i<n; i++) {
             contact[i].surface.mode = _surface_mode | dContactSoftERP | dContactSoftCFM;
-            if (_usePerSurfaceFrictions) {
-                // take the lower value of the friction to not oerestimate grip
-                contact[i].surface.mu = (dReal)combinedFriction;
-                contact[i].surface.mu2 = (dReal)combinedFriction;
-            }
-            else  {
-                contact[i].surface.mu = (dReal)_globalfriction;
-                contact[i].surface.mu2 = (dReal)_globalfriction;
-            }
+            contact[i].surface.mu = (dReal)combinedFriction;
+            contact[i].surface.mu2 = (dReal)combinedFriction;
+
             //        contact[i].surface.slip1 = 0.7;
             //        contact[i].surface.slip2 = 0.7;
             //        contact[i].surface.mode = dContactSoftERP | dContactSoftCFM | dContactApprox1 | dContactSlip1 | dContactSlip2;
@@ -753,7 +748,6 @@ private:
     dReal _globalfriction, _globalcfm, _globalerp;
     dReal _contactCfm, _contactErp;
     bool _visualizeContact;
-    bool _usePerSurfaceFrictions;
 
     /**
      * _surface_mode stores global surface settings in dSurfaceParameters.

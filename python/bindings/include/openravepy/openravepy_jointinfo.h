@@ -112,7 +112,7 @@ public:
     py::list _vAxialSlices;
     py::dict _calibrationBoardParameters;
 
-    float _friction = 0.0;
+    float _friction = -1.0; /// << initialize to -1, so that it an be used as a flag (if friction is -1 - use _globalFriction in a simulation, otherwise use _friction - see odephysics.h)
 };
 
 typedef OPENRAVE_SHARED_PTR<PyGeometryInfo> PyGeometryInfoPtr;
