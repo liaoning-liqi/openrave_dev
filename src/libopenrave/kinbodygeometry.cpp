@@ -523,6 +523,10 @@ int KinBody::GeometryInfo::Compare(const GeometryInfo& rhs, dReal fUnitScale, dR
         break;
     }
 
+    if( _friction != rhs._friction ) {
+        return 32;
+    }
+
     return 0;
 }
 
@@ -2134,6 +2138,13 @@ void KinBody::Geometry::SetName(const std::string& name)
     parent->GetParent()->_PostprocessChangedParameters(Prop_LinkGeometry);
 }
 
+void KinBody::Geometry::SetFriction(const float& friction)
+{
+    LinkPtr parent(_parent);
+    _info._friction = friction;
+    parent->GetParent()->_PostprocessChangedParameters(Prop_LinkGeometry);
+}
+
 void KinBody::Geometry::UpdateInfo()
 {
 }
@@ -2295,6 +2306,12 @@ UpdateFromInfoResult KinBody::Geometry::UpdateFromInfo(const KinBody::GeometryIn
     if(GetPositiveCropContainerEmptyMargins() != info._vPositiveCropContainerEmptyMargins) {
         SetPositiveCropContainerEmptyMargins(info._vPositiveCropContainerEmptyMargins);
         RAVELOG_VERBOSE_FORMAT("geometry %s positiveCropContainerEmptyMargins changed", _info._id);
+        updateFromInfoResult = UFIR_Success;
+    }
+
+    if (GetFriction() != info._friction) {
+        SetFriction(info._friction);
+        RAVELOG_VERBOSE_FORMAT("geometry %s friction changed", _info._friction);
         updateFromInfoResult = UFIR_Success;
     }
 

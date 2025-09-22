@@ -827,6 +827,10 @@ public:
             return _info._meshcollision;
         }
 
+        inline float GetFriction() const {
+            return _info._friction;
+        }
+
         inline const KinBody::GeometryInfo& GetInfo() const {
             return _info;
         }
@@ -910,6 +914,10 @@ public:
 
         /// \brief set the positive crop empty margin of the geometry
         void SetPositiveCropContainerEmptyMargins(const Vector& positiveCropContainerEmptyMargins);
+
+
+        /// \brief sets the friction of the geometry
+        void SetFriction(const float& friction);
 
         /// \brief generates the dot mesh of a calibration board
         inline void GetCalibrationBoardDotMesh(TriMesh& tri) {
