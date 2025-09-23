@@ -1058,7 +1058,7 @@ void KinBody::GeometryInfo::Reset()
     _vPositiveCropContainerMargins = Vector(0,0,0);
     _vNegativeCropContainerEmptyMargins = Vector(0,0,0);
     _vPositiveCropContainerEmptyMargins = Vector(0,0,0);
-    _friction = 0.0;
+    _friction = -1.0;
 }
 
 const char* GetGeometryTypeString(GeometryType geometryType)

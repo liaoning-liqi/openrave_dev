@@ -558,7 +558,7 @@ public:
         std::string _id;   ///< unique id of the geometry
         std::string _name; ///< the name of the geometry
 
-        float _friction; ///< friction of the geometry (used for simulations to set per-surface friction)
+        float _friction = -1.0; ///< friction of the geometry (used for simulations to set per-surface friction)
 
         /// \brief filename for render model (optional)
         ///
@@ -914,7 +914,6 @@ public:
 
         /// \brief set the positive crop empty margin of the geometry
         void SetPositiveCropContainerEmptyMargins(const Vector& positiveCropContainerEmptyMargins);
-
 
         /// \brief sets the friction of the geometry
         void SetFriction(const float& friction);
