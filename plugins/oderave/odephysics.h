@@ -668,7 +668,7 @@ private:
         // Get frictions before processing collisions.
         // Friction is a property of a contact surface in ODE which is linked to ODE geoms.
         // Hence _friction is stored on the geom level in OpenRAVE.
-        // For simlicity we assume that OpenRAVE link has a uniform material, therefore every geom in a link has the same _friction value.
+        // For simplicity we assume that OpenRAVE link has a uniform material, therefore every geom in a link has the same _friction value.
         // Hence we can just take the friction of the first geom GetGeometry(0).
         // TODO: Being able to get corresponding OpenRAVE's geometry from ODE's dGeomID so that we can use friction coefficient from the actual geometries that have the collision.
         float friction1 = pkb1->GetGeometry(0)->GetInfo().GetFriction();
