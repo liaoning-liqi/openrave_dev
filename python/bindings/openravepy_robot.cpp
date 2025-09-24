@@ -2469,6 +2469,15 @@ void init_openravepy_robot()
                            .def_readwrite("_vGripperInfos",&PyRobotBase::PyRobotBaseInfo::_vGripperInfos)
                            .def("__str__",&PyRobotBase::PyRobotBaseInfo::__str__)
                            .def("__unicode__",&PyRobotBase::PyRobotBaseInfo::__unicode__)
+                           .def("__copy__", [](const PyRobotBase::PyRobotBaseInfo& self){
+            return self;
+        })
+                           .def("__deepcopy__",
+                                [](const PyRobotBase::PyRobotBaseInfo &pyinfo, const py::dict&) {
+            RobotBase::RobotBaseInfoPtr pinfo = pyinfo.GetRobotBaseInfo();
+            return PyRobotBase::PyRobotBaseInfoPtr(new PyRobotBase::PyRobotBaseInfo(*pinfo));
+        }
+                                )
 #ifdef USE_PYBIND11_PYTHON_BINDINGS
                            .def("SerializeJSON", &PyRobotBase::PyRobotBaseInfo::SerializeJSON,
                                 "unitScale"_a = 1.0,

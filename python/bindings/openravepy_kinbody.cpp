@@ -5654,6 +5654,15 @@ void init_openravepy_kinbody()
                          .def_readwrite("_isRobot", &PyKinBody::PyKinBodyInfo::_isRobot)
                          .def("__str__",&PyKinBody::PyKinBodyInfo::__str__)
                          .def("__unicode__",&PyKinBody::PyKinBodyInfo::__unicode__)
+                         .def("__copy__", [](const PyKinBody::PyKinBodyInfo& self){
+            return self;
+        })
+                         .def("__deepcopy__",
+                              [](const PyKinBody::PyKinBodyInfo &pyinfo, const py::dict&) {
+            KinBody::KinBodyInfoPtr pinfo = pyinfo.GetKinBodyInfo();
+            return PyKinBody::PyKinBodyInfoPtr(new PyKinBody::PyKinBodyInfo(*pinfo));
+        }
+                              )
 #ifdef USE_PYBIND11_PYTHON_BINDINGS
                          .def("SerializeJSON", &PyKinBody::PyKinBodyInfo::SerializeJSON,
                               "unitScale"_a = 1.0,
