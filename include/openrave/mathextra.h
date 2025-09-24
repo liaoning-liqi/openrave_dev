@@ -1470,7 +1470,7 @@ inline bool computequinticnextdiscretizedstep(const T* coeffs, const T step, con
     else if( tempcoeffs[4] != 0 ) {
         // polyroots<T, 1>(&tempcoeffs[4], rawroots, numroots);  // out-of-bound memory access
         numroots = 1;
-        rawroots[0] = -tempcoeffs[4]/tempcoeffs[3];
+        rawroots[0] = -tempcoeffs[5]/tempcoeffs[4];
     }
     bool bFound = false;
     for( int i = 0; i < numroots; ++i ) {
