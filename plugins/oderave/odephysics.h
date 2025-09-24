@@ -228,9 +228,7 @@ The possible properties that can be set are: ";
         _contactCfm = 1e-5;
         _num_iterations = 20;
         _visualizeContact = false;
-        //Default to openrave 0.6.6 behavior, but this really should default to
-        //enable the friction pyramid model.
-        _surface_mode = 0;
+        _surface_mode = dContactApprox1;
         _surfacelayer = 0.001;
         _options = OpenRAVE::PEO_SelfCollisions;
 

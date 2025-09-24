@@ -8,6 +8,8 @@ Version 0.168.0
 
 - Introduce friction to kinbody geometry.
 - Add support for using per-object frictions in ODE plugin.
+- Enable friction model by default in ODE plugin.
+- Split ERP and CFM to to the ones for joint constraints and the ones for contact constraints (`erp`/`cfm` and `contactErp`/`contactCfm` respectively)
 
 Version 0.167.12
 ===============
