@@ -3,6 +3,12 @@
 ChangeLog
 #########
 
+Version 0.168.0
+===============
+
+- Introduce friction to kinbody geometry.
+- Add support for using per-object frictions in ODE plugin.
+
 Version 0.167.12
 ===============
 
