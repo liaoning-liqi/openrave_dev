@@ -4217,6 +4217,9 @@ void KinBody::_EnsureAllPairsShortestPaths() const
         return;
     }
 
+    // Sanity check: we assume that links can be addressed using only a 16 bit index
+    OPENRAVE_ASSERT_OP(_veclinks.size(), <=, std::numeric_limits<uint16_t>::max());
+
     // Preallocate to fit our NxN joint map
     _vAllPairsShortestPaths.resize(_veclinks.size() * _veclinks.size());
 
@@ -4241,9 +4244,14 @@ void KinBody::_EnsureAllPairsShortestPaths() const
 
     // Since not all links will be part of valid joints, we should only consider those valid links when building our cost map.
     // Otherwise, scenes that contain a large number of non-jointed links will incur significant overhead.
-    // Note that we use an ordered set here - iterating the links in-order ensures that we mimic the actual connection order of the links.
-    // Iterating in non-deterministic order may produce unexpected paths where a 'future' link traversal shares the same cost as a traversal that is closer to the robot base.
-    std::set<int> usedLinkIndices;
+    // We track whether or not a joint has been used using a bitfield vector instead of a map - since we already have a fairly bounded integer as a key (the link index), this is faster.
+    // However, in addition to tracking which joints are _used_, we also want to ensure we later iterate the first link index in a joint before the second link index of that joint.
+    // This is because iterating in non-deterministic order may produce unexpected paths where a 'future' link traversal shares the same cost as a traversal that is closer to the robot base.
+    // To do this, we use the usedLinkIndicesInJointOrder to gate appending to linkIndicesUsedInJoints, which we then guarantee contains only one copy of each link index, but has all indices in first -> second order
+    // (Note that for links involved in _multiple_ joints, this guarantee is not necessarily true for all joint pairs)
+    std::vector<int> usedLinkIndicesInJointOrder;
+    std::vector<bool> linkIndicesUsedInJoints;
+    linkIndicesUsedInJoints.resize(_vecjoints.size(), false);
 
     for (const JointPtr& joint : _vecjoints) {
         // If this joint doesn't have two links to calculate a cost between, skip it
@@ -4257,8 +4265,14 @@ void KinBody::_EnsureAllPairsShortestPaths() const
         const int secondLinkIndex = joint->GetSecondAttached()->GetIndex();
 
         // Mark these links as used
-        usedLinkIndices.emplace(firstLinkIndex);
-        usedLinkIndices.emplace(secondLinkIndex);
+        if (!linkIndicesUsedInJoints[firstLinkIndex]) {
+            usedLinkIndicesInJointOrder.emplace_back(firstLinkIndex);
+        }
+        linkIndicesUsedInJoints[firstLinkIndex] = true;
+        if (!linkIndicesUsedInJoints[secondLinkIndex]) {
+            usedLinkIndicesInJointOrder.emplace_back(secondLinkIndex);
+        }
+        linkIndicesUsedInJoints[secondLinkIndex] = true;
 
         // First link
         {
@@ -4288,8 +4302,14 @@ void KinBody::_EnsureAllPairsShortestPaths() const
         const int secondLinkIndex = passiveJoint->GetSecondAttached()->GetIndex();
 
         // Mark these links as used
-        usedLinkIndices.emplace(firstLinkIndex);
-        usedLinkIndices.emplace(secondLinkIndex);
+        if (!linkIndicesUsedInJoints[firstLinkIndex]) {
+            usedLinkIndicesInJointOrder.emplace_back(firstLinkIndex);
+        }
+        linkIndicesUsedInJoints[firstLinkIndex] = true;
+        if (!linkIndicesUsedInJoints[secondLinkIndex]) {
+            usedLinkIndicesInJointOrder.emplace_back(secondLinkIndex);
+        }
+        linkIndicesUsedInJoints[secondLinkIndex] = true;
 
         // First link
         {
@@ -4310,14 +4330,14 @@ void KinBody::_EnsureAllPairsShortestPaths() const
     }
 
     // Now that we have the base costs set for all joints, iterate the links we know to be jointed and calculate the total cost between each pair
-    for (size_t k : usedLinkIndices) {
-        for (size_t i : usedLinkIndices) {
+    for (int k : linkIndicesUsedInJoints) {
+        for (int i : linkIndicesUsedInJoints) {
             // Skip comparisons of a link with itself
             if (i == k) {
                 continue;
             }
 
-            for (size_t j : usedLinkIndices) {
+            for (int j : linkIndicesUsedInJoints) {
                 // Skip comparisons of a link with itself
                 if ((j == i) || (j == k)) {
                     continue;
