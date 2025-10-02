@@ -497,6 +497,13 @@ void PlannerBaseInitializer::init_openravepy_planner()
     ;
 
     {
+#ifdef USE_PYBIND11_PYTHON_BINDINGS
+        // PlannerParameters belongs to Planner
+        class_<PyPlannerBase::PyPlannerParameters, PyPlannerBase::PyPlannerParametersPtr > planningparameters(planner, "PlannerParameters", DOXY_CLASS(PlannerBase::PlannerParameters));
+#else
+        class_<PyPlannerBase::PyPlannerParameters, PyPlannerBase::PyPlannerParametersPtr > planningparameters("PlannerParameters", DOXY_CLASS(PlannerBase::PlannerParameters));
+#endif
+
         bool (PyPlannerBase::*InitPlan1)(PyRobotBasePtr, PyPlannerBase::PyPlannerParametersPtr,bool) = &PyPlannerBase::InitPlan;
         bool (PyPlannerBase::*InitPlan2)(PyRobotBasePtr, const string &) = &PyPlannerBase::InitPlan;
 
@@ -524,12 +531,8 @@ void PlannerBaseInitializer::init_openravepy_planner()
                          .def("GetParameters",&PyPlannerBase::GetParameters, DOXY_FN(PlannerBase,GetParameters))
                          .def("RegisterPlanCallback",&PyPlannerBase::RegisterPlanCallback, DOXY_FN(PlannerBase,RegisterPlanCallback))
         ;
-#ifdef USE_PYBIND11_PYTHON_BINDINGS
-        // PlannerParameters belongs to Planner
-        class_<PyPlannerBase::PyPlannerParameters, PyPlannerBase::PyPlannerParametersPtr >(planner, "PlannerParameters", DOXY_CLASS(PlannerBase::PlannerParameters))
-#else
-        class_<PyPlannerBase::PyPlannerParameters, PyPlannerBase::PyPlannerParametersPtr >("PlannerParameters", DOXY_CLASS(PlannerBase::PlannerParameters))
-#endif
+
+        planningparameters
         .def(init<>())
 #ifdef USE_PYBIND11_PYTHON_BINDINGS
         .def(init<PyPlannerBase::PyPlannerParametersPtr>(), "parameters"_a)

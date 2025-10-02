@@ -742,7 +742,40 @@ void SensorBaseInitializer::init_openravepy_sensor()
 #ifdef USE_PYBIND11_PYTHON_BINDINGS
     using namespace py::literals; // "..."_a
 #endif
+
     {
+#ifdef USE_PYBIND11_PYTHON_BINDINGS
+        // SensorType belongs to Sensor
+        enum_<SensorBase::SensorType> sensortype(sensor, "Type", py::arithmetic() DOXY_ENUM(SensorType));
+#else
+        enum_<SensorBase::SensorType> sensortype("Type" DOXY_ENUM(SensorType));
+#endif
+
+#ifdef USE_PYBIND11_PYTHON_BINDINGS
+        enum_<SensorBase::ConfigureCommand> configurecommand(sensor, "ConfigureCommand", py::arithmetic() DOXY_ENUM(ConfigureCommand));
+#else
+        enum_<SensorBase::ConfigureCommand> configurecommand("ConfigureCommand" DOXY_ENUM(ConfigureCommand));
+#endif
+
+#ifdef USE_PYBIND11_PYTHON_BINDINGS
+        // SensorData is inside SensorBase
+        class_<PySensorBase::PySensorData, OPENRAVE_SHARED_PTR<PySensorBase::PySensorData> > sensordata(sensor, "SensorData", DOXY_CLASS(SensorBase::SensorData));
+#else
+        class_<PySensorBase::PySensorData, OPENRAVE_SHARED_PTR<PySensorBase::PySensorData> > sensordata("SensorData", DOXY_CLASS(SensorBase::SensorData),no_init);
+#endif
+
+        // SensorGeometry must appear after SensorType declaration before Sensor declaration
+#ifdef USE_PYBIND11_PYTHON_BINDINGS
+        class_<PySensorGeometry, OPENRAVE_SHARED_PTR<PySensorGeometry>>(m, "SensorGeometry", DOXY_CLASS(PySensorGeometry))
+        // how to handle pure virtual
+        // see p.62 (book page) https://buildmedia.readthedocs.org/media/pdf/pybind11/stable/pybind11.pdf
+        .def("GetType", &PySensorGeometry::GetType)
+#else
+        class_<PySensorGeometry, OPENRAVE_SHARED_PTR<PySensorGeometry>, boost::noncopyable >("SensorGeometry", DOXY_CLASS(PySensorGeometry),no_init)
+        .def("GetType",py::pure_virtual(&PySensorGeometry::GetType))
+#endif
+        ;
+
         OPENRAVE_SHARED_PTR<PySensorBase::PySensorData> (PySensorBase::*GetSensorData1)() = &PySensorBase::GetSensorData;
         OPENRAVE_SHARED_PTR<PySensorBase::PySensorData> (PySensorBase::*GetSensorData2)(SensorBase::SensorType) = &PySensorBase::GetSensorData;
 
@@ -784,12 +817,7 @@ void SensorBaseInitializer::init_openravepy_sensor()
         .def_readwrite("focal_length",&PyCameraIntrinsics::focal_length)
         ;
 
-#ifdef USE_PYBIND11_PYTHON_BINDINGS
-        // SensorData is inside SensorBase
-        class_<PySensorBase::PySensorData, OPENRAVE_SHARED_PTR<PySensorBase::PySensorData> >(sensor, "SensorData", DOXY_CLASS(SensorBase::SensorData))
-#else
-        class_<PySensorBase::PySensorData, OPENRAVE_SHARED_PTR<PySensorBase::PySensorData> >("SensorData", DOXY_CLASS(SensorBase::SensorData),no_init)
-#endif
+        sensordata
         .def_readonly("type",&PySensorBase::PySensorData::type)
         .def_readonly("stamp",&PySensorBase::PySensorData::stamp)
         ;
@@ -917,12 +945,7 @@ void SensorBaseInitializer::init_openravepy_sensor()
             ;
         }
 
-#ifdef USE_PYBIND11_PYTHON_BINDINGS
-        // SensorType belongs to Sensor
-        enum_<SensorBase::SensorType>(sensor, "Type", py::arithmetic() DOXY_ENUM(SensorType))
-#else
-        enum_<SensorBase::SensorType>("Type" DOXY_ENUM(SensorType))
-#endif
+        sensortype
         .value("Invalid",SensorBase::ST_Invalid)
         .value("Laser",SensorBase::ST_Laser)
         .value("Camera",SensorBase::ST_Camera)
@@ -937,11 +960,7 @@ void SensorBaseInitializer::init_openravepy_sensor()
 #endif
         ;
 
-#ifdef USE_PYBIND11_PYTHON_BINDINGS
-        enum_<SensorBase::ConfigureCommand>(sensor, "ConfigureCommand", py::arithmetic() DOXY_ENUM(ConfigureCommand))
-#else
-        enum_<SensorBase::ConfigureCommand>("ConfigureCommand" DOXY_ENUM(ConfigureCommand))
-#endif
+        configurecommand
         .value("PowerOn",SensorBase::CC_PowerOn)
         .value("PowerOff",SensorBase::CC_PowerOff)
         .value("PowerCheck",SensorBase::CC_PowerCheck)
@@ -956,17 +975,6 @@ void SensorBaseInitializer::init_openravepy_sensor()
 #endif
         ;
     }
-
-#ifdef USE_PYBIND11_PYTHON_BINDINGS
-    class_<PySensorGeometry, OPENRAVE_SHARED_PTR<PySensorGeometry>>(m, "SensorGeometry", DOXY_CLASS(PySensorGeometry))
-    // how to handle pure virtual
-    // see p.62 (book page) https://buildmedia.readthedocs.org/media/pdf/pybind11/stable/pybind11.pdf
-    .def("GetType", &PySensorGeometry::GetType)
-#else
-    class_<PySensorGeometry, OPENRAVE_SHARED_PTR<PySensorGeometry>, boost::noncopyable >("SensorGeometry", DOXY_CLASS(PySensorGeometry),no_init)
-    .def("GetType",py::pure_virtual(&PySensorGeometry::GetType))
-#endif
-    ;
 
 #ifdef USE_PYBIND11_PYTHON_BINDINGS
     class_<PyCameraGeomData, OPENRAVE_SHARED_PTR<PyCameraGeomData>, PySensorGeometry>(m, "CameraGeomData", DOXY_CLASS(SensorBase::CameraGeomData))
