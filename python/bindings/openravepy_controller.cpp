@@ -223,27 +223,29 @@ void ControllerBaseInitializer::init_openravepy_controller()
 #ifdef USE_PYBIND11_PYTHON_BINDINGS
         using namespace py::literals;  // "..."_a
 #endif
-        controller.def("Init",init1, DOXY_FN(ControllerBase,Init));
-        controller.def("Init",init2, PY_ARGS("robot","dofindices","controltransform") DOXY_FN(ControllerBase,Init));
-        controller.def("GetControlDOFIndices",&PyControllerBase::GetControlDOFIndices,DOXY_FN(ControllerBase,GetControlDOFIndices));
-        controller.def("IsControlTransformation",&PyControllerBase::IsControlTransformation, DOXY_FN(ControllerBase,IsControlTransformation));
-        controller.def("GetRobot",&PyControllerBase::GetRobot, DOXY_FN(ControllerBase,GetRobot));
+        controller
+        .def("Init",init1, DOXY_FN(ControllerBase,Init))
+        .def("Init",init2, PY_ARGS("robot","dofindices","controltransform") DOXY_FN(ControllerBase,Init))
+        .def("GetControlDOFIndices",&PyControllerBase::GetControlDOFIndices,DOXY_FN(ControllerBase,GetControlDOFIndices))
+        .def("IsControlTransformation",&PyControllerBase::IsControlTransformation, DOXY_FN(ControllerBase,IsControlTransformation))
+        .def("GetRobot",&PyControllerBase::GetRobot, DOXY_FN(ControllerBase,GetRobot))
 #ifdef USE_PYBIND11_PYTHON_BINDINGS
-        controller.def("Reset", &PyControllerBase::Reset,
-                       "options"_a = 0,
-                       DOXY_FN(ControllerBase, Reset)
-                       );
+        .def("Reset", &PyControllerBase::Reset,
+            "options"_a = 0,
+            DOXY_FN(ControllerBase, Reset)
+        )
 #else
-        controller.def("Reset",&PyControllerBase::Reset, Reset_overloads(PY_ARGS("options") DOXY_FN(ControllerBase,Reset)));
+        .def("Reset",&PyControllerBase::Reset, Reset_overloads(PY_ARGS("options") DOXY_FN(ControllerBase,Reset)))
 #endif
-        controller.def("SetDesired",setdesired1, PY_ARGS("values") DOXY_FN(ControllerBase,SetDesired));
-        controller.def("SetDesired",setdesired2, PY_ARGS("values","transform") DOXY_FN(ControllerBase,SetDesired));
-        controller.def("SetPath",&PyControllerBase::SetPath, DOXY_FN(ControllerBase,SetPath));
-        controller.def("SimulationStep",&PyControllerBase::SimulationStep, DOXY_FN(ControllerBase,SimulationStep "dReal"));
-        controller.def("IsDone",&PyControllerBase::IsDone, DOXY_FN(ControllerBase,IsDone));
-        controller.def("GetTime",&PyControllerBase::GetTime, DOXY_FN(ControllerBase,GetTime));
-        controller.def("GetVelocity",&PyControllerBase::GetVelocity, DOXY_FN(ControllerBase,GetVelocity));
-        controller.def("GetTorque",&PyControllerBase::GetTorque, DOXY_FN(ControllerBase,GetTorque));
+        .def("SetDesired",setdesired1, PY_ARGS("values") DOXY_FN(ControllerBase,SetDesired))
+        .def("SetDesired",setdesired2, PY_ARGS("values","transform") DOXY_FN(ControllerBase,SetDesired))
+        .def("SetPath",&PyControllerBase::SetPath, DOXY_FN(ControllerBase,SetPath))
+        .def("SimulationStep",&PyControllerBase::SimulationStep, DOXY_FN(ControllerBase,SimulationStep "dReal"))
+        .def("IsDone",&PyControllerBase::IsDone, DOXY_FN(ControllerBase,IsDone))
+        .def("GetTime",&PyControllerBase::GetTime, DOXY_FN(ControllerBase,GetTime))
+        .def("GetVelocity",&PyControllerBase::GetVelocity, DOXY_FN(ControllerBase,GetVelocity))
+        .def("GetTorque",&PyControllerBase::GetTorque, DOXY_FN(ControllerBase,GetTorque))
+        ;
     }
 
     {

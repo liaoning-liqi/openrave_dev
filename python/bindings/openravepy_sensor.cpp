@@ -742,95 +742,36 @@ void SensorBaseInitializer::init_openravepy_sensor()
 #ifdef USE_PYBIND11_PYTHON_BINDINGS
     using namespace py::literals; // "..."_a
 #endif
-
     {
         OPENRAVE_SHARED_PTR<PySensorBase::PySensorData> (PySensorBase::*GetSensorData1)() = &PySensorBase::GetSensorData;
         OPENRAVE_SHARED_PTR<PySensorBase::PySensorData> (PySensorBase::*GetSensorData2)(SensorBase::SensorType) = &PySensorBase::GetSensorData;
 
+        sensor
 #ifdef USE_PYBIND11_PYTHON_BINDINGS
-        // SensorType belongs to Sensor
-        enum_<SensorBase::SensorType>(sensor, "Type", py::arithmetic() DOXY_ENUM(SensorType))
-#else
-        enum_<SensorBase::SensorType>("Type" DOXY_ENUM(SensorType))
-#endif
-        .value("Invalid",SensorBase::ST_Invalid)
-        .value("Laser",SensorBase::ST_Laser)
-        .value("Camera",SensorBase::ST_Camera)
-        .value("JointEncoder",SensorBase::ST_JointEncoder)
-        .value("Force6D",SensorBase::ST_Force6D)
-        .value("IMU",SensorBase::ST_IMU)
-        .value("Odometry",SensorBase::ST_Odometry)
-        .value("Tactile",SensorBase::ST_Tactile)
-        .value("Actuator",SensorBase::ST_Actuator)
-#ifdef USE_PYBIND11_PYTHON_BINDINGS
-        .export_values()
-#endif
-        ;
-
-#ifdef USE_PYBIND11_PYTHON_BINDINGS
-        // SensorData is inside SensorBase
-        class_<PySensorBase::PySensorData, OPENRAVE_SHARED_PTR<PySensorBase::PySensorData> >(sensor, "SensorData", DOXY_CLASS(SensorBase::SensorData))
-#else
-        class_<PySensorBase::PySensorData, OPENRAVE_SHARED_PTR<PySensorBase::PySensorData> >("SensorData", DOXY_CLASS(SensorBase::SensorData),no_init)
-#endif
-        .def_readonly("type",&PySensorBase::PySensorData::type)
-        .def_readonly("stamp",&PySensorBase::PySensorData::stamp)
-        ;
-
-#ifdef USE_PYBIND11_PYTHON_BINDINGS
-        enum_<SensorBase::ConfigureCommand>(sensor, "ConfigureCommand", py::arithmetic() DOXY_ENUM(ConfigureCommand))
-#else
-        enum_<SensorBase::ConfigureCommand>("ConfigureCommand" DOXY_ENUM(ConfigureCommand))
-#endif
-        .value("PowerOn",SensorBase::CC_PowerOn)
-        .value("PowerOff",SensorBase::CC_PowerOff)
-        .value("PowerCheck",SensorBase::CC_PowerCheck)
-        .value("RenderDataOn",SensorBase::CC_RenderDataOn)
-        .value("RenderDataOff",SensorBase::CC_RenderDataOff)
-        .value("RenderDataCheck",SensorBase::CC_RenderDataCheck)
-        .value("RenderGeometryOn",SensorBase::CC_RenderGeometryOn)
-        .value("RenderGeometryOff",SensorBase::CC_RenderGeometryOff)
-        .value("RenderGeometryCheck",SensorBase::CC_RenderGeometryCheck)
-#ifdef USE_PYBIND11_PYTHON_BINDINGS
-        .export_values()
-#endif
-        ;
-
-#ifdef USE_PYBIND11_PYTHON_BINDINGS
-    class_<PySensorGeometry, OPENRAVE_SHARED_PTR<PySensorGeometry>>(m, "SensorGeometry", DOXY_CLASS(PySensorGeometry))
-    // how to handle pure virtual
-    // see p.62 (book page) https://buildmedia.readthedocs.org/media/pdf/pybind11/stable/pybind11.pdf
-    .def("GetType", &PySensorGeometry::GetType)
-#else
-    class_<PySensorGeometry, OPENRAVE_SHARED_PTR<PySensorGeometry>, boost::noncopyable >("SensorGeometry", DOXY_CLASS(PySensorGeometry),no_init)
-    .def("GetType",py::pure_virtual(&PySensorGeometry::GetType))
-#endif
-    ;
-
-#ifdef USE_PYBIND11_PYTHON_BINDINGS
-        sensor.def("Configure", &PySensorBase::Configure,
-              "command"_a,
-              "blocking"_a = false,
-              DOXY_FN(SensorBase, Configure)
-              );
+                       .def("Configure", &PySensorBase::Configure,
+                        "command"_a,
+                        "blocking"_a = false,
+                        DOXY_FN(SensorBase, Configure)
+                        )
 #else   
-        sensor.def("Configure",&PySensorBase::Configure, Configure_overloads(PY_ARGS("command","blocking") DOXY_FN(SensorBase,Configure)));
+                       .def("Configure",&PySensorBase::Configure, Configure_overloads(PY_ARGS("command","blocking") DOXY_FN(SensorBase,Configure)))
 #endif
-        sensor.def("SimulationStep",&PySensorBase::SimulationStep, PY_ARGS("timeelapsed") DOXY_FN(SensorBase,SimulationStep));
-        sensor.def("GetSensorData",GetSensorData1, DOXY_FN(SensorBase,GetSensorData));
-        sensor.def("GetSensorData",GetSensorData2, DOXY_FN(SensorBase,GetSensorData));
-        sensor.def("CreateSensorData",&PySensorBase::CreateSensorData, DOXY_FN(SensorBase,CreateSensorData));
-        sensor.def("GetSensorGeometry",&PySensorBase::GetSensorGeometry,DOXY_FN(SensorBase,GetSensorGeometry));
-        sensor.def("SetSensorGeometry",&PySensorBase::SetSensorGeometry, DOXY_FN(SensorBase,SetSensorGeometry));
-        sensor.def("SetTransform",&PySensorBase::SetTransform, DOXY_FN(SensorBase,SetTransform));
-        sensor.def("GetTransform",&PySensorBase::GetTransform, DOXY_FN(SensorBase,GetTransform));
-        sensor.def("GetTransformPose",&PySensorBase::GetTransformPose, DOXY_FN(SensorBase,GetTransform));
-        sensor.def("GetName",&PySensorBase::GetName, DOXY_FN(SensorBase,GetName));
-        sensor.def("SetName",&PySensorBase::SetName, DOXY_FN(SensorBase,SetName));
-        sensor.def("Supports",&PySensorBase::Supports, DOXY_FN(SensorBase,Supports));
-        sensor.def("__str__",&PySensorBase::__str__);
-        sensor.def("__unicode__",&PySensorBase::__unicode__);
-        sensor.def("__repr__",&PySensorBase::__repr__);
+                       .def("SimulationStep",&PySensorBase::SimulationStep, PY_ARGS("timeelapsed") DOXY_FN(SensorBase,SimulationStep))
+                       .def("GetSensorData",GetSensorData1, DOXY_FN(SensorBase,GetSensorData))
+                       .def("GetSensorData",GetSensorData2, DOXY_FN(SensorBase,GetSensorData))
+                       .def("CreateSensorData",&PySensorBase::CreateSensorData, DOXY_FN(SensorBase,CreateSensorData))
+                       .def("GetSensorGeometry",&PySensorBase::GetSensorGeometry,DOXY_FN(SensorBase,GetSensorGeometry))
+                       .def("SetSensorGeometry",&PySensorBase::SetSensorGeometry, DOXY_FN(SensorBase,SetSensorGeometry))
+                       .def("SetTransform",&PySensorBase::SetTransform, DOXY_FN(SensorBase,SetTransform))
+                       .def("GetTransform",&PySensorBase::GetTransform, DOXY_FN(SensorBase,GetTransform))
+                       .def("GetTransformPose",&PySensorBase::GetTransformPose, DOXY_FN(SensorBase,GetTransform))
+                       .def("GetName",&PySensorBase::GetName, DOXY_FN(SensorBase,GetName))
+                       .def("SetName",&PySensorBase::SetName, DOXY_FN(SensorBase,SetName))
+                       .def("Supports",&PySensorBase::Supports, DOXY_FN(SensorBase,Supports))
+                       .def("__str__",&PySensorBase::__str__)
+                       .def("__unicode__",&PySensorBase::__unicode__)
+                       .def("__repr__",&PySensorBase::__repr__)
+        ;
 
 #ifdef USE_PYBIND11_PYTHON_BINDINGS
         class_<PyCameraIntrinsics, OPENRAVE_SHARED_PTR<PyCameraIntrinsics> >(sensor, "CameraIntrinsics", DOXY_CLASS(geometry::RaveCameraIntrinsics))
@@ -841,6 +782,16 @@ void SensorBaseInitializer::init_openravepy_sensor()
         .def_readwrite("distortion_model",&PyCameraIntrinsics::distortion_model)
         .def_readwrite("distortion_coeffs",&PyCameraIntrinsics::distortion_coeffs)
         .def_readwrite("focal_length",&PyCameraIntrinsics::focal_length)
+        ;
+
+#ifdef USE_PYBIND11_PYTHON_BINDINGS
+        // SensorData is inside SensorBase
+        class_<PySensorBase::PySensorData, OPENRAVE_SHARED_PTR<PySensorBase::PySensorData> >(sensor, "SensorData", DOXY_CLASS(SensorBase::SensorData))
+#else
+        class_<PySensorBase::PySensorData, OPENRAVE_SHARED_PTR<PySensorBase::PySensorData> >("SensorData", DOXY_CLASS(SensorBase::SensorData),no_init)
+#endif
+        .def_readonly("type",&PySensorBase::PySensorData::type)
+        .def_readonly("stamp",&PySensorBase::PySensorData::stamp)
         ;
 
 #ifdef USE_PYBIND11_PYTHON_BINDINGS
@@ -929,11 +880,25 @@ void SensorBaseInitializer::init_openravepy_sensor()
 
         {
 #ifdef USE_PYBIND11_PYTHON_BINDINGS
+            scope_ actuatorsensordata = 
             // ActuatorSensorData is inside SensorBase
-            class_<PySensorBase::PyActuatorSensorData, OPENRAVE_SHARED_PTR<PySensorBase::PyActuatorSensorData>, PySensorBase::PySensorData> actuatorsensordata(sensor, "ActuatorSensorData", DOXY_CLASS(SensorBase::ActuatorSensorData));
+            class_<PySensorBase::PyActuatorSensorData, OPENRAVE_SHARED_PTR<PySensorBase::PyActuatorSensorData>, PySensorBase::PySensorData>(sensor, "ActuatorSensorData", DOXY_CLASS(SensorBase::ActuatorSensorData))
 #else
-            class_<PySensorBase::PyActuatorSensorData, OPENRAVE_SHARED_PTR<PySensorBase::PyActuatorSensorData>, bases<PySensorBase::PySensorData> > actuatorsensordata("ActuatorSensorData", DOXY_CLASS(SensorBase::ActuatorSensorData),no_init);
+            class_<PySensorBase::PyActuatorSensorData, OPENRAVE_SHARED_PTR<PySensorBase::PyActuatorSensorData>, bases<PySensorBase::PySensorData> >("ActuatorSensorData", DOXY_CLASS(SensorBase::ActuatorSensorData),no_init)
 #endif
+            .def_readonly("state",&PySensorBase::PyActuatorSensorData::state)
+            .def_readonly("measuredcurrent",&PySensorBase::PyActuatorSensorData::measuredcurrent)
+            .def_readonly("measuredtemperature",&PySensorBase::PyActuatorSensorData::measuredtemperature)
+            .def_readonly("appliedcurrent",&PySensorBase::PyActuatorSensorData::appliedcurrent)
+            .def_readonly("maxtorque",&PySensorBase::PyActuatorSensorData::maxtorque)
+            .def_readonly("maxcurrent",&PySensorBase::PyActuatorSensorData::maxcurrent)
+            .def_readonly("nominalcurrent",&PySensorBase::PyActuatorSensorData::nominalcurrent)
+            .def_readonly("maxvelocity",&PySensorBase::PyActuatorSensorData::maxvelocity)
+            .def_readonly("maxacceleration",&PySensorBase::PyActuatorSensorData::maxacceleration)
+            .def_readonly("maxjerk",&PySensorBase::PyActuatorSensorData::maxjerk)
+            .def_readonly("staticfriction",&PySensorBase::PyActuatorSensorData::staticfriction)
+            .def_readonly("viscousfriction",&PySensorBase::PyActuatorSensorData::viscousfriction)
+            ;
 
 #ifdef USE_PYBIND11_PYTHON_BINDINGS
             // ActuatorState belongs to ActuatorSensorData
@@ -950,21 +915,58 @@ void SensorBaseInitializer::init_openravepy_sensor()
             .export_values()
 #endif
             ;
-
-            actuatorsensordata.def_readonly("state",&PySensorBase::PyActuatorSensorData::state);
-            actuatorsensordata.def_readonly("measuredcurrent",&PySensorBase::PyActuatorSensorData::measuredcurrent);
-            actuatorsensordata.def_readonly("measuredtemperature",&PySensorBase::PyActuatorSensorData::measuredtemperature);
-            actuatorsensordata.def_readonly("appliedcurrent",&PySensorBase::PyActuatorSensorData::appliedcurrent);
-            actuatorsensordata.def_readonly("maxtorque",&PySensorBase::PyActuatorSensorData::maxtorque);
-            actuatorsensordata.def_readonly("maxcurrent",&PySensorBase::PyActuatorSensorData::maxcurrent);
-            actuatorsensordata.def_readonly("nominalcurrent",&PySensorBase::PyActuatorSensorData::nominalcurrent);
-            actuatorsensordata.def_readonly("maxvelocity",&PySensorBase::PyActuatorSensorData::maxvelocity);
-            actuatorsensordata.def_readonly("maxacceleration",&PySensorBase::PyActuatorSensorData::maxacceleration);
-            actuatorsensordata.def_readonly("maxjerk",&PySensorBase::PyActuatorSensorData::maxjerk);
-            actuatorsensordata.def_readonly("staticfriction",&PySensorBase::PyActuatorSensorData::staticfriction);
-            actuatorsensordata.def_readonly("viscousfriction",&PySensorBase::PyActuatorSensorData::viscousfriction);
         }
+
+#ifdef USE_PYBIND11_PYTHON_BINDINGS
+        // SensorType belongs to Sensor
+        enum_<SensorBase::SensorType>(sensor, "Type", py::arithmetic() DOXY_ENUM(SensorType))
+#else
+        enum_<SensorBase::SensorType>("Type" DOXY_ENUM(SensorType))
+#endif
+        .value("Invalid",SensorBase::ST_Invalid)
+        .value("Laser",SensorBase::ST_Laser)
+        .value("Camera",SensorBase::ST_Camera)
+        .value("JointEncoder",SensorBase::ST_JointEncoder)
+        .value("Force6D",SensorBase::ST_Force6D)
+        .value("IMU",SensorBase::ST_IMU)
+        .value("Odometry",SensorBase::ST_Odometry)
+        .value("Tactile",SensorBase::ST_Tactile)
+        .value("Actuator",SensorBase::ST_Actuator)
+#ifdef USE_PYBIND11_PYTHON_BINDINGS
+        .export_values()
+#endif
+        ;
+
+#ifdef USE_PYBIND11_PYTHON_BINDINGS
+        enum_<SensorBase::ConfigureCommand>(sensor, "ConfigureCommand", py::arithmetic() DOXY_ENUM(ConfigureCommand))
+#else
+        enum_<SensorBase::ConfigureCommand>("ConfigureCommand" DOXY_ENUM(ConfigureCommand))
+#endif
+        .value("PowerOn",SensorBase::CC_PowerOn)
+        .value("PowerOff",SensorBase::CC_PowerOff)
+        .value("PowerCheck",SensorBase::CC_PowerCheck)
+        .value("RenderDataOn",SensorBase::CC_RenderDataOn)
+        .value("RenderDataOff",SensorBase::CC_RenderDataOff)
+        .value("RenderDataCheck",SensorBase::CC_RenderDataCheck)
+        .value("RenderGeometryOn",SensorBase::CC_RenderGeometryOn)
+        .value("RenderGeometryOff",SensorBase::CC_RenderGeometryOff)
+        .value("RenderGeometryCheck",SensorBase::CC_RenderGeometryCheck)
+#ifdef USE_PYBIND11_PYTHON_BINDINGS
+        .export_values()
+#endif
+        ;
     }
+
+#ifdef USE_PYBIND11_PYTHON_BINDINGS
+    class_<PySensorGeometry, OPENRAVE_SHARED_PTR<PySensorGeometry>>(m, "SensorGeometry", DOXY_CLASS(PySensorGeometry))
+    // how to handle pure virtual
+    // see p.62 (book page) https://buildmedia.readthedocs.org/media/pdf/pybind11/stable/pybind11.pdf
+    .def("GetType", &PySensorGeometry::GetType)
+#else
+    class_<PySensorGeometry, OPENRAVE_SHARED_PTR<PySensorGeometry>, boost::noncopyable >("SensorGeometry", DOXY_CLASS(PySensorGeometry),no_init)
+    .def("GetType",py::pure_virtual(&PySensorGeometry::GetType))
+#endif
+    ;
 
 #ifdef USE_PYBIND11_PYTHON_BINDINGS
     class_<PyCameraGeomData, OPENRAVE_SHARED_PTR<PyCameraGeomData>, PySensorGeometry>(m, "CameraGeomData", DOXY_CLASS(SensorBase::CameraGeomData))

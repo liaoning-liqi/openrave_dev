@@ -497,6 +497,33 @@ void PlannerBaseInitializer::init_openravepy_planner()
     ;
 
     {
+        bool (PyPlannerBase::*InitPlan1)(PyRobotBasePtr, PyPlannerBase::PyPlannerParametersPtr,bool) = &PyPlannerBase::InitPlan;
+        bool (PyPlannerBase::*InitPlan2)(PyRobotBasePtr, const string &) = &PyPlannerBase::InitPlan;
+
+        planner
+#ifdef USE_PYBIND11_PYTHON_BINDINGS
+                         .def("InitPlan", InitPlan1,
+                              "robot"_a,
+                              "params"_a,
+                              "releasegil"_a = false,
+                              DOXY_FN(PlannerBase, InitPlan "RobotBasePtr; PlannerParametersConstPtr")
+                              )
+#else
+                         .def("InitPlan",InitPlan1,InitPlan_overloads(PY_ARGS("robot","params","releasegil") DOXY_FN(PlannerBase,InitPlan "RobotBasePtr; PlannerParametersConstPtr")))
+#endif
+                         .def("InitPlan",InitPlan2, PY_ARGS("robot","xmlparams") DOXY_FN(PlannerBase,InitPlan "RobotBasePtr; std::istream"))
+#ifdef USE_PYBIND11_PYTHON_BINDINGS
+                         .def("PlanPath", &PyPlannerBase::PlanPath,
+                              "traj"_a,
+                              "releasegil"_a = true,
+                              DOXY_FN(PlannerBase, PlanPath)
+                              )
+#else
+                         .def("PlanPath",&PyPlannerBase::PlanPath,PlanPath_overloads(PY_ARGS("traj","releasegil") DOXY_FN(PlannerBase,PlanPath)))
+#endif
+                         .def("GetParameters",&PyPlannerBase::GetParameters, DOXY_FN(PlannerBase,GetParameters))
+                         .def("RegisterPlanCallback",&PyPlannerBase::RegisterPlanCallback, DOXY_FN(PlannerBase,RegisterPlanCallback))
+        ;
 #ifdef USE_PYBIND11_PYTHON_BINDINGS
         // PlannerParameters belongs to Planner
         class_<PyPlannerBase::PyPlannerParameters, PyPlannerBase::PyPlannerParametersPtr >(planner, "PlannerParameters", DOXY_CLASS(PlannerBase::PlannerParameters))
@@ -562,31 +589,6 @@ void PlannerBaseInitializer::init_openravepy_planner()
         .def("__ne__",&PyPlannerBase::PyPlannerParameters::__ne__)
         .def("__hash__",&PyPlannerBase::PyPlannerParameters::__hash__)
         ;
-
-        bool (PyPlannerBase::*InitPlan1)(PyRobotBasePtr, PyPlannerBase::PyPlannerParametersPtr,bool) = &PyPlannerBase::InitPlan;
-        bool (PyPlannerBase::*InitPlan2)(PyRobotBasePtr, const string &) = &PyPlannerBase::InitPlan;
-#ifdef USE_PYBIND11_PYTHON_BINDINGS
-        planner.def("InitPlan", InitPlan1,
-                    "robot"_a,
-                    "params"_a,
-                    "releasegil"_a = false,
-                    DOXY_FN(PlannerBase, InitPlan "RobotBasePtr; PlannerParametersConstPtr")
-                    );
-#else
-        planner.def("InitPlan",InitPlan1,InitPlan_overloads(PY_ARGS("robot","params","releasegil") DOXY_FN(PlannerBase,InitPlan "RobotBasePtr; PlannerParametersConstPtr")));
-#endif
-        planner.def("InitPlan",InitPlan2, PY_ARGS("robot","xmlparams") DOXY_FN(PlannerBase,InitPlan "RobotBasePtr; std::istream"));
-#ifdef USE_PYBIND11_PYTHON_BINDINGS
-        planner.def("PlanPath", &PyPlannerBase::PlanPath,
-                    "traj"_a,
-                    "releasegil"_a = true,
-                    DOXY_FN(PlannerBase, PlanPath)
-                    );
-#else
-        planner.def("PlanPath",&PyPlannerBase::PlanPath,PlanPath_overloads(PY_ARGS("traj","releasegil") DOXY_FN(PlannerBase,PlanPath)));
-#endif
-        planner.def("GetParameters",&PyPlannerBase::GetParameters, DOXY_FN(PlannerBase,GetParameters));
-        planner.def("RegisterPlanCallback",&PyPlannerBase::RegisterPlanCallback, DOXY_FN(PlannerBase,RegisterPlanCallback));
     }
 
 #ifdef USE_PYBIND11_PYTHON_BINDINGS
