@@ -908,12 +908,20 @@ void SensorBaseInitializer::init_openravepy_sensor()
 
         {
 #ifdef USE_PYBIND11_PYTHON_BINDINGS
-            scope_ actuatorsensordata = 
             // ActuatorSensorData is inside SensorBase
-            class_<PySensorBase::PyActuatorSensorData, OPENRAVE_SHARED_PTR<PySensorBase::PyActuatorSensorData>, PySensorBase::PySensorData>(sensor, "ActuatorSensorData", DOXY_CLASS(SensorBase::ActuatorSensorData))
+            class_<PySensorBase::PyActuatorSensorData, OPENRAVE_SHARED_PTR<PySensorBase::PyActuatorSensorData>, PySensorBase::PySensorData> actuatorsensordata(sensor, "ActuatorSensorData", DOXY_CLASS(SensorBase::ActuatorSensorData));
 #else
-            class_<PySensorBase::PyActuatorSensorData, OPENRAVE_SHARED_PTR<PySensorBase::PyActuatorSensorData>, bases<PySensorBase::PySensorData> >("ActuatorSensorData", DOXY_CLASS(SensorBase::ActuatorSensorData),no_init)
+            class_<PySensorBase::PyActuatorSensorData, OPENRAVE_SHARED_PTR<PySensorBase::PyActuatorSensorData>, bases<PySensorBase::PySensorData> > actuatorsensordata("ActuatorSensorData", DOXY_CLASS(SensorBase::ActuatorSensorData),no_init);
 #endif
+
+#ifdef USE_PYBIND11_PYTHON_BINDINGS
+            // ActuatorState belongs to ActuatorSensorData
+            enum_<SensorBase::ActuatorSensorData::ActuatorState> actuatorstate(actuatorsensordata, "ActuatorState", py::arithmetic() DOXY_ENUM(ActuatorState));
+#else
+            enum_<SensorBase::ActuatorSensorData::ActuatorState> actuatorstate("ActuatorState" DOXY_ENUM(ActuatorState));
+#endif
+
+            actuatorsensordata
             .def_readonly("state",&PySensorBase::PyActuatorSensorData::state)
             .def_readonly("measuredcurrent",&PySensorBase::PyActuatorSensorData::measuredcurrent)
             .def_readonly("measuredtemperature",&PySensorBase::PyActuatorSensorData::measuredtemperature)
@@ -928,12 +936,7 @@ void SensorBaseInitializer::init_openravepy_sensor()
             .def_readonly("viscousfriction",&PySensorBase::PyActuatorSensorData::viscousfriction)
             ;
 
-#ifdef USE_PYBIND11_PYTHON_BINDINGS
-            // ActuatorState belongs to ActuatorSensorData
-            enum_<SensorBase::ActuatorSensorData::ActuatorState>(actuatorsensordata, "ActuatorState", py::arithmetic() DOXY_ENUM(ActuatorState))
-#else
-            enum_<SensorBase::ActuatorSensorData::ActuatorState>("ActuatorState" DOXY_ENUM(ActuatorState))
-#endif
+            actuatorstate
             .value("Undefined",SensorBase::ActuatorSensorData::AS_Undefined)
             .value("Idle",SensorBase::ActuatorSensorData::AS_Idle)
             .value("Moving",SensorBase::ActuatorSensorData::AS_Moving)
