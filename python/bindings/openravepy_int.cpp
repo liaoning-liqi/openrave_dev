@@ -3478,7 +3478,7 @@ OPENRAVE_PYTHON_MODULE(openravepy_int)
 #ifdef USE_PYBIND11_PYTHON_BINDINGS
 
     static PyOpenRAVEException<OpenRAVEException> pyOpenRAVEException(m, OPENRAVE_EXCEPTION_CLASS_NAME, PyExc_Exception);
-    pyOpenRAVEException.def_property_readonly("message",[](py::object o) {
+    pyOpenRAVEException.def_property_readonly("message",[](py::object o) -> py::object {
         return o.attr("args")[py::to_object(0)];
     });
     pyOpenRAVEException.def_property_readonly("errortype",[](py::object o) {
