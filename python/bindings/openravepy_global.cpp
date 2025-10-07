@@ -1743,7 +1743,7 @@ void init_openravepy_global()
                         .value(GetLengthUnitString(LU_DeciMillimeter), LU_DeciMillimeter)
                         .value(GetLengthUnitString(LU_Micrometer), LU_Micrometer)
                         .value(GetLengthUnitString(LU_Nanometer), LU_Nanometer)
-                        .value(GetLengthUnitString(LU_Inch), LU_Inch)
+                        .value((std::string(GetLengthUnitString(LU_Inch))+"_").c_str(), LU_Inch)
                         .value(GetLengthUnitString(LU_Foot), LU_Foot)
     ;
 

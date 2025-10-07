@@ -471,7 +471,7 @@ void PlannerBaseInitializer::init_openravepy_planner()
 #else
     object planneraction = enum_<PlannerAction>("PlannerAction" DOXY_ENUM(PlannerAction))
 #endif
-                           .value("None",PA_None)
+                           .value("None_",PA_None)
                            .value("Interrupt",PA_Interrupt)
                            .value("ReturnWithAnySolution",PA_ReturnWithAnySolution)
     ;

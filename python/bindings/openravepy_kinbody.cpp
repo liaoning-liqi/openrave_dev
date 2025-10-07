@@ -5008,7 +5008,7 @@ void KinBodyInitializer::init_openravepy_kinbody()
 #else
     object geometrytype = enum_<GeometryType>("GeometryType" DOXY_ENUM(GeometryType))
 #endif
-                          .value("None",GT_None)
+                          .value("None_",GT_None)
                           .value("Box",GT_Box)
                           .value("Sphere",GT_Sphere)
                           .value("Cylinder",GT_Cylinder)
@@ -5120,7 +5120,7 @@ void KinBodyInitializer::init_openravepy_kinbody()
 #else
     object jointtype = enum_<KinBody::JointType>("JointType" DOXY_ENUM(JointType))
 #endif
-                       .value("None",KinBody::JointNone)
+                       .value("None_",KinBody::JointNone)
                        .value("Hinge",KinBody::JointHinge)
                        .value("Revolute",KinBody::JointRevolute)
                        .value("Slider",KinBody::JointSlider)
