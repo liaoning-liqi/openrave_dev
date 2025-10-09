@@ -4960,10 +4960,16 @@ BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(ComputeLocalAABBForGeometryGroup_overload
 #endif // USE_PYBIND11_PYTHON_BINDINGS
 
 #ifdef USE_PYBIND11_PYTHON_BINDINGS
-void init_openravepy_kinbody(py::module& m)
+KinBodyInitializer::KinBodyInitializer(py::module& m_): m(m_),
+    kinbody(m, "KinBody", py::dynamic_attr(), DOXY_CLASS(KinBody))
 #else
-void init_openravepy_kinbody()
+KinBodyInitializer::KinBodyInitializer(),
+    kinbody("KinBody", DOXY_CLASS(KinBody), no_init)
 #endif
+{
+}
+
+void KinBodyInitializer::init_openravepy_kinbody()
 {
 #ifdef USE_PYBIND11_PYTHON_BINDINGS
     using namespace py::literals;  // "..."_a
@@ -5002,7 +5008,7 @@ void init_openravepy_kinbody()
 #else
     object geometrytype = enum_<GeometryType>("GeometryType" DOXY_ENUM(GeometryType))
 #endif
-                          .value("None",GT_None)
+                          .value("None_",GT_None)
                           .value("Box",GT_Box)
                           .value("Sphere",GT_Sphere)
                           .value("Cylinder",GT_Cylinder)
@@ -5114,7 +5120,7 @@ void init_openravepy_kinbody()
 #else
     object jointtype = enum_<KinBody::JointType>("JointType" DOXY_ENUM(JointType))
 #endif
-                       .value("None",KinBody::JointNone)
+                       .value("None_",KinBody::JointNone)
                        .value("Hinge",KinBody::JointHinge)
                        .value("Revolute",KinBody::JointRevolute)
                        .value("Slider",KinBody::JointSlider)
@@ -5724,11 +5730,8 @@ void init_openravepy_kinbody()
         std::string sInitFromBoxesDoc = std::string(DOXY_FN(KinBody,InitFromBoxes "const std::vector< AABB; bool")) + std::string("\nboxes is a Nx6 array, first 3 columsn are position, last 3 are extents");
         std::string sGetChainDoc = std::string(DOXY_FN(KinBody,GetChain)) + std::string("If returnjoints is false will return a list of links, otherwise will return a list of links (default is true)");
         std::string sComputeInverseDynamicsDoc = std::string(":param returncomponents: If True will return three N-element arrays that represents the torque contributions to M, C, and G.\n\n:param externalforcetorque: A dictionary of link indices and a 6-element array of forces/torques in that order.\n\n") + std::string(DOXY_FN(KinBody, ComputeInverseDynamics));
-#ifdef USE_PYBIND11_PYTHON_BINDINGS
-        scope_ kinbody = class_<PyKinBody, OPENRAVE_SHARED_PTR<PyKinBody>, PyInterfaceBase>(m, "KinBody", py::dynamic_attr(), DOXY_CLASS(KinBody))
-#else
-        scope_ kinbody = class_<PyKinBody, OPENRAVE_SHARED_PTR<PyKinBody>, bases<PyInterfaceBase> >("KinBody", DOXY_CLASS(KinBody), no_init)
-#endif
+
+        kinbody
                          .def("Destroy",&PyKinBody::Destroy, DOXY_FN(KinBody,Destroy))
 #ifdef USE_PYBIND11_PYTHON_BINDINGS
                          .def("InitFromKinBodyInfo", &PyKinBody::InitFromKinBodyInfo,

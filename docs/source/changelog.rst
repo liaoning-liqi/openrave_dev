@@ -3,6 +3,11 @@
 ChangeLog
 #########
 
+Version 0.168.1
+===============
+
+- Reordered classes declaration order to comply https://pybind11.readthedocs.io/en/stable/advanced/misc.html#avoiding-c-types-in-docstrings , which is required for pybind11-stubgen.
+
 Version 0.168.0
 ===============
 
