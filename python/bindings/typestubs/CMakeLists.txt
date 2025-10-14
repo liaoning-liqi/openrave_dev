@@ -1,36 +1,11 @@
 # -*- coding: utf-8 -*-
 
-cmake_minimum_required(VERSION 2.8)
+
+cmake_minimum_required(VERSION 3.20)  # For CMP0118
 
 project(openravepytypestubs)
 
-set( CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS TRUE )
-
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
-
 message(STATUS "Using cmake version ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}.${CMAKE_PATCH_VERSION}" )
-# https://cmake.org/cmake/help/cmake2.6docs.html#policy:CMP0002
-cmake_policy(SET CMP0002 NEW)
-# https://cmake.org/cmake/help/cmake2.6docs.html#policy:CMP0003
-cmake_policy(SET CMP0003 NEW)
-# Proper handling for generated sources
-cmake_policy(SET CMP0118 NEW)
-
-# Use, i.e. don't skip the full RPATH for the build tree
-set(CMAKE_SKIP_BUILD_RPATH  FALSE)
-
-# When building, don't use the install RPATH already
-# (but later on when installing)
-set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
-
-set(LIB_SUFFIX CACHE STRING "suffix for the library directory need for x86-64 systems that use lib64 ")
-
-# The RPATH to be used when installing
-set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib${LIB_SUFFIX}")
-
-# Add the automatically determined parts of the RPATH
-# which point to directories outside the build tree to the install RPATH
-set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 # ---
 
