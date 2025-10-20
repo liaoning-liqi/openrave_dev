@@ -5,12 +5,11 @@ cmake_minimum_required(VERSION 3.20)  # For CMP0118
 
 project(openravepytypestubs)
 
-message(STATUS "Using cmake version ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}.${CMAKE_PATCH_VERSION}" )
+message(STATUS "Using cmake version ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}.${CMAKE_PATCH_VERSION}")
 
 # ---
 
 find_package(OpenRAVE 0.151.0 REQUIRED)
-set(BLA_VENDOR "${OpenRAVE_BLA_VENDOR}")
 
 if (OpenRAVE_PYTHON3)
     message(STATUS "Found openrave's python3 dir: ${OpenRAVE_PYTHON3_DIR}")
