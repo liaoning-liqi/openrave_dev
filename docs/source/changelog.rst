@@ -7,6 +7,7 @@ Version 0.168.2
 ===============
 
 - Fix bug with not preservering `grippername` when regrabbing.
+- Fix bug with copying `grabbedUserData` in `GrabbedInfo` in python.
 
 Version 0.168.1
 ===============
