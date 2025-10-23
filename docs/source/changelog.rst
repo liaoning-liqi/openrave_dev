@@ -3,6 +3,11 @@
 ChangeLog
 #########
 
+Version 0.168.2
+===============
+
+- Fix bug with not preservering `grippername` when regrabbing.
+
 Version 0.168.1
 ===============
 
