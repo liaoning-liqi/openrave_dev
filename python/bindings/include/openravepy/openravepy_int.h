@@ -163,8 +163,8 @@ typedef OPENRAVE_SHARED_PTR<PyJoint const> PyJointConstPtr;
 //@{
 OPENRAVEPY_API Transform ExtractTransform(const py::object& oraw);
 OPENRAVEPY_API TransformMatrix ExtractTransformMatrix(const py::object& oraw);
-OPENRAVEPY_API py::object toPyArray(const TransformMatrix& t);
-OPENRAVEPY_API py::object toPyArray(const Transform& t);
+OPENRAVEPY_API py::array_t<dReal> toPyArray(const TransformMatrix& t);
+OPENRAVEPY_API py::array_t<dReal> toPyArray(const Transform& t);
 OPENRAVEPY_API py::object toPyArray(const std::vector<KinBody::GeometryInfo>& infos);
 OPENRAVEPY_API py::object toPyArray(const std::vector<KinBody::GeometryInfoPtr>& infos);
 OPENRAVEPY_API ReadablePtr ExtractReadable(py::object o);
@@ -340,7 +340,7 @@ inline RaveTransformMatrix<T> ExtractTransformMatrixType(const py::object& o)
     return t;
 }
 
-inline py::object toPyArrayRotation(const TransformMatrix& t)
+inline py::array_t<dReal> toPyArrayRotation(const TransformMatrix& t)
 {
 #ifdef USE_PYBIND11_PYTHON_BINDINGS
     py::array_t<dReal> pyvalues({3, 3});
@@ -368,7 +368,7 @@ inline py::object toPyArrayRotation(const TransformMatrix& t)
 }
 
 template <typename T>
-inline py::object toPyArray3(const std::vector<RaveVector<T> >& v)
+inline py::array_t<dReal> toPyArray3(const std::vector<RaveVector<T> >& v)
 {
 #ifdef USE_PYBIND11_PYTHON_BINDINGS
     py::array_t<dReal> pyvalues({(int)v.size(), 3});
@@ -395,7 +395,7 @@ inline py::object toPyArray3(const std::vector<RaveVector<T> >& v)
 #endif // USE_PYBIND11_PYTHON_BINDINGS
 }
 
-inline py::object toPyVector2(Vector v)
+inline py::array_t<dReal> toPyVector2(Vector v)
 {
 #ifdef USE_PYBIND11_PYTHON_BINDINGS
     py::array_t<dReal> pyvec(2);
@@ -410,7 +410,7 @@ inline py::object toPyVector2(Vector v)
 #endif
 }
 
-inline py::object toPyVector3(Vector v)
+inline py::array_t<dReal> toPyVector3(Vector v)
 {
 #ifdef USE_PYBIND11_PYTHON_BINDINGS
     py::array_t<dReal> pyvec(3);
@@ -426,7 +426,7 @@ inline py::object toPyVector3(Vector v)
 #endif
 }
 
-inline py::object toPyVector4(Vector v)
+inline py::array_t<dReal> toPyVector4(Vector v)
 {
 #ifdef USE_PYBIND11_PYTHON_BINDINGS
     py::array_t<dReal> pyvec(4);
@@ -450,7 +450,7 @@ OPENRAVEPY_API AttributesList toAttributesList(py::list olist);
 OPENRAVEPY_API AttributesList toAttributesList(py::object oattributes);
 
 template <typename T>
-inline py::object ReturnTransform(const T& t)
+inline py::array_t<dReal> ReturnTransform(const T& t)
 {
     return toPyArray(TransformMatrix(t));
 }

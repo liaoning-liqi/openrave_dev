@@ -463,7 +463,7 @@ TransformMatrix ExtractTransformMatrix(const object& oraw)
     return ExtractTransformMatrixType<dReal>(oraw);
 }
 
-object toPyArray(const TransformMatrix& t)
+py::array_t<dReal> toPyArray(const TransformMatrix& t)
 {
 #ifdef USE_PYBIND11_PYTHON_BINDINGS
     py::array_t<dReal> pyvalues({4, 4});
@@ -497,7 +497,7 @@ object toPyArray(const TransformMatrix& t)
 }
 
 
-object toPyArray(const Transform& t)
+py::array_t<dReal> toPyArray(const Transform& t)
 {
 #ifdef USE_PYBIND11_PYTHON_BINDINGS
     py::array_t<dReal> pyvalues(7);

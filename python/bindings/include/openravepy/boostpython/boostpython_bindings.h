@@ -35,6 +35,8 @@ inline object none_() {
     return object();
 }
 using array_int = object; // py::array_int
+template <typename T>
+using array_t = numeric::array;
 } // namespace boost::python
 } // namespace boost
 
