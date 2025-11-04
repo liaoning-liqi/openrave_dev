@@ -40,6 +40,10 @@ if (PYBIND11_STUBGEN)
         COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/python/openravepy-stubs/_openravepy_
         COMMAND ${COPY_COMMAND} ${CMAKE_CURRENT_BINARY_DIR}/python/_openravepy_-stubs/. ${CMAKE_CURRENT_BINARY_DIR}/python/openravepy-stubs/_openravepy_/
         COMMAND ${CMAKE_COMMAND} -E echo "from ._openravepy_ import *" > ${CMAKE_CURRENT_BINARY_DIR}/python/openravepy-stubs/__init__.pyi
+        COMMAND ${Python3_EXECUTABLE} -c [=[from mypy.stubgen import main\; main\(\)]=] -o ${CMAKE_CURRENT_BINARY_DIR}/python -m openravepy.misc
+        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/python/openravepy/misc.pyi ${CMAKE_CURRENT_BINARY_DIR}/python/openravepy-stubs/_openravepy_/misc/__init__.pyi
+        COMMAND ${Python3_EXECUTABLE} -c [=[from mypy.stubgen import main\; main\(\)]=] -o ${CMAKE_CURRENT_BINARY_DIR}/python -m openravepy.openravepy_ext
+        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/python/openravepy/openravepy_ext.pyi ${CMAKE_CURRENT_BINARY_DIR}/python/openravepy-stubs/_openravepy_/openravepy_ext/__init__.pyi
         DEPENDS ${OPENRAVEPY_INT_SO_FILE}
     )
     add_custom_target(openravepy_int_stubs ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/python/openravepy-stubs/_openravepy_/__init__.pyi)
