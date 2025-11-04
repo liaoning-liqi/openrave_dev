@@ -36,6 +36,7 @@
 #include <openravepy/openravepy_iksolverbase.h>
 #include <openravepy/openravepy_plannerbase.h>
 #include <openravepy/openravepy_trajectorybase.h>
+#include <openravepy/openravepy_viewer.h>
 
 #define OPENRAVE_EXCEPTION_CLASS_NAME "_OpenRAVEException"
 
