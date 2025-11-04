@@ -491,22 +491,22 @@ void PyGeometryInfo::FillGeometryInfo(KinBody::GeometryInfo& info)
     }
 }
 
-object PyGeometryInfo::GetBoxHalfExtents()
+py::array_t<dReal> PyGeometryInfo::GetBoxHalfExtents()
 {
     return toPyVector3(ExtractVector<dReal>(_vGeomData));
 }
 
-object PyGeometryInfo::GetCageBaseHalfExtents()
+py::array_t<dReal> PyGeometryInfo::GetCageBaseHalfExtents()
 {
     return toPyVector3(ExtractVector<dReal>(_vGeomData));
 }
 
-object PyGeometryInfo::GetContainerOuterExtents()
+py::array_t<dReal> PyGeometryInfo::GetContainerOuterExtents()
 {
     return toPyVector3(ExtractVector<dReal>(_vGeomData));
 }
 
-object PyGeometryInfo::GetContainerInnerExtents()
+py::array_t<dReal> PyGeometryInfo::GetContainerInnerExtents()
 {
     return toPyVector3(ExtractVector<dReal>(_vGeomData2));
 }
@@ -1509,10 +1509,10 @@ bool PyGeometry::IsModifiable() {
 GeometryType PyGeometry::GetType() {
     return _pgeometry->GetType();
 }
-object PyGeometry::GetTransform() {
+py::array_t<dReal> PyGeometry::GetTransform() {
     return ReturnTransform(_pgeometry->GetTransform());
 }
-object PyGeometry::GetTransformPose() {
+py::array_t<dReal> PyGeometry::GetTransformPose() {
     return toPyArray(_pgeometry->GetTransform());
 }
 dReal PyGeometry::GetSphereRadius() const {
@@ -1542,22 +1542,22 @@ dReal PyGeometry::GetCapsuleRadius() const {
 dReal PyGeometry::GetCapsuleHeight() const {
     return _pgeometry->GetCapsuleHeight();
 }
-object PyGeometry::GetBoxExtents() const {
+py::array_t<dReal> PyGeometry::GetBoxExtents() const {
     return toPyVector3(_pgeometry->GetBoxExtents());
 }
-object PyGeometry::GetContainerOuterExtents() const {
+py::array_t<dReal> PyGeometry::GetContainerOuterExtents() const {
     return toPyVector3(_pgeometry->GetContainerOuterExtents());
 }
-object PyGeometry::GetContainerInnerExtents() const {
+py::array_t<dReal> PyGeometry::GetContainerInnerExtents() const {
     return toPyVector3(_pgeometry->GetContainerInnerExtents());
 }
-object PyGeometry::GetContainerBottomCross() const {
+py::array_t<dReal> PyGeometry::GetContainerBottomCross() const {
     return toPyVector3(_pgeometry->GetContainerBottomCross());
 }
-object PyGeometry::GetContainerBottom() const {
+py::array_t<dReal> PyGeometry::GetContainerBottom() const {
     return toPyVector3(_pgeometry->GetContainerBottom());
 }
-object PyGeometry::GetRenderScale() const {
+py::array_t<dReal> PyGeometry::GetRenderScale() const {
     return toPyVector3(_pgeometry->GetRenderScale());
 }
 object PyGeometry::GetRenderFilename() const {
@@ -1576,46 +1576,46 @@ float PyGeometry::GetFriction() const {
 float PyGeometry::GetTransparency() const {
     return _pgeometry->GetTransparency();
 }
-object PyGeometry::GetDiffuseColor() const {
+py::array_t<dReal> PyGeometry::GetDiffuseColor() const {
     return toPyVector3(_pgeometry->GetDiffuseColor());
 }
-object PyGeometry::GetAmbientColor() const {
+py::array_t<dReal> PyGeometry::GetAmbientColor() const {
     return toPyVector3(_pgeometry->GetAmbientColor());
 }
-object PyGeometry::GetNegativeCropContainerMargins() const {
+py::array_t<dReal> PyGeometry::GetNegativeCropContainerMargins() const {
     return toPyVector3(_pgeometry->GetNegativeCropContainerMargins());
 }
-object PyGeometry::GetPositiveCropContainerMargins() const {
+py::array_t<dReal> PyGeometry::GetPositiveCropContainerMargins() const {
     return toPyVector3(_pgeometry->GetPositiveCropContainerMargins());
 }
-object PyGeometry::GetNegativeCropContainerEmptyMargins() const {
+py::array_t<dReal> PyGeometry::GetNegativeCropContainerEmptyMargins() const {
     return toPyVector3(_pgeometry->GetNegativeCropContainerEmptyMargins());
 }
-object PyGeometry::GetPositiveCropContainerEmptyMargins() const {
+py::array_t<dReal> PyGeometry::GetPositiveCropContainerEmptyMargins() const {
     return toPyVector3(_pgeometry->GetPositiveCropContainerEmptyMargins());
 }
 object PyGeometry::GetInfo() {
     return py::to_object(PyGeometryInfoPtr(new PyGeometryInfo(_pgeometry->GetInfo())));
 }
-object PyGeometry::GetCalibrationBoardNumDots() const {
+py::tuple PyGeometry::GetCalibrationBoardNumDots() const {
     return py::make_tuple(_pgeometry->GetCalibrationBoardNumDotsX(), _pgeometry->GetCalibrationBoardNumDotsY());
 }
-object PyGeometry::GetCalibrationBoardDotsDistances() const {
+py::tuple PyGeometry::GetCalibrationBoardDotsDistances() const {
     return py::make_tuple(_pgeometry->GetCalibrationBoardDotsDistanceX(), _pgeometry->GetCalibrationBoardDotsDistanceY());
 }
-object PyGeometry::GetCalibrationBoardDotColor() const {
+py::array_t<dReal> PyGeometry::GetCalibrationBoardDotColor() const {
     return toPyVector3(_pgeometry->GetCalibrationBoardDotColor());
 }
 object PyGeometry::GetCalibrationBoardPatternName() const {
     return ConvertStringToUnicode(_pgeometry->GetCalibrationBoardPatternName());
 }
-object PyGeometry::GetCalibrationBoardDotDiameterDistanceRatios() const {
+py::tuple PyGeometry::GetCalibrationBoardDotDiameterDistanceRatios() const {
     return py::make_tuple(_pgeometry->GetCalibrationBoardDotDiameterDistanceRatio(), _pgeometry->GetCalibrationBoardBigDotDiameterDistanceRatio());
 }
 int PyGeometry::GetNumberOfAxialSlices() const {
     return _pgeometry->GetNumberOfAxialSlices();
 }
-object PyGeometry::ComputeInnerEmptyVolume() const
+py::tuple PyGeometry::ComputeInnerEmptyVolume() const
 {
     Transform tInnerEmptyVolume;
     Vector abInnerEmptyExtents;
@@ -1729,24 +1729,24 @@ object PyLink::ComputeAABBForGeometryGroupFromTransform(const std::string& geomg
     return toPyAABB(_plink->ComputeAABBForGeometryGroupFromTransform(geomgroupname, ExtractTransform(otransform)));
 }
 
-object PyLink::GetTransform() const {
+py::array_t<dReal> PyLink::GetTransform() const {
     return ReturnTransform(_plink->GetTransform());
 }
-object PyLink::GetTransformPose() const {
+py::array_t<dReal> PyLink::GetTransformPose() const {
     return toPyArray(_plink->GetTransform());
 }
 
-object PyLink::GetCOMOffset() const {
+py::array_t<dReal> PyLink::GetCOMOffset() const {
     return toPyVector3(_plink->GetCOMOffset());
 }
-object PyLink::GetLocalCOM() const {
+py::array_t<dReal> PyLink::GetLocalCOM() const {
     return toPyVector3(_plink->GetLocalCOM());
 }
-object PyLink::GetGlobalCOM() const {
+py::array_t<dReal> PyLink::GetGlobalCOM() const {
     return toPyVector3(_plink->GetGlobalCOM());
 }
 
-object PyLink::GetLocalInertia() const {
+py::array_t<dReal> PyLink::GetLocalInertia() const {
     const TransformMatrix t = _plink->GetLocalInertia();
 #ifdef USE_PYBIND11_PYTHON_BINDINGS
     py::array_t<dReal> pyvalues({3, 3});
@@ -1772,7 +1772,7 @@ object PyLink::GetLocalInertia() const {
     return py::to_array_astype<dReal>(pyvalues);
 #endif // USE_PYBIND11_PYTHON_BINDINGS
 }
-object PyLink::GetGlobalInertia() const {
+py::array_t<dReal> PyLink::GetGlobalInertia() const {
     const TransformMatrix t = _plink->GetGlobalInertia();
 #ifdef USE_PYBIND11_PYTHON_BINDINGS
     py::array_t<dReal> pyvalues({3, 3});
@@ -1833,7 +1833,7 @@ void PyLink::SetTorque(object otorque, bool bAdd) {
     return _plink->SetTorque(ExtractVector3(otorque),bAdd);
 }
 
-object PyLink::GetGeometries() const
+py::list PyLink::GetGeometries() const
 {
     py::list geoms;
     size_t N = _plink->GetGeometries().size();
@@ -1843,10 +1843,10 @@ object PyLink::GetGeometries() const
     return geoms;
 }
 
-object PyLink::GetGeometry(const std::string& geomname) const
+PyGeometryPtr PyLink::GetGeometry(const std::string& geomname) const
 {
     KinBody::GeometryPtr pgeometry = _plink->GetGeometry(geomname);
-    return !pgeometry ? py::none_() : py::to_object(PyGeometryPtr(new PyGeometry(pgeometry)));
+    return !pgeometry ? PyGeometryPtr() : PyGeometryPtr(new PyGeometry(pgeometry));
 }
 
 void PyLink::InitGeometries(object ogeometryinfos)
@@ -1890,7 +1890,7 @@ void PyLink::SetGeometriesFromGroup(const std::string& name)
     _plink->SetGeometriesFromGroup(name);
 }
 
-object PyLink::GetGeometriesFromGroup(const std::string& name)
+py::list PyLink::GetGeometriesFromGroup(const std::string& name)
 {
     py::list ogeometryinfos;
     FOREACHC(itinfo, _plink->GetGeometriesFromGroup(name)) {
@@ -1917,7 +1917,7 @@ int PyLink::GetGroupNumGeometries(const std::string& geomname)
     return _plink->GetGroupNumGeometries(geomname);
 }
 
-object PyLink::GetRigidlyAttachedLinks() const {
+py::list PyLink::GetRigidlyAttachedLinks() const {
     std::vector<KinBody::LinkPtr> vattachedlinks;
     _plink->GetRigidlyAttachedLinks(vattachedlinks);
     py::list links;
@@ -3277,7 +3277,7 @@ object PyKinBody::GetDOFResolutions(object oindices) const
     return toPyArray(values);
 }
 
-object PyKinBody::GetLinks() const
+py::list PyKinBody::GetLinks() const
 {
     py::list links;
     FOREACHC(itlink, _pbody->GetLinks()) {
@@ -3286,7 +3286,7 @@ object PyKinBody::GetLinks() const
     return links;
 }
 
-object PyKinBody::GetLinks(object oindices) const
+py::list PyKinBody::GetLinks(object oindices) const
 {
     if( IS_PYTHONOBJECT_NONE(oindices) ) {
         return GetLinks();
@@ -3299,13 +3299,13 @@ object PyKinBody::GetLinks(object oindices) const
     return links;
 }
 
-object PyKinBody::GetLink(const std::string& linkname) const
+PyLinkPtr PyKinBody::GetLink(const std::string& linkname) const
 {
     KinBody::LinkPtr plink = _pbody->GetLink(linkname);
-    return !plink ? py::none_() : py::to_object(PyLinkPtr(new PyLink(plink,GetEnv())));
+    return !plink ? PyLinkPtr() : PyLinkPtr(new PyLink(plink,GetEnv()));
 }
 
-object PyKinBody::GetJoints() const
+py::list PyKinBody::GetJoints() const
 {
     py::list joints;
     FOREACHC(itjoint, _pbody->GetJoints()) {
@@ -3314,7 +3314,7 @@ object PyKinBody::GetJoints() const
     return joints;
 }
 
-object PyKinBody::GetJoints(object oindices) const
+py::list PyKinBody::GetJoints(object oindices) const
 {
     if( IS_PYTHONOBJECT_NONE(oindices) ) {
         return GetJoints();
@@ -3327,7 +3327,7 @@ object PyKinBody::GetJoints(object oindices) const
     return joints;
 }
 
-object PyKinBody::GetPassiveJoints()
+py::list PyKinBody::GetPassiveJoints()
 {
     py::list joints;
     FOREACHC(itjoint, _pbody->GetPassiveJoints()) {
@@ -3336,7 +3336,7 @@ object PyKinBody::GetPassiveJoints()
     return joints;
 }
 
-object PyKinBody::GetDependencyOrderedJoints()
+py::list PyKinBody::GetDependencyOrderedJoints()
 {
     py::list joints;
     FOREACHC(itjoint, _pbody->GetDependencyOrderedJoints()) {
@@ -3345,7 +3345,7 @@ object PyKinBody::GetDependencyOrderedJoints()
     return joints;
 }
 
-object PyKinBody::GetClosedLoops()
+py::list PyKinBody::GetClosedLoops()
 {
     py::list loops;
     FOREACHC(itloop, _pbody->GetClosedLoops()) {
@@ -3358,7 +3358,7 @@ object PyKinBody::GetClosedLoops()
     return loops;
 }
 
-object PyKinBody::GetRigidlyAttachedLinks(int linkindex) const
+py::list PyKinBody::GetRigidlyAttachedLinks(int linkindex) const
 {
     RAVELOG_WARN("KinBody.GetRigidlyAttachedLinks is deprecated, use KinBody.Link.GetRigidlyAttachedLinks\n");
     std::vector<KinBody::LinkPtr> vattachedlinks;
@@ -3370,7 +3370,7 @@ object PyKinBody::GetRigidlyAttachedLinks(int linkindex) const
     return links;
 }
 
-object PyKinBody::GetChain(int linkindex1, int linkindex2,bool returnjoints) const
+py::list PyKinBody::GetChain(int linkindex1, int linkindex2,bool returnjoints) const
 {
     py::list chain;
     if( returnjoints ) {
@@ -4972,6 +4972,21 @@ KinBodyInitializer::KinBodyInitializer(),
 
 void KinBodyInitializer::init_openravepy_kinbody()
 {
+
+#ifdef USE_PYBIND11_PYTHON_BINDINGS
+    // link belongs to kinbody
+    class_<PyLink, OPENRAVE_SHARED_PTR<PyLink>, PyReadablesContainer > link(kinbody, "Link", DOXY_CLASS(KinBody::Link));
+#else
+    class_<PyLink, OPENRAVE_SHARED_PTR<PyLink>, bases<PyReadablesContainer> > link("Link", DOXY_CLASS(KinBody::Link), no_init);
+#endif
+
+#ifdef USE_PYBIND11_PYTHON_BINDINGS
+    // PyGeometry belongs to PyLink, not openravepy._openravepy_.openravepy_int
+    class_<PyGeometry, OPENRAVE_SHARED_PTR<PyGeometry> > geometry(link, "Geometry", DOXY_CLASS(KinBody::Geometry));
+#else
+    class_<PyGeometry, OPENRAVE_SHARED_PTR<PyGeometry> > geometry("Geometry", DOXY_CLASS(KinBody::Geometry),no_init);
+#endif
+
 #ifdef USE_PYBIND11_PYTHON_BINDINGS
     using namespace py::literals;  // "..."_a
     class_<PyStateRestoreContextBase>(m, "StateRestoreContext")
@@ -5716,10 +5731,10 @@ void KinBodyInitializer::init_openravepy_kinbody()
         object (PyKinBody::*getdofhardjerklimits2)(object) const = &PyKinBody::GetDOFHardJerkLimits;
         object (PyKinBody::*getdoftorquelimits1)() const = &PyKinBody::GetDOFTorqueLimits;
         object (PyKinBody::*getdoftorquelimits2)(object) const = &PyKinBody::GetDOFTorqueLimits;
-        object (PyKinBody::*getlinks1)() const = &PyKinBody::GetLinks;
-        object (PyKinBody::*getlinks2)(object) const = &PyKinBody::GetLinks;
-        object (PyKinBody::*getjoints1)() const = &PyKinBody::GetJoints;
-        object (PyKinBody::*getjoints2)(object) const = &PyKinBody::GetJoints;
+        py::list (PyKinBody::*getlinks1)() const = &PyKinBody::GetLinks;
+        py::list (PyKinBody::*getlinks2)(object) const = &PyKinBody::GetLinks;
+        py::list (PyKinBody::*getjoints1)() const = &PyKinBody::GetJoints;
+        py::list (PyKinBody::*getjoints2)(object) const = &PyKinBody::GetJoints;
         void (PyKinBody::*setdofvelocities1)(object) = &PyKinBody::SetDOFVelocities;
         void (PyKinBody::*setdofvelocities2)(object,object,object) = &PyKinBody::SetDOFVelocities;
         void (PyKinBody::*setdofvelocities3)(object,uint32_t,object) = &PyKinBody::SetDOFVelocities;
@@ -6215,12 +6230,7 @@ void KinBodyInitializer::init_openravepy_kinbody()
         kinbody.attr("GrabbedInfo") = grabbedinfo;
         kinbody.attr("KinBodyInfo") = kinbodyinfo;
         {
-#ifdef USE_PYBIND11_PYTHON_BINDINGS
-            // link belongs to kinbody
-            scope_ link = class_<PyLink, OPENRAVE_SHARED_PTR<PyLink>, PyReadablesContainer >(kinbody, "Link", DOXY_CLASS(KinBody::Link))
-#else
-            scope_ link = class_<PyLink, OPENRAVE_SHARED_PTR<PyLink>, bases<PyReadablesContainer> >("Link", DOXY_CLASS(KinBody::Link), no_init)
-#endif
+            link
                           .def("GetId",&PyLink::GetId, DOXY_FN(KinBody::Link,GetId))
                           .def("GetName",&PyLink::GetName, DOXY_FN(KinBody::Link,GetName))
                           .def("GetIndex",&PyLink::GetIndex, DOXY_FN(KinBody::Link,GetIndex))
@@ -6317,12 +6327,7 @@ void KinBodyInitializer::init_openravepy_kinbody()
             link.attr("GeomType") = geometrytype;
             link.attr("GeometryInfo") = geometryinfo;
             {
-#ifdef USE_PYBIND11_PYTHON_BINDINGS
-                // PyGeometry belongs to PyLink, not openravepy._openravepy_.openravepy_int
-                scope_ geometry = class_<PyGeometry, OPENRAVE_SHARED_PTR<PyGeometry> >(link, "Geometry", DOXY_CLASS(KinBody::Geometry))
-#else
-                scope_ geometry = class_<PyGeometry, OPENRAVE_SHARED_PTR<PyGeometry> >("Geometry", DOXY_CLASS(KinBody::Geometry),no_init)
-#endif
+                geometry
                                   .def("SetCollisionMesh",&PyGeometry::SetCollisionMesh,PY_ARGS("trimesh") DOXY_FN(KinBody::Geometry,SetCollisionMesh))
                                   .def("GetCollisionMesh",&PyGeometry::GetCollisionMesh, DOXY_FN(KinBody::Geometry,GetCollisionMesh))
 #ifdef USE_PYBIND11_PYTHON_BINDINGS

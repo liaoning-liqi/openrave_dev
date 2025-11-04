@@ -289,7 +289,7 @@ public:
     /// \brief sets the default viewer
     bool SetDefaultViewer(bool showviewer=true);
 
-    object GetViewer();
+    PyViewerBasePtr GetViewer();
 
     /// returns the number of points
     static size_t _getGraphPoints(object opoints, std::vector<float>&vpoints);
@@ -327,8 +327,8 @@ public:
 
     object drawtrimesh(object opoints, object oindices=py::none_(), object ocolors=py::none_());
 
-    object GetBodies();
-    object GetBodiesWithReadableInterface(const std::string& readableInterfaceName);
+    py::list GetBodies();
+    py::list GetBodiesWithReadableInterface(const std::string& readableInterfaceName);
     int GetNumBodies();
 
     object GetRobots();

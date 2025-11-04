@@ -522,7 +522,7 @@ py::array_t<dReal> toPyArray(const Transform& t)
 #endif // USE_PYBIND11_PYTHON_BINDINGS
 }
 
-object toPyArray(const std::vector<KinBody::GeometryInfo>& infos)
+py::list toPyArray(const std::vector<KinBody::GeometryInfo>& infos)
 {
     py::list pyvalues;
     for(size_t i = 0; i < infos.size(); ++i) {
@@ -531,7 +531,7 @@ object toPyArray(const std::vector<KinBody::GeometryInfo>& infos)
     return pyvalues;
 }
 
-object toPyArray(const std::vector<KinBody::GeometryInfoPtr>& infos)
+py::list toPyArray(const std::vector<KinBody::GeometryInfoPtr>& infos)
 {
     py::list pyvalues;
     for(size_t i = 0; i < infos.size(); ++i) {
@@ -1086,7 +1086,7 @@ PyInterfaceBasePtr PyEnvironmentBase::_toPyInterface(InterfaceBasePtr pinterface
     case PT_Sensor: return openravepy::toPySensor(OPENRAVE_STATIC_POINTER_CAST<SensorBase>(pinterface),shared_from_this());
     case PT_CollisionChecker: return openravepy::toPyCollisionChecker(OPENRAVE_STATIC_POINTER_CAST<CollisionCheckerBase>(pinterface),shared_from_this());
     case PT_Trajectory: return openravepy::toPyTrajectory(OPENRAVE_STATIC_POINTER_CAST<TrajectoryBase>(pinterface),shared_from_this());
-    case PT_Viewer: return openravepy::toPyViewer(OPENRAVE_STATIC_POINTER_CAST<ViewerBase>(pinterface),shared_from_this());
+    case PT_Viewer: return static_cast<PyInterfaceBasePtr>(openravepy::toPyViewer(OPENRAVE_STATIC_POINTER_CAST<ViewerBase>(pinterface),shared_from_this()));
     case PT_SpaceSampler: return openravepy::toPySpaceSampler(OPENRAVE_STATIC_POINTER_CAST<SpaceSamplerBase>(pinterface),shared_from_this());
     }
     return PyInterfaceBasePtr();
@@ -2538,9 +2538,9 @@ bool PyEnvironmentBase::SetDefaultViewer(bool showviewer)
     return false;
 }
 
-object PyEnvironmentBase::GetViewer()
+PyViewerBasePtr PyEnvironmentBase::GetViewer()
 {
-    return py::to_object(openravepy::toPyViewer(_penv->GetViewer(),shared_from_this()));
+    return openravepy::toPyViewer(_penv->GetViewer(),shared_from_this());
 }
 
 /// returns the number of points
@@ -2927,7 +2927,7 @@ object PyEnvironmentBase::drawtrimesh(object opoints, object oindices, object oc
     return toPyGraphHandle(_penv->drawtrimesh(vpoints.data(),sizeof(float)*3,pindices,numTriangles,RaveVector<float>(1,0.5,0.5,1)));
 }
 
-static object _KinbodyVectorToPyArray(const std::vector<KinBodyPtr>& vBodies, const boost::shared_ptr<PyEnvironmentBase>& sharedEnvironmentThis)
+static py::list _KinbodyVectorToPyArray(const std::vector<KinBodyPtr>& vBodies, const boost::shared_ptr<PyEnvironmentBase>& sharedEnvironmentThis)
 {
     py::list bodies(vBodies.size()); // Preallocate
     for (size_t bodyIndex = 0; bodyIndex < vBodies.size(); bodyIndex++) {
@@ -2942,14 +2942,14 @@ static object _KinbodyVectorToPyArray(const std::vector<KinBodyPtr>& vBodies, co
     return bodies;
 }
 
-object PyEnvironmentBase::GetBodies()
+py::list PyEnvironmentBase::GetBodies()
 {
     std::vector<KinBodyPtr> vBodies;
     _penv->GetBodies(vBodies);
     return _KinbodyVectorToPyArray(vBodies, shared_from_this());
 }
 
-object PyEnvironmentBase::GetBodiesWithReadableInterface(const std::string& readableInterfaceName)
+py::list PyEnvironmentBase::GetBodiesWithReadableInterface(const std::string& readableInterfaceName)
 {
     std::vector<KinBodyPtr> vBodies;
     _penv->GetBodiesMatchingFilter(vBodies, std::bind(&KinBody::HasReadableInterface, std::placeholders::_1, std::ref(readableInterfaceName)));

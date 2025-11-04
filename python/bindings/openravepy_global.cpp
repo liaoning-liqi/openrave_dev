@@ -1089,23 +1089,23 @@ PyInterfaceBasePtr pyRaveClone(PyInterfaceBasePtr pyreference, int cloningoption
     case PT_Sensor: return toPySensor(RaveInterfaceCast<SensorBase>(pclone), pyenv);
     case PT_CollisionChecker: return toPyCollisionChecker(RaveInterfaceCast<CollisionCheckerBase>(pclone), pyenv);
     case PT_Trajectory: return toPyTrajectory(RaveInterfaceCast<TrajectoryBase>(pclone), pyenv);
-    case PT_Viewer: return toPyViewer(RaveInterfaceCast<ViewerBase>(pclone), pyenv);
+    case PT_Viewer: return static_cast<PyInterfaceBasePtr>(toPyViewer(RaveInterfaceCast<ViewerBase>(pclone), pyenv));
     case PT_SpaceSampler: return toPySpaceSampler(RaveInterfaceCast<SpaceSamplerBase>(pclone), pyenv);
     }
     throw openrave_exception(_("invalid interface type"),ORE_InvalidArguments);
 }
 
-object quatFromAxisAngle1(object oaxis)
+py::array_t<dReal> quatFromAxisAngle1(object oaxis)
 {
     return toPyVector4(quatFromAxisAngle(ExtractVector3(oaxis)));
 }
 
-object quatFromAxisAngle2(object oaxis, dReal angle)
+py::array_t<dReal> quatFromAxisAngle2(object oaxis, dReal angle)
 {
     return toPyVector4(quatFromAxisAngle(ExtractVector3(oaxis),angle));
 }
 
-object quatFromRotationMatrix(object R)
+py::array_t<dReal> quatFromRotationMatrix(object R)
 {
     TransformMatrix t;
     t.rotfrommat(extract<dReal>(R[py::to_object(0)][py::to_object(0)]), extract<dReal>(R[py::to_object(0)][py::to_object(1)]), extract<dReal>(R[py::to_object(0)][py::to_object(2)]),
@@ -1114,17 +1114,17 @@ object quatFromRotationMatrix(object R)
     return toPyVector4(quatFromMatrix(t));
 }
 
-object InterpolateQuatSlerp(object q1, object q2, dReal t, bool forceshortarc=true)
+py::array_t<dReal> InterpolateQuatSlerp(object q1, object q2, dReal t, bool forceshortarc=true)
 {
     return toPyVector4(InterpolateQuatSlerp(ExtractVector4(q1),ExtractVector4(q2),t, forceshortarc));
 }
 
-object InterpolateQuatSquad(object q0, object q1, object q2, object q3, dReal t, bool forceshortarc=true)
+py::array_t<dReal> InterpolateQuatSquad(object q0, object q1, object q2, object q3, dReal t, bool forceshortarc=true)
 {
     return toPyVector4(InterpolateQuatSquad(ExtractVector4(q0),ExtractVector4(q1),ExtractVector4(q2),ExtractVector4(q3), t, forceshortarc));
 }
 
-object axisAngleFromRotationMatrix(object R)
+py::array_t<dReal> axisAngleFromRotationMatrix(object R)
 {
     TransformMatrix t;
     t.rotfrommat(extract<dReal>(R[py::to_object(0)][py::to_object(0)]), extract<dReal>(R[py::to_object(0)][py::to_object(1)]), extract<dReal>(R[py::to_object(0)][py::to_object(2)]),
@@ -1133,12 +1133,12 @@ object axisAngleFromRotationMatrix(object R)
     return toPyVector3(axisAngleFromMatrix(t));
 }
 
-object axisAngleFromQuat(object oquat)
+py::array_t<dReal> axisAngleFromQuat(object oquat)
 {
     return toPyVector3(axisAngleFromQuat(ExtractVector4(oquat)));
 }
 
-object rotationMatrixFromQuat(object oquat)
+py::array_t<dReal> rotationMatrixFromQuat(object oquat)
 {
     return toPyArrayRotation(matrixFromQuat(ExtractVector4(oquat)));
 }
@@ -1153,37 +1153,37 @@ object rotationMatrixFromQArray(object qarray)
     return orots;
 }
 
-object matrixFromQuat(object oquat)
+py::array_t<dReal> matrixFromQuat(object oquat)
 {
     return toPyArray(matrixFromQuat(ExtractVector4(oquat)));
 }
 
-object rotationMatrixFromAxisAngle1(object oaxis)
+py::array_t<dReal> rotationMatrixFromAxisAngle1(object oaxis)
 {
     return toPyArrayRotation(matrixFromAxisAngle(ExtractVector3(oaxis)));
 }
 
-object rotationMatrixFromAxisAngle2(object oaxis, dReal angle)
+py::array_t<dReal> rotationMatrixFromAxisAngle2(object oaxis, dReal angle)
 {
     return toPyArrayRotation(matrixFromAxisAngle(ExtractVector3(oaxis),angle));
 }
 
-object matrixFromAxisAngle1(object oaxis)
+py::array_t<dReal> matrixFromAxisAngle1(object oaxis)
 {
     return toPyArray(matrixFromAxisAngle(ExtractVector3(oaxis)));
 }
 
-object matrixFromAxisAngle2(object oaxis, dReal angle)
+py::array_t<dReal> matrixFromAxisAngle2(object oaxis, dReal angle)
 {
     return toPyArray(matrixFromAxisAngle(ExtractVector3(oaxis),angle));
 }
 
-object matrixFromPose(object opose)
+py::array_t<dReal>matrixFromPose(object opose)
 {
     return toPyArray(TransformMatrix(ExtractTransformType<dReal>(opose)));
 }
 
-object matrixFromPoses(object oposes)
+py::list matrixFromPoses(object oposes)
 {
     py::list omatrices;
     int N = len(oposes);
@@ -1193,7 +1193,7 @@ object matrixFromPoses(object oposes)
     return omatrices;
 }
 
-object poseFromMatrix(object o)
+py::array_t<dReal> poseFromMatrix(object o)
 {
     TransformMatrix t;
     for(int i = 0; i < 3; ++i) {
@@ -1205,7 +1205,7 @@ object poseFromMatrix(object o)
     return toPyArray(Transform(t));
 }
 
-object poseFromMatrices(object otransforms)
+py::array_t<dReal> poseFromMatrices(object otransforms)
 {
     const int N = len(otransforms);
     if( N == 0 ) {
@@ -1242,7 +1242,7 @@ object poseFromMatrices(object otransforms)
 #endif // USE_PYBIND11_PYTHON_BINDINGS
 }
 
-object InvertPoses(object o)
+py::array_t<dReal> InvertPoses(object o)
 {
     const int N = len(o);
     if( N == 0 ) {
@@ -1271,51 +1271,51 @@ object InvertPoses(object o)
 #endif // USE_PYBIND11_PYTHON_BINDINGS
 }
 
-object InvertPose(object opose)
+py::array_t<dReal> InvertPose(object opose)
 {
     Transform t = ExtractTransformType<dReal>(opose);
     return toPyArray(t.inverse());
 }
 
-object quatRotateDirection(object source, object target)
+py::array_t<dReal> quatRotateDirection(object source, object target)
 {
     return toPyVector4(quatRotateDirection(ExtractVector3(source), ExtractVector3(target)));
 }
 
-object ExtractAxisFromQuat(object oquat, int iaxis)
+py::array_t<dReal> ExtractAxisFromQuat(object oquat, int iaxis)
 {
     return toPyVector3(ExtractAxisFromQuat(ExtractVector4(oquat), iaxis));
 }
 
-object normalizeAxisRotation(object axis, object quat)
+py::tuple normalizeAxisRotation(object axis, object quat)
 {
     std::pair<dReal, Vector > res = normalizeAxisRotation(ExtractVector3(axis), ExtractVector4(quat));
     return py::make_tuple(res.first,toPyVector4(res.second));
 }
 
-object MultiplyQuat(object oquat1, object oquat2)
+py::array_t<dReal> MultiplyQuat(object oquat1, object oquat2)
 {
     return toPyVector4(OpenRAVE::geometry::quatMultiply(ExtractVector4(oquat1),ExtractVector4(oquat2)));
 }
 
-object InvertQuat(object oquat)
+py::array_t<dReal> InvertQuat(object oquat)
 {
     return toPyVector4(OpenRAVE::geometry::quatInverse(ExtractVector4(oquat)));
 }
 
-object MultiplyPose(object opose1, object opose2)
+py::array_t<dReal> MultiplyPose(object opose1, object opose2)
 {
     return toPyArray(ExtractTransformType<dReal>(opose1)*ExtractTransformType<dReal>(opose2));
 }
 
-object poseTransformPoint(object opose, object opoint)
+py::array_t<dReal> poseTransformPoint(object opose, object opoint)
 {
     Transform t = ExtractTransformType<dReal>(opose);
     Vector newpoint = t*ExtractVector3(opoint);
     return toPyVector3(newpoint);
 }
 
-py::object poseTransformPoints(py::object opose, py::object opoints)
+py::array_t<dReal> poseTransformPoints(py::object opose, py::object opoints)
 {
     // Extract pose data from opose
     dReal rotx, roty, rotz, rotw, transx, transy, transz;
@@ -1440,7 +1440,7 @@ py::object poseTransformPoints(py::object opose, py::object opoints)
 #endif // USE_PYBIND11_PYTHON_BINDINGS
 }
 
-object TransformLookat(object olookat, object ocamerapos, object ocameraup)
+py::array_t<dReal> TransformLookat(object olookat, object ocamerapos, object ocameraup)
 {
     return toPyArray(transformLookat(ExtractVector3(olookat),ExtractVector3(ocamerapos),ExtractVector3(ocameraup)));
 }

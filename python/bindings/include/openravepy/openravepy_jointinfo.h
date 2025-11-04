@@ -63,10 +63,10 @@ public:
     KinBody::GeometryInfoPtr GetGeometryInfo();
     void FillGeometryInfo(KinBody::GeometryInfo& geominfo);
 
-    object GetBoxHalfExtents();
-    object GetCageBaseHalfExtents();
-    object GetContainerOuterExtents();
-    object GetContainerInnerExtents();
+    py::array_t<dReal> GetBoxHalfExtents();
+    py::array_t<dReal> GetCageBaseHalfExtents();
+    py::array_t<dReal> GetContainerOuterExtents();
+    py::array_t<dReal> GetContainerInnerExtents();
     void SetBoxHalfExtents(object oHalfExtents);
     void SetCageBaseHalfExtents(object oHalfExtents);
     void SetContainerOuterExtents(object oOuterExtents);
@@ -297,8 +297,8 @@ public:
     bool IsVisible();
     bool IsModifiable();
     GeometryType GetType();
-    object GetTransform();
-    object GetTransformPose();
+    py::array_t<dReal> GetTransform();
+    py::array_t<dReal> GetTransformPose();
     dReal GetSphereRadius() const;
     dReal GetCylinderRadius() const;
     dReal GetCylinderHeight() const;
@@ -308,31 +308,31 @@ public:
     dReal GetPrismHeight() const;
     dReal GetCapsuleRadius() const;
     dReal GetCapsuleHeight() const;
-    object GetBoxExtents() const;
-    object GetContainerOuterExtents() const;
-    object GetContainerInnerExtents() const;
-    object GetContainerBottomCross() const;
-    object GetContainerBottom() const;
-    object GetRenderScale() const;
+    py::array_t<dReal> GetBoxExtents() const;
+    py::array_t<dReal> GetContainerOuterExtents() const;
+    py::array_t<dReal> GetContainerInnerExtents() const;
+    py::array_t<dReal> GetContainerBottomCross() const;
+    py::array_t<dReal> GetContainerBottom() const;
+    py::array_t<dReal> GetRenderScale() const;
     object GetRenderFilename() const;
     std::string GetId() const;
     object GetName() const;
     float GetFriction() const;
     float GetTransparency() const;
-    object GetDiffuseColor() const;
-    object GetAmbientColor() const;
-    object GetNegativeCropContainerMargins() const;
-    object GetPositiveCropContainerMargins() const;
-    object GetNegativeCropContainerEmptyMargins() const;
-    object GetPositiveCropContainerEmptyMargins() const;
-    object GetCalibrationBoardNumDots() const;
-    object GetCalibrationBoardDotsDistances() const;
-    object GetCalibrationBoardDotColor() const;
+    py::array_t<dReal> GetDiffuseColor() const;
+    py::array_t<dReal> GetAmbientColor() const;
+    py::array_t<dReal> GetNegativeCropContainerMargins() const;
+    py::array_t<dReal> GetPositiveCropContainerMargins() const;
+    py::array_t<dReal> GetNegativeCropContainerEmptyMargins() const;
+    py::array_t<dReal> GetPositiveCropContainerEmptyMargins() const;
+    py::tuple GetCalibrationBoardNumDots() const;
+    py::tuple GetCalibrationBoardDotsDistances() const;
+    py::array_t<dReal> GetCalibrationBoardDotColor() const;
     object GetCalibrationBoardPatternName() const;
-    object GetCalibrationBoardDotDiameterDistanceRatios() const;
+    py::tuple GetCalibrationBoardDotDiameterDistanceRatios() const;
     int GetNumberOfAxialSlices() const;
     object GetInfo();
-    object ComputeInnerEmptyVolume() const;
+    py::tuple ComputeInnerEmptyVolume() const;
     bool __eq__(OPENRAVE_SHARED_PTR<PyGeometry> p);
     bool __ne__(OPENRAVE_SHARED_PTR<PyGeometry> p);
     long __hash__();
@@ -376,15 +376,15 @@ public:
     object ComputeAABBForGeometryGroup(const std::string& geomgroupname) const;
     object ComputeAABBForGeometryGroupFromTransform(const std::string& geomgroupname, object otransform) const;
 
-    object GetTransform() const;
-    object GetTransformPose() const;
+    py::array_t<dReal> GetTransform() const;
+    py::array_t<dReal> GetTransformPose() const;
 
-    object GetCOMOffset() const;
-    object GetLocalCOM() const;
-    object GetGlobalCOM() const;
+    py::array_t<dReal> GetCOMOffset() const;
+    py::array_t<dReal> GetLocalCOM() const;
+    py::array_t<dReal> GetGlobalCOM() const;
 
-    object GetLocalInertia() const;
-    object GetGlobalInertia() const;
+    py::array_t<dReal> GetLocalInertia() const;
+    py::array_t<dReal> GetGlobalInertia() const;
     dReal GetMass() const;
     object GetPrincipalMomentsOfInertia() const;
     object GetLocalMassFrame() const;
@@ -398,8 +398,8 @@ public:
     void SetForce(object oforce, object opos, bool bAdd);
     void SetTorque(object otorque, bool bAdd);
 
-    object GetGeometries() const;
-    object GetGeometry(const std::string& geomname) const;
+    py::list GetGeometries() const;
+    PyGeometryPtr GetGeometry(const std::string& geomname) const;
 
     void InitGeometries(object ogeometryinfos);
 
@@ -409,13 +409,13 @@ public:
     void RemoveGeometryByName(const std::string& geometryname, bool removeFromAllGroups);
     void SetGeometriesFromGroup(const std::string& name);
 
-    object GetGeometriesFromGroup(const std::string& name);
+    py::list GetGeometriesFromGroup(const std::string& name);
 
     void SetGroupGeometries(const std::string& name, object ogeometryinfos);
 
     int GetGroupNumGeometries(const std::string& geomname);
 
-    object GetRigidlyAttachedLinks() const;
+    py::list GetRigidlyAttachedLinks() const;
 
     bool IsRigidlyAttached(OPENRAVE_SHARED_PTR<PyLink> plink);
 

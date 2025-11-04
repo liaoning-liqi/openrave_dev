@@ -266,9 +266,9 @@ ViewerBasePtr GetViewer(PyViewerBasePtr pyviewer)
     return !pyviewer ? ViewerBasePtr() : pyviewer->GetViewer();
 }
 
-PyInterfaceBasePtr toPyViewer(ViewerBasePtr pviewer, PyEnvironmentBasePtr pyenv)
+PyViewerBasePtr toPyViewer(ViewerBasePtr pviewer, PyEnvironmentBasePtr pyenv)
 {
-    return !pviewer ? PyInterfaceBasePtr() : PyInterfaceBasePtr(new PyViewerBase(pviewer,pyenv));
+    return !pviewer ? PyViewerBasePtr() : PyViewerBasePtr(new PyViewerBase(pviewer,pyenv));
 }
 
 PyViewerBasePtr RaveCreateViewer(PyEnvironmentBasePtr pyenv, const std::string& name)

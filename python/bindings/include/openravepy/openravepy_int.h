@@ -165,8 +165,8 @@ OPENRAVEPY_API Transform ExtractTransform(const py::object& oraw);
 OPENRAVEPY_API TransformMatrix ExtractTransformMatrix(const py::object& oraw);
 OPENRAVEPY_API py::array_t<dReal> toPyArray(const TransformMatrix& t);
 OPENRAVEPY_API py::array_t<dReal> toPyArray(const Transform& t);
-OPENRAVEPY_API py::object toPyArray(const std::vector<KinBody::GeometryInfo>& infos);
-OPENRAVEPY_API py::object toPyArray(const std::vector<KinBody::GeometryInfoPtr>& infos);
+OPENRAVEPY_API py::list toPyArray(const std::vector<KinBody::GeometryInfo>& infos);
+OPENRAVEPY_API py::list toPyArray(const std::vector<KinBody::GeometryInfoPtr>& infos);
 OPENRAVEPY_API ReadablePtr ExtractReadable(py::object o);
 OPENRAVEPY_API py::object toPyReadable(ReadablePtr p);
 OPENRAVEPY_API bool ExtractIkParameterization(py::object o, IkParameterization& ikparam);
@@ -830,7 +830,7 @@ void init_openravepy_viewer(py::module& m);
 void init_openravepy_viewer();
 #endif
 OPENRAVEPY_API ViewerBasePtr GetViewer(PyViewerBasePtr);
-OPENRAVEPY_API PyInterfaceBasePtr toPyViewer(ViewerBasePtr, PyEnvironmentBasePtr);
+OPENRAVEPY_API PyViewerBasePtr toPyViewer(ViewerBasePtr, PyEnvironmentBasePtr);
 
 OPENRAVEPY_API int pyGetIntFromPy(py::object olevel, int defaultvalue);
 OPENRAVEPY_API py::object toPyPlannerStatus(const PlannerStatus&);
