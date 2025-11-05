@@ -237,6 +237,7 @@ public:
     py::object GetJoints(py::object oindices) const;
     py::object GetPassiveJoints();
     py::object GetDependencyOrderedJoints();
+    py::object GetDependencyOrderedJointsAll();
     py::object GetClosedLoops();
     py::object GetRigidlyAttachedLinks(int linkindex) const;
     py::object GetChain(int linkindex1, int linkindex2,bool returnjoints = true) const;
