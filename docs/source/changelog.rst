@@ -3,6 +3,11 @@
 ChangeLog
 #########
 
+Version 0.168.3
+===============
+
+- Expose `KinBody::GetDependencyOrderedJointsAll()` to python bindings.
+
 Version 0.168.2
 ===============
 
