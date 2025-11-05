@@ -3345,6 +3345,15 @@ object PyKinBody::GetDependencyOrderedJoints()
     return joints;
 }
 
+object PyKinBody::GetDependencyOrderedJointsAll()
+{
+    py::list joints;
+    FOREACHC(itjoint, _pbody->GetDependencyOrderedJointsAll()) {
+        joints.append(PyJointPtr(new PyJoint(*itjoint, GetEnv())));
+    }
+    return joints;
+}
+
 object PyKinBody::GetClosedLoops()
 {
     py::list loops;
@@ -5859,6 +5868,7 @@ void KinBodyInitializer::init_openravepy_kinbody()
                          .def("GetJoints",getjoints2, PY_ARGS("indices") DOXY_FN(KinBody,GetJoints))
                          .def("GetPassiveJoints",&PyKinBody::GetPassiveJoints, DOXY_FN(KinBody,GetPassiveJoints))
                          .def("GetDependencyOrderedJoints",&PyKinBody::GetDependencyOrderedJoints, DOXY_FN(KinBody,GetDependencyOrderedJoints))
+                         .def("GetDependencyOrderedJointsAll",&PyKinBody::GetDependencyOrderedJointsAll, DOXY_FN(KinBody,GetDependencyOrderedJointsAll))
                          .def("GetClosedLoops",&PyKinBody::GetClosedLoops,DOXY_FN(KinBody,GetClosedLoops))
                          .def("GetRigidlyAttachedLinks",&PyKinBody::GetRigidlyAttachedLinks,PY_ARGS("linkindex") DOXY_FN(KinBody,GetRigidlyAttachedLinks))
 #ifdef USE_PYBIND11_PYTHON_BINDINGS
