@@ -2818,6 +2818,25 @@ bool PyKinBody::InitFromBoxes(const boost::multi_array<dReal,2>& vboxes, bool bD
 }
 
 #ifdef USE_PYBIND11_PYTHON_BINDINGS
+bool PyKinBody::InitFromBoxes(const py::array_t<dReal>& vboxes, const bool bDraw, const std::string& uri)
+{
+    py::buffer_info vboxesinfo = vboxes.request();
+    if( vboxesinfo.ndim != 2 || vboxesinfo.shape[1]  != 6 )
+    {
+        throw openrave_exception(_("boxes needs to be a Nx6 vector\n"));
+    }
+    std::vector<AABB> vaabbs(vboxes.shape()[0]);
+
+    dReal *vboxesptr = static_cast<dReal*>(vboxesinfo.ptr);
+    for(size_t i = 0; i < vaabbs.size(); ++i) {
+        vaabbs[i].pos = Vector(vboxesptr[i*6+0],vboxesptr[i*6+1],vboxesptr[i*6+2]);
+        vaabbs[i].extents = Vector(vboxesptr[i*6+3],vboxesptr[i*6+4],vboxesptr[i*6+5]);
+    }
+    return _pbody->InitFromBoxes(vaabbs,bDraw,uri);
+}
+#endif
+
+#ifdef USE_PYBIND11_PYTHON_BINDINGS
 bool PyKinBody::InitFromSpheres(const std::vector<std::vector<dReal> >& vspheres, const bool bDraw, const std::string& uri)
 #else
 bool PyKinBody::InitFromSpheres(const boost::multi_array<dReal,2>& vspheres, bool bDraw, const std::string& uri)
@@ -5753,6 +5772,12 @@ void KinBodyInitializer::init_openravepy_kinbody()
         bool (PyKinBody::*pgrab4)(PyKinBodyPtr,object,object,object,const std::string&) = &PyKinBody::Grab;
         object (PyKinBody::*GetNonAdjacentLinks1)() const = &PyKinBody::GetNonAdjacentLinks;
         object (PyKinBody::*GetNonAdjacentLinks2)(int) const = &PyKinBody::GetNonAdjacentLinks;
+#ifdef USE_PYBIND11_PYTHON_BINDINGS
+        bool (PyKinBody::*InitFromBoxes1)(const std::vector<std::vector<dReal> >& vboxes, const bool bDraw, const std::string& uri) = &PyKinBody::InitFromBoxes;
+        bool (PyKinBody::*InitFromBoxes2)(const py::array_t<dReal>& vboxes, const bool bDraw, const std::string& uri) = &PyKinBody::InitFromBoxes;
+#else
+        bool (PyKinBody::*InitFromBoxes1)(const boost::multi_array<dReal,2>& vboxes, bool bDraw, const std::string& uri) = &PyKinBody::InitFromBoxes;
+#endif
         std::string sInitFromBoxesDoc = std::string(DOXY_FN(KinBody,InitFromBoxes "const std::vector< AABB; bool")) + std::string("\nboxes is a Nx6 array, first 3 columsn are position, last 3 are extents");
         std::string sGetChainDoc = std::string(DOXY_FN(KinBody,GetChain)) + std::string("If returnjoints is false will return a list of links, otherwise will return a list of links (default is true)");
         std::string sComputeInverseDynamicsDoc = std::string(":param returncomponents: If True will return three N-element arrays that represents the torque contributions to M, C, and G.\n\n:param externalforcetorque: A dictionary of link indices and a 6-element array of forces/torques in that order.\n\n") + std::string(DOXY_FN(KinBody, ComputeInverseDynamics));
@@ -5767,14 +5792,20 @@ void KinBodyInitializer::init_openravepy_kinbody()
                          .def("InitFromKinBodyInfo",&PyKinBody::InitFromKinBodyInfo, DOXY_FN(KinBody, InitFromKinBodyInfo))
 #endif
 #ifdef USE_PYBIND11_PYTHON_BINDINGS
-                         .def("InitFromBoxes", &PyKinBody::InitFromBoxes,
+                         .def("InitFromBoxes", InitFromBoxes1,
+                              "boxes"_a,
+                              "draw"_a = true,
+                              "uri"_a = "",
+                              sInitFromBoxesDoc.c_str()
+                              )
+                         .def("InitFromBoxes", InitFromBoxes2,
                               "boxes"_a,
                               "draw"_a = true,
                               "uri"_a = "",
                               sInitFromBoxesDoc.c_str()
                               )
 #else
-                         .def("InitFromBoxes",&PyKinBody::InitFromBoxes,InitFromBoxes_overloads(PY_ARGS("boxes","draw","uri") sInitFromBoxesDoc.c_str()))
+                         .def("InitFromBoxes",InitFromBoxes1,InitFromBoxes_overloads(PY_ARGS("boxes","draw","uri") sInitFromBoxesDoc.c_str()))
 #endif
 #ifdef USE_PYBIND11_PYTHON_BINDINGS
                          .def("InitFromSpheres", &PyKinBody::InitFromSpheres,
