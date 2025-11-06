@@ -595,6 +595,34 @@ public:
     RAY r;
 };
 
+class OPENRAVEPY_API PyAABB
+{
+public:
+    PyAABB() {
+    }
+    PyAABB(py::object newpos, py::object newextents) {
+        ab.pos = ExtractVector3(newpos);
+        ab.extents = ExtractVector3(newextents);
+    }
+    PyAABB(const AABB& newab) : ab(newab) {
+    }
+
+    py::array_t<dReal> extents();
+    py::array_t<dReal> pos();
+
+    py::dict toDict();
+
+    PyAABB GetCombined(const PyAABB& rhs);
+
+    PyAABB GetTransformed(py::object otrans);
+
+    virtual std::string __repr__();
+    virtual std::string __str__();
+    virtual py::object __unicode__();
+
+    AABB ab;
+};
+
 OPENRAVEPY_API py::object toPyGraphHandle(const GraphHandlePtr p);
 OPENRAVEPY_API py::object toPyUserData(UserDataPtr p);
 

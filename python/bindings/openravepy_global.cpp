@@ -220,53 +220,41 @@ public:
     }
 };
 
-class PyAABB
-{
-public:
-    PyAABB() {
-    }
-    PyAABB(object newpos, object newextents) {
-        ab.pos = ExtractVector3(newpos);
-        ab.extents = ExtractVector3(newextents);
-    }
-    PyAABB(const AABB& newab) : ab(newab) {
-    }
+py::array_t<dReal> PyAABB::extents() {
+    return toPyVector3(ab.extents);
+}
 
-    object extents() {
-        return toPyVector3(ab.extents);
-    }
-    object pos() {
-        return toPyVector3(ab.pos);
-    }
+py::array_t<dReal> PyAABB::pos() {
+    return toPyVector3(ab.pos);
+}
 
-    dict toDict() {
-        // for ujson serialization
-        dict d;
-        d["pos"] = pos();
-        d["extents"] = extents();
-        return d;
-    }
+py::dict PyAABB::toDict() {
+    // for ujson serialization
+    py::dict d;
+    d["pos"] = pos();
+    d["extents"] = extents();
+    return d;
+}
 
-    PyAABB GetCombined(const PyAABB& rhs) {
-        return PyAABB(ab.GetCombined(rhs.ab));
-    }
+PyAABB PyAABB::GetCombined(const PyAABB& rhs) {
+    return PyAABB(ab.GetCombined(rhs.ab));
+}
 
-    PyAABB GetTransformed(object otrans) {
-        return PyAABB(ab.GetTransformed(ExtractTransform(otrans)));
-    }
+PyAABB PyAABB::GetTransformed(py::object otrans) {
+    return PyAABB(ab.GetTransformed(ExtractTransform(otrans)));
+}
 
-    virtual std::string __repr__() {
-        return boost::str(boost::format("AABB([%.15e,%.15e,%.15e],[%.15e,%.15e,%.15e])")%ab.pos.x%ab.pos.y%ab.pos.z%ab.extents.x%ab.extents.y%ab.extents.z);
-    }
-    virtual std::string __str__() {
-        return boost::str(boost::format("<%.15e %.15e %.15e %.15e %.15e %.15e>")%ab.pos.x%ab.pos.y%ab.pos.z%ab.extents.x%ab.extents.y%ab.extents.z);
-    }
-    virtual object __unicode__() {
-        return ConvertStringToUnicode(__str__());
-    }
+std::string PyAABB::__repr__() {
+    return boost::str(boost::format("AABB([%.15e,%.15e,%.15e],[%.15e,%.15e,%.15e])")%ab.pos.x%ab.pos.y%ab.pos.z%ab.extents.x%ab.extents.y%ab.extents.z);
+}
 
-    AABB ab;
-};
+std::string PyAABB::__str__() {
+    return boost::str(boost::format("<%.15e %.15e %.15e %.15e %.15e %.15e>")%ab.pos.x%ab.pos.y%ab.pos.z%ab.extents.x%ab.extents.y%ab.extents.z);
+}
+
+py::object PyAABB::__unicode__() {
+    return ConvertStringToUnicode(__str__());
+}
 
 class AABB_pickle_suite
 #ifndef USE_PYBIND11_PYTHON_BINDINGS
