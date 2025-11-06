@@ -51,58 +51,30 @@ public:
 
     int main(bool bShow, int64_t sig_thread_id=0);
 
-    void quitmainloop() {
-        return _pviewer->quitmainloop();
-    }
+    void quitmainloop();
 
-    void SetSize(const double w, const double h) {
-        _pviewer->SetSize((int) w, (int) h);
-    }
-    void Move(const double x, const double y) {
-        _pviewer->Move((int) x, (int) y);
-    }
-    void Show(int showtype) {
-        _pviewer->Show(showtype);
-    }
-    void SetName(const std::string &title) {
-        _pviewer->SetName(title);
-    }
-    void SetUserText(const std::string &userText) {
-        _pviewer->SetUserText(userText);
-    }
-    void SetTextSize(const double size) {
-        _pviewer->SetTextSize(size);
-    }
-    std::string GetName() {
-        return _pviewer->GetName();
-    }
+    void SetSize(const double w, const double h);
+    void Move(const double x, const double y);
+    void Show(int showtype);
+    void SetName(const std::string &title);
+    void SetUserText(const std::string &userText);
+    void SetTextSize(const double size);
+    std::string GetName();
 
     object RegisterCallback(object properties, object fncallback);
 
     object RegisterItemSelectionCallback(object fncallback);
 
-    void EnvironmentSync() {
-        return _pviewer->EnvironmentSync();
-    }
+    void EnvironmentSync();
 
-    void SetCamera(object transform) {
-        _pviewer->SetCamera(ExtractTransform(transform));
-    }
-    void SetCamera(object transform, float focalDistance) {
-        _pviewer->SetCamera(ExtractTransform(transform),focalDistance);
-    }
+    void SetCamera(object transform);
+    void SetCamera(object transform, float focalDistance);
 
-    void SetBkgndColor(object ocolor) {
-        _pviewer->SetBkgndColor(ExtractVector3(ocolor));
-    }
+    void SetBkgndColor(object ocolor);
 
-    py::array_t<dReal> GetCameraTransform() {
-        return ReturnTransform(_pviewer->GetCameraTransform());
-    }
+    py::array_t<dReal> GetCameraTransform();
 
-    float GetCameraDistanceToFocus() {
-        return _pviewer->GetCameraDistanceToFocus();
-    }
+    float GetCameraDistanceToFocus();
 
     py::array_t<uint8_t> GetCameraImage(int width, int height, object extrinsic, object oKK);
 

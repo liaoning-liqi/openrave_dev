@@ -218,6 +218,46 @@ int PyViewerBase::main(bool bShow, int64_t sig_thread_id)
     return bSuccess;
 }
 
+void PyViewerBase::quitmainloop()
+{
+    return _pviewer->quitmainloop();
+}
+
+void PyViewerBase::SetSize(const double w, const double h)
+{
+    _pviewer->SetSize((int) w, (int) h);
+}
+
+void PyViewerBase::Move(const double x, const double y)
+{
+    _pviewer->Move((int) x, (int) y);
+}
+
+void PyViewerBase::Show(int showtype)
+{
+    _pviewer->Show(showtype);
+}
+
+void PyViewerBase::SetName(const std::string &title)
+{
+    _pviewer->SetName(title);
+}
+
+void PyViewerBase::SetUserText(const std::string &userText)
+{
+    _pviewer->SetUserText(userText);
+}
+
+void PyViewerBase::SetTextSize(const double size)
+{
+    _pviewer->SetTextSize(size);
+}
+
+std::string PyViewerBase::GetName()
+{
+    return _pviewer->GetName();
+}
+
 object PyViewerBase::RegisterCallback(object properties, object fncallback)
 {
     if( !fncallback ) {
@@ -240,6 +280,36 @@ object PyViewerBase::RegisterItemSelectionCallback(object fncallback)
         throw openrave_exception(_("no registration callback returned"));
     }
     return openravepy::GetUserData(p);
+}
+
+void PyViewerBase::EnvironmentSync()
+{
+    return _pviewer->EnvironmentSync();
+}
+
+void PyViewerBase::SetCamera(object transform)
+{
+    _pviewer->SetCamera(ExtractTransform(transform));
+}
+
+void PyViewerBase::SetCamera(object transform, float focalDistance)
+{
+    _pviewer->SetCamera(ExtractTransform(transform),focalDistance);
+}
+
+void PyViewerBase::SetBkgndColor(object ocolor)
+{
+    _pviewer->SetBkgndColor(ExtractVector3(ocolor));
+}
+
+py::array_t<dReal> PyViewerBase::GetCameraTransform()
+{
+    return ReturnTransform(_pviewer->GetCameraTransform());
+}
+
+float PyViewerBase::GetCameraDistanceToFocus()
+{
+    return _pviewer->GetCameraDistanceToFocus();
 }
 
 py::array_t<uint8_t> PyViewerBase::GetCameraImage(int width, int height, object extrinsic, object oKK)
