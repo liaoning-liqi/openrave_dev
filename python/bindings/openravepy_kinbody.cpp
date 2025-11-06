@@ -1802,13 +1802,13 @@ py::array_t<dReal> PyLink::GetGlobalInertia() const {
 dReal PyLink::GetMass() const {
     return _plink->GetMass();
 }
-object PyLink::GetPrincipalMomentsOfInertia() const {
+py::array_t<dReal> PyLink::GetPrincipalMomentsOfInertia() const {
     return toPyVector3(_plink->GetPrincipalMomentsOfInertia());
 }
-object PyLink::GetLocalMassFrame() const {
+py::array_t<dReal> PyLink::GetLocalMassFrame() const {
     return ReturnTransform(_plink->GetLocalMassFrame());
 }
-object PyLink::GetGlobalMassFrame() const {
+py::array_t<dReal> PyLink::GetGlobalMassFrame() const {
     return ReturnTransform(_plink->GetGlobalMassFrame());
 }
 void PyLink::SetLocalMassFrame(object omassframe) {
@@ -1937,7 +1937,7 @@ void PyLink::SetVelocity(object olinear, object oangular) {
     _plink->SetVelocity(ExtractVector3(olinear),ExtractVector3(oangular));
 }
 
-object PyLink::GetVelocity() const {
+py::array_t<dReal> PyLink::GetVelocity() const {
     std::pair<Vector,Vector> velocity;
     velocity = _plink->GetVelocity();
     boost::array<dReal,6> v = {{ velocity.first.x, velocity.first.y, velocity.first.z, velocity.second.x, velocity.second.y, velocity.second.z}};
@@ -2060,11 +2060,11 @@ dReal PyJoint::GetMaxJerk(int iaxis) const {
 dReal PyJoint::GetMaxTorque(int iaxis) const {
     return _pjoint->GetMaxTorque(iaxis);
 }
-object PyJoint::GetInstantaneousTorqueLimits(int iaxis) const {
+py::tuple PyJoint::GetInstantaneousTorqueLimits(int iaxis) const {
     std::pair<dReal, dReal> values = _pjoint->GetInstantaneousTorqueLimits(iaxis);
     return py::make_tuple(values.first, values.second);
 }
-object PyJoint::GetNominalTorqueLimits(int iaxis) const {
+py::tuple PyJoint::GetNominalTorqueLimits(int iaxis) const {
     std::pair<dReal, dReal> values = _pjoint->GetNominalTorqueLimits(iaxis);
     return py::make_tuple(values.first, values.second);
 }
@@ -2113,7 +2113,7 @@ bool PyJoint::IsStatic() const {
 int PyJoint::GetDOF() const {
     return _pjoint->GetDOF();
 }
-object PyJoint::GetValues() const {
+py::array_t<dReal> PyJoint::GetValues() const {
     std::vector<dReal> values;
     _pjoint->GetValues(values);
     return toPyArray(values);
@@ -2121,16 +2121,16 @@ object PyJoint::GetValues() const {
 dReal PyJoint::GetValue(int iaxis) const {
     return _pjoint->GetValue(iaxis);
 }
-object PyJoint::GetVelocities() const {
+py::array_t<dReal> PyJoint::GetVelocities() const {
     std::vector<dReal> values;
     _pjoint->GetVelocities(values);
     return toPyArray(values);
 }
 
-object PyJoint::GetAnchor() const {
+py::array_t<dReal> PyJoint::GetAnchor() const {
     return toPyVector3(_pjoint->GetAnchor());
 }
-object PyJoint::GetAxis(int iaxis) {
+py::array_t<dReal> PyJoint::GetAxis(int iaxis) {
     return toPyVector3(_pjoint->GetAxis(iaxis));
 }
 PyLinkPtr PyJoint::GetHierarchyParentLink() const {
@@ -2139,58 +2139,58 @@ PyLinkPtr PyJoint::GetHierarchyParentLink() const {
 PyLinkPtr PyJoint::GetHierarchyChildLink() const {
     return !_pjoint->GetHierarchyChildLink() ? PyLinkPtr() : PyLinkPtr(new PyLink(_pjoint->GetHierarchyChildLink(),_pyenv));
 }
-object PyJoint::GetInternalHierarchyAxis(int iaxis) {
+py::array_t<dReal> PyJoint::GetInternalHierarchyAxis(int iaxis) {
     return toPyVector3(_pjoint->GetInternalHierarchyAxis(iaxis));
 }
-object PyJoint::GetInternalHierarchyLeftTransform() {
+py::array_t<dReal> PyJoint::GetInternalHierarchyLeftTransform() {
     return ReturnTransform(_pjoint->GetInternalHierarchyLeftTransform());
 }
-object PyJoint::GetInternalHierarchyLeftTransformPose() {
+py::array_t<dReal> PyJoint::GetInternalHierarchyLeftTransformPose() {
     return toPyArray(_pjoint->GetInternalHierarchyLeftTransform());
 }
-object PyJoint::GetInternalHierarchyRightTransform() {
+py::array_t<dReal> PyJoint::GetInternalHierarchyRightTransform() {
     return ReturnTransform(_pjoint->GetInternalHierarchyRightTransform());
 }
-object PyJoint::GetInternalHierarchyRightTransformPose() {
+py::array_t<dReal> PyJoint::GetInternalHierarchyRightTransformPose() {
     return toPyArray(_pjoint->GetInternalHierarchyRightTransform());
 }
 
-object PyJoint::GetLimits() const {
+py::tuple PyJoint::GetLimits() const {
     std::vector<dReal> lower, upper;
     _pjoint->GetLimits(lower,upper);
     return py::make_tuple(toPyArray(lower),toPyArray(upper));
 }
-object PyJoint::GetVelocityLimits() const {
+py::tuple PyJoint::GetVelocityLimits() const {
     std::vector<dReal> vlower,vupper;
     _pjoint->GetVelocityLimits(vlower,vupper);
     return py::make_tuple(toPyArray(vlower),toPyArray(vupper));
 }
-object PyJoint::GetAccelerationLimits() const {
+py::array_t<dReal> PyJoint::GetAccelerationLimits() const {
     std::vector<dReal> v;
     _pjoint->GetAccelerationLimits(v);
     return toPyArray(v);
 }
-object PyJoint::GetJerkLimits() const {
+py::array_t<dReal> PyJoint::GetJerkLimits() const {
     std::vector<dReal> v;
     _pjoint->GetJerkLimits(v);
     return toPyArray(v);
 }
-object PyJoint::GetHardVelocityLimits() const {
+py::array_t<dReal> PyJoint::GetHardVelocityLimits() const {
     std::vector<dReal> v;
     _pjoint->GetHardVelocityLimits(v);
     return toPyArray(v);
 }
-object PyJoint::GetHardAccelerationLimits() const {
+py::array_t<dReal> PyJoint::GetHardAccelerationLimits() const {
     std::vector<dReal> v;
     _pjoint->GetHardAccelerationLimits(v);
     return toPyArray(v);
 }
-object PyJoint::GetHardJerkLimits() const {
+py::array_t<dReal> PyJoint::GetHardJerkLimits() const {
     std::vector<dReal> v;
     _pjoint->GetHardJerkLimits(v);
     return toPyArray(v);
 }
-object PyJoint::GetTorqueLimits() const {
+py::array_t<dReal> PyJoint::GetTorqueLimits() const {
     std::vector<dReal> v;
     _pjoint->GetTorqueLimits(v);
     return toPyArray(v);
@@ -2260,7 +2260,7 @@ void PyJoint::SetTorqueLimits(object omaxlimits) {
     _pjoint->SetTorqueLimits(vmaxlimits);
 }
 
-object PyJoint::GetResolutions() const {
+py::array_t<dReal> PyJoint::GetResolutions() const {
     std::vector<dReal> resolutions;
     _pjoint->GetResolutions(resolutions);
     return toPyArray(resolutions);
@@ -2272,7 +2272,7 @@ void PyJoint::SetResolution(dReal resolution) {
     _pjoint->SetResolution(resolution);
 }
 
-object PyJoint::GetWeights() const {
+py::array_t<dReal> PyJoint::GetWeights() const {
     std::vector<dReal> weights;
     _pjoint->GetWeights(weights);
     return toPyArray(weights);
@@ -2284,7 +2284,7 @@ void PyJoint::SetWeights(object o) {
     _pjoint->SetWeights(ExtractArray<dReal>(o));
 }
 
-object PyJoint::SubtractValues(object ovalues0, object ovalues1) {
+py::array_t<dReal> PyJoint::SubtractValues(object ovalues0, object ovalues1) {
     std::vector<dReal> values0 = ExtractArray<dReal>(ovalues0);
     std::vector<dReal> values1 = ExtractArray<dReal>(ovalues1);
     BOOST_ASSERT((int)values0.size() == GetDOF() );
@@ -2975,13 +2975,13 @@ int PyKinBody::GetDOF() const
     return _pbody->GetDOF();
 }
 
-object PyKinBody::GetDOFValues() const
+py::array_t<dReal> PyKinBody::GetDOFValues() const
 {
     std::vector<dReal> values;
     _pbody->GetDOFValues(values);
     return toPyArray(values);
 }
-object PyKinBody::GetDOFValues(object oindices) const
+py::array_t<dReal> PyKinBody::GetDOFValues(object oindices) const
 {
     if( IS_PYTHONOBJECT_NONE(oindices) ) {
         return py::empty_array_astype<dReal>();
@@ -2995,14 +2995,14 @@ object PyKinBody::GetDOFValues(object oindices) const
     return toPyArray(values);
 }
 
-object PyKinBody::GetDOFVelocities() const
+py::array_t<dReal> PyKinBody::GetDOFVelocities() const
 {
     std::vector<dReal> values;
     _pbody->GetDOFVelocities(values);
     return toPyArray(values);
 }
 
-object PyKinBody::GetDOFVelocities(object oindices) const
+py::array_t<dReal> PyKinBody::GetDOFVelocities(object oindices) const
 {
     if( IS_PYTHONOBJECT_NONE(oindices) ) {
         return py::empty_array_astype<dReal>();
@@ -3016,63 +3016,63 @@ object PyKinBody::GetDOFVelocities(object oindices) const
     return toPyArray(values);
 }
 
-object PyKinBody::GetDOFLimits() const
+py::tuple PyKinBody::GetDOFLimits() const
 {
     std::vector<dReal> vlower, vupper;
     _pbody->GetDOFLimits(vlower,vupper);
     return py::make_tuple(toPyArray(vlower),toPyArray(vupper));
 }
 
-object PyKinBody::GetDOFVelocityLimits() const
+py::array_t<dReal> PyKinBody::GetDOFVelocityLimits() const
 {
     std::vector<dReal> vmax;
     _pbody->GetDOFVelocityLimits(vmax);
     return toPyArray(vmax);
 }
 
-object PyKinBody::GetDOFAccelerationLimits() const
+py::array_t<dReal> PyKinBody::GetDOFAccelerationLimits() const
 {
     std::vector<dReal> vmax;
     _pbody->GetDOFAccelerationLimits(vmax);
     return toPyArray(vmax);
 }
 
-object PyKinBody::GetDOFJerkLimits() const
+py::array_t<dReal> PyKinBody::GetDOFJerkLimits() const
 {
     std::vector<dReal> vmax;
     _pbody->GetDOFJerkLimits(vmax);
     return toPyArray(vmax);
 }
 
-object PyKinBody::GetDOFHardVelocityLimits() const
+py::array_t<dReal> PyKinBody::GetDOFHardVelocityLimits() const
 {
     std::vector<dReal> vmax;
     _pbody->GetDOFHardVelocityLimits(vmax);
     return toPyArray(vmax);
 }
 
-object PyKinBody::GetDOFHardAccelerationLimits() const
+py::array_t<dReal> PyKinBody::GetDOFHardAccelerationLimits() const
 {
     std::vector<dReal> vmax;
     _pbody->GetDOFHardAccelerationLimits(vmax);
     return toPyArray(vmax);
 }
 
-object PyKinBody::GetDOFHardJerkLimits() const
+py::array_t<dReal> PyKinBody::GetDOFHardJerkLimits() const
 {
     std::vector<dReal> vmax;
     _pbody->GetDOFHardJerkLimits(vmax);
     return toPyArray(vmax);
 }
 
-object PyKinBody::GetDOFTorqueLimits() const
+py::array_t<dReal> PyKinBody::GetDOFTorqueLimits() const
 {
     std::vector<dReal> vmax;
     _pbody->GetDOFTorqueLimits(vmax);
     return toPyArray(vmax);
 }
 
-object PyKinBody::GetDOFLimits(object oindices) const
+py::tuple PyKinBody::GetDOFLimits(object oindices) const
 {
     if( IS_PYTHONOBJECT_NONE(oindices) ) {
         return py::make_tuple(py::empty_array_astype<dReal>(), py::empty_array_astype<dReal>()); // always need 2 since users can do lower, upper = GetDOFLimits()
@@ -3093,7 +3093,7 @@ object PyKinBody::GetDOFLimits(object oindices) const
     return py::make_tuple(toPyArray(vlower),toPyArray(vupper));
 }
 
-object PyKinBody::GetDOFVelocityLimits(object oindices) const
+py::array_t<dReal> PyKinBody::GetDOFVelocityLimits(object oindices) const
 {
     if( IS_PYTHONOBJECT_NONE(oindices) ) {
         return py::empty_array_astype<dReal>();
@@ -3112,7 +3112,7 @@ object PyKinBody::GetDOFVelocityLimits(object oindices) const
     return toPyArray(vmax);
 }
 
-object PyKinBody::GetDOFAccelerationLimits(object oindices) const
+py::array_t<dReal> PyKinBody::GetDOFAccelerationLimits(object oindices) const
 {
     if( IS_PYTHONOBJECT_NONE(oindices) ) {
         return py::empty_array_astype<dReal>();
@@ -3131,7 +3131,7 @@ object PyKinBody::GetDOFAccelerationLimits(object oindices) const
     return toPyArray(vmax);
 }
 
-object PyKinBody::GetDOFJerkLimits(object oindices) const
+py::array_t<dReal> PyKinBody::GetDOFJerkLimits(object oindices) const
 {
     if( IS_PYTHONOBJECT_NONE(oindices) ) {
         return py::empty_array_astype<dReal>();
@@ -3150,7 +3150,7 @@ object PyKinBody::GetDOFJerkLimits(object oindices) const
     return toPyArray(vmax);
 }
 
-object PyKinBody::GetDOFHardVelocityLimits(object oindices) const
+py::array_t<dReal> PyKinBody::GetDOFHardVelocityLimits(object oindices) const
 {
     if( IS_PYTHONOBJECT_NONE(oindices) ) {
         return py::empty_array_astype<dReal>();
@@ -3169,7 +3169,7 @@ object PyKinBody::GetDOFHardVelocityLimits(object oindices) const
     return toPyArray(vmax);
 }
 
-object PyKinBody::GetDOFHardAccelerationLimits(object oindices) const
+py::array_t<dReal> PyKinBody::GetDOFHardAccelerationLimits(object oindices) const
 {
     if( IS_PYTHONOBJECT_NONE(oindices) ) {
         return py::empty_array_astype<dReal>();
@@ -3188,7 +3188,7 @@ object PyKinBody::GetDOFHardAccelerationLimits(object oindices) const
     return toPyArray(vmax);
 }
 
-object PyKinBody::GetDOFHardJerkLimits(object oindices) const
+py::array_t<dReal> PyKinBody::GetDOFHardJerkLimits(object oindices) const
 {
     if( IS_PYTHONOBJECT_NONE(oindices) ) {
         return py::empty_array_astype<dReal>();
@@ -3207,7 +3207,7 @@ object PyKinBody::GetDOFHardJerkLimits(object oindices) const
     return toPyArray(vmax);
 }
 
-object PyKinBody::GetDOFTorqueLimits(object oindices) const
+py::array_t<dReal> PyKinBody::GetDOFTorqueLimits(object oindices) const
 {
     if( IS_PYTHONOBJECT_NONE(oindices) ) {
         return py::empty_array_astype<dReal>();
@@ -3226,20 +3226,20 @@ object PyKinBody::GetDOFTorqueLimits(object oindices) const
     return toPyArray(vmax);
 }
 
-object PyKinBody::GetDOFMaxVel() const
+py::array_t<dReal> PyKinBody::GetDOFMaxVel() const
 {
     RAVELOG_WARN("KinBody.GetDOFMaxVel() is deprecated, use GetDOFVelocityLimits\n");
     std::vector<dReal> values;
     _pbody->GetDOFVelocityLimits(values);
     return toPyArray(values);
 }
-object PyKinBody::GetDOFMaxTorque() const
+py::array_t<dReal> PyKinBody::GetDOFMaxTorque() const
 {
     std::vector<dReal> values;
     _pbody->GetDOFMaxTorque(values);
     return toPyArray(values);
 }
-object PyKinBody::GetDOFMaxAccel() const
+py::array_t<dReal> PyKinBody::GetDOFMaxAccel() const
 {
     RAVELOG_WARN("KinBody.GetDOFMaxAccel() is deprecated, use GetDOFAccelerationLimits\n");
     std::vector<dReal> values;
@@ -3247,14 +3247,14 @@ object PyKinBody::GetDOFMaxAccel() const
     return toPyArray(values);
 }
 
-object PyKinBody::GetDOFWeights() const
+py::array_t<dReal> PyKinBody::GetDOFWeights() const
 {
     std::vector<dReal> values;
     _pbody->GetDOFWeights(values);
     return toPyArray(values);
 }
 
-object PyKinBody::GetDOFWeights(object oindices) const
+py::array_t<dReal> PyKinBody::GetDOFWeights(object oindices) const
 {
     if( IS_PYTHONOBJECT_NONE(oindices) ) {
         return py::empty_array_astype<dReal>();
@@ -3272,14 +3272,14 @@ object PyKinBody::GetDOFWeights(object oindices) const
     return toPyArray(values);
 }
 
-object PyKinBody::GetDOFResolutions() const
+py::array_t<dReal> PyKinBody::GetDOFResolutions() const
 {
     std::vector<dReal> values;
     _pbody->GetDOFResolutions(values);
     return toPyArray(values);
 }
 
-object PyKinBody::GetDOFResolutions(object oindices) const
+py::array_t<dReal> PyKinBody::GetDOFResolutions(object oindices) const
 {
     if( IS_PYTHONOBJECT_NONE(oindices) ) {
         return py::empty_array_astype<dReal>();
@@ -3429,27 +3429,27 @@ int PyKinBody::GetJointIndex(const std::string& jointname) const
     return _pbody->GetJointIndex(jointname);
 }
 
-object PyKinBody::GetJoint(const std::string& jointname) const
+PyJointPtr PyKinBody::GetJoint(const std::string& jointname) const
 {
     KinBody::JointPtr pjoint = _pbody->GetJoint(jointname);
-    return !pjoint ? py::none_() : py::to_object(PyJointPtr(new PyJoint(pjoint,GetEnv())));
+    return !pjoint ? PyJointPtr() : PyJointPtr(new PyJoint(pjoint,GetEnv()));
 }
 
-object PyKinBody::GetJointFromDOFIndex(int dofindex) const
+PyJointPtr PyKinBody::GetJointFromDOFIndex(int dofindex) const
 {
     KinBody::JointPtr pjoint = _pbody->GetJointFromDOFIndex(dofindex);
-    return !pjoint ? py::none_() : py::to_object(PyJointPtr(new PyJoint(pjoint,GetEnv())));
+    return !pjoint ? PyJointPtr() : PyJointPtr(new PyJoint(pjoint,GetEnv()));
 }
 
-object PyKinBody::GetTransform() const {
+py::array_t<dReal> PyKinBody::GetTransform() const {
     return ReturnTransform(_pbody->GetTransform());
 }
 
-object PyKinBody::GetTransformPose() const {
+py::array_t<dReal> PyKinBody::GetTransformPose() const {
     return toPyArray(_pbody->GetTransform());
 }
 
-object PyKinBody::GetLinkTransformations(bool returndoflastvlaues) const
+py::list PyKinBody::GetLinkTransformations(bool returndoflastvlaues) const
 {
     py::list otransforms;
     std::vector<Transform> vtransforms;
@@ -3499,14 +3499,14 @@ void PyKinBody::SetLinkVelocities(object ovelocities)
     return _pbody->SetLinkVelocities(velocities);
 }
 
-object PyKinBody::GetLinkEnableStates() const
+py::array_t<uint8_t> PyKinBody::GetLinkEnableStates() const
 {
     std::vector<uint8_t> enablestates;
     _pbody->GetLinkEnableStates(enablestates);
     return toPyArray(enablestates);
 }
 
-object PyKinBody::GetLinkEnableStatesMasks() const
+py::array_t<uint64_t> PyKinBody::GetLinkEnableStatesMasks() const
 {
     return toPyArray(_pbody->GetLinkEnableStatesMasks());
 }
@@ -3564,7 +3564,7 @@ void PyKinBody::SetDOFVelocities(object odofvelocities, uint32_t checklimits, ob
     }
 }
 
-object PyKinBody::GetLinkVelocities() const
+py::array_t<dReal> PyKinBody::GetLinkVelocities() const
 {
     if( _pbody->GetLinks().empty() ) {
         return py::empty_array_astype<dReal>();
@@ -3596,7 +3596,7 @@ object PyKinBody::GetLinkVelocities() const
 #endif // USE_PYBIND11_PYTHON_BINDINGS
 }
 
-object PyKinBody::GetLinkAccelerations(object odofaccelerations, object oexternalaccelerations) const
+py::array_t<dReal> PyKinBody::GetLinkAccelerations(object odofaccelerations, object oexternalaccelerations) const
 {
     if( _pbody->GetLinks().size() == 0 ) {
         return py::empty_array_astype<dReal>();
@@ -3693,7 +3693,7 @@ dReal PyKinBody::GetMass() const
     return _pbody->GetMass();
 }
 
-object PyKinBody::GetCenterOfMass() const
+py::array_t<dReal> PyKinBody::GetCenterOfMass() const
 {
     return toPyVector3(_pbody->GetCenterOfMass());
 }
@@ -3910,7 +3910,7 @@ void PyKinBody::SetDOFValues(object o, object indices)
     SetDOFValues(o,indices,KinBody::CLA_CheckLimits);
 }
 
-object PyKinBody::SubtractDOFValues(object ovalues0, object ovalues1, object oindices)
+py::array_t<dReal> PyKinBody::SubtractDOFValues(object ovalues0, object ovalues1, object oindices)
 {
     std::vector<dReal> values0 = ExtractArray<dReal>(ovalues0);
     std::vector<dReal> values1 = ExtractArray<dReal>(ovalues1);
@@ -3936,7 +3936,7 @@ void PyKinBody::SetDOFTorques(object otorques, bool bAdd)
     _pbody->SetDOFTorques(vtorques,bAdd);
 }
 
-object PyKinBody::ComputeJacobianTranslation(int index, object oposition, object oindices)
+py::array_t<dReal> PyKinBody::ComputeJacobianTranslation(int index, object oposition, object oindices)
 {
     std::vector<int> vindices;
     if( !IS_PYTHONOBJECT_NONE(oindices) ) {
@@ -3948,7 +3948,7 @@ object PyKinBody::ComputeJacobianTranslation(int index, object oposition, object
     return toPyArray(vjacobian,dims);
 }
 
-object PyKinBody::ComputeJacobianAxisAngle(int index, object oindices)
+py::array_t<dReal> PyKinBody::ComputeJacobianAxisAngle(int index, object oindices)
 {
     std::vector<int> vindices;
     if( !IS_PYTHONOBJECT_NONE(oindices) ) {
@@ -3960,7 +3960,7 @@ object PyKinBody::ComputeJacobianAxisAngle(int index, object oindices)
     return toPyArray(vjacobian,dims);
 }
 
-object PyKinBody::CalculateJacobian(int index, object oposition)
+py::array_t<dReal> PyKinBody::CalculateJacobian(int index, object oposition)
 {
     std::vector<dReal> vjacobian;
     _pbody->CalculateJacobian(index,ExtractVector3(oposition),vjacobian);
@@ -3968,7 +3968,7 @@ object PyKinBody::CalculateJacobian(int index, object oposition)
     return toPyArray(vjacobian,dims);
 }
 
-object PyKinBody::CalculateRotationJacobian(int index, object q) const
+py::array_t<dReal> PyKinBody::CalculateRotationJacobian(int index, object q) const
 {
     std::vector<dReal> vjacobian;
     _pbody->CalculateRotationJacobian(index,ExtractVector4(q),vjacobian);
@@ -3976,7 +3976,7 @@ object PyKinBody::CalculateRotationJacobian(int index, object q) const
     return toPyArray(vjacobian,dims);
 }
 
-object PyKinBody::CalculateAngularVelocityJacobian(int index) const
+py::array_t<dReal> PyKinBody::CalculateAngularVelocityJacobian(int index) const
 {
     std::vector<dReal> vjacobian;
     _pbody->ComputeJacobianAxisAngle(index,vjacobian);
@@ -3984,7 +3984,7 @@ object PyKinBody::CalculateAngularVelocityJacobian(int index) const
     return toPyArray(vjacobian,dims);
 }
 
-object PyKinBody::ComputeHessianTranslation(int index, object oposition, object oindices)
+py::array_t<dReal> PyKinBody::ComputeHessianTranslation(int index, object oposition, object oindices)
 {
     std::vector<int> vindices;
     if( !IS_PYTHONOBJECT_NONE(oindices) ) {
@@ -3997,7 +3997,7 @@ object PyKinBody::ComputeHessianTranslation(int index, object oposition, object 
     return toPyArray(vhessian,dims);
 }
 
-object PyKinBody::ComputeHessianAxisAngle(int index, object oindices)
+py::array_t<dReal> PyKinBody::ComputeHessianAxisAngle(int index, object oindices)
 {
     std::vector<int> vindices;
     if( !IS_PYTHONOBJECT_NONE(oindices) ) {
@@ -4049,7 +4049,7 @@ object PyKinBody::ComputeInverseDynamics(object odofaccelerations, object oexter
     }
 }
 
-object PyKinBody::GetDOFDynamicAccelerationJerkLimits(py::object oDOFPositions, py::object oDOFVelocities) const
+py::tuple PyKinBody::GetDOFDynamicAccelerationJerkLimits(py::object oDOFPositions, py::object oDOFVelocities) const
 {
     if( IS_PYTHONOBJECT_NONE(oDOFPositions) || IS_PYTHONOBJECT_NONE(oDOFVelocities) ) {
         return py::make_tuple(py::none_(), py::none_());
@@ -4097,7 +4097,7 @@ bool PyKinBody::HasAttached() const
 {
     return _pbody->HasAttached();
 }
-object PyKinBody::GetAttached() const
+py::list PyKinBody::GetAttached() const
 {
     py::list attached;
     std::vector<KinBodyPtr> vattached;
@@ -4108,7 +4108,7 @@ object PyKinBody::GetAttached() const
     return attached;
 }
 
-object PyKinBody::GetAttachedEnvironmentBodyIndices() const
+py::list PyKinBody::GetAttachedEnvironmentBodyIndices() const
 {
     py::list attached;
     std::vector<int> vattached;
@@ -4146,7 +4146,7 @@ void PyKinBody::SetConfigurationValues(object ovalues, uint32_t checklimits)
     _pbody->SetConfigurationValues(vvalues.begin(),checklimits);
 }
 
-object PyKinBody::GetConfigurationValues() const
+py::array_t<dReal> PyKinBody::GetConfigurationValues() const
 {
     std::vector<dReal> values;
     _pbody->GetConfigurationValues(values);
@@ -4193,7 +4193,7 @@ void PyKinBody::RegrabAll()
 {
     _pbody->RegrabAll();
 }
-object PyKinBody::IsGrabbing(PyKinBodyPtr pbody) const
+PyLinkPtr PyKinBody::IsGrabbing(PyKinBodyPtr pbody) const
 {
     CHECK_POINTER(pbody);
     KinBody::LinkPtr plink = _pbody->IsGrabbing(*pbody->GetBody());
@@ -4222,7 +4222,7 @@ int PyKinBody::GetNumGrabbed() const
     return _pbody->GetNumGrabbed();
 }
 
-object PyKinBody::GetGrabbed() const
+py::list PyKinBody::GetGrabbed() const
 {
     py::list bodies;
     std::vector<KinBodyPtr> vbodies;
@@ -4302,7 +4302,7 @@ object PyKinBody::GetReferenceURI() const
     return ConvertStringToUnicode(_pbody->GetReferenceURI());
 }
 
-object PyKinBody::GetNonAdjacentLinks() const
+py::list PyKinBody::GetNonAdjacentLinks() const
 {
     py::list ononadjacent;
     const std::vector<int>& nonadjacent = _pbody->GetNonAdjacentLinks();
@@ -4311,7 +4311,7 @@ object PyKinBody::GetNonAdjacentLinks() const
     }
     return ononadjacent;
 }
-object PyKinBody::GetNonAdjacentLinks(int adjacentoptions) const
+py::list PyKinBody::GetNonAdjacentLinks(int adjacentoptions) const
 {
     py::list ononadjacent;
     const std::vector<int>& nonadjacent = _pbody->GetNonAdjacentLinks(adjacentoptions);
@@ -4332,7 +4332,7 @@ void PyKinBody::SetAdjacentLinksCombinations(object olinkIndices)
     _pbody->SetAdjacentLinksCombinations(linkIndices);
 }
 
-object PyKinBody::GetAdjacentLinks() const
+py::list PyKinBody::GetAdjacentLinks() const
 {
     py::list adjacent;
     const size_t numLinks = _pbody->GetLinks().size();
@@ -4456,38 +4456,38 @@ void PyKinBody::__exit__(object type, object value, object traceback)
     }
 }
 
-object toPyKinBodyLink(KinBody::LinkPtr plink, PyEnvironmentBasePtr pyenv)
+PyLinkPtr toPyKinBodyLink(KinBody::LinkPtr plink, PyEnvironmentBasePtr pyenv)
 {
     if( !plink ) {
-        return py::none_();
+        return PyLinkPtr();
     }
-    return py::to_object(PyLinkPtr(new PyLink(plink,pyenv)));
+    return PyLinkPtr(new PyLink(plink,pyenv));
 }
 
-object toPyKinBodyLink(KinBody::LinkPtr plink, object opyenv)
+PyLinkPtr toPyKinBodyLink(KinBody::LinkPtr plink, object opyenv)
 {
     extract_<PyEnvironmentBasePtr> pyenv(opyenv);
     if( pyenv.check() ) {
         // call object toPyKinBodyLink(KinBody::LinkPtr plink, PyEnvironmentBasePtr pyenv)
         return toPyKinBodyLink(plink, (PyEnvironmentBasePtr)pyenv);
     }
-    return py::none_();
+    return PyLinkPtr();
 }
 
-object toPyKinBodyGeometry(KinBody::GeometryPtr pgeom)
+PyGeometryPtr toPyKinBodyGeometry(KinBody::GeometryPtr pgeom)
 {
     if( !pgeom ) {
-        return py::none_();
+        return PyGeometryPtr();
     }
-    return py::to_object(OPENRAVE_SHARED_PTR<PyGeometry>(new PyGeometry(pgeom)));
+    return PyGeometryPtr(new PyGeometry(pgeom));
 }
 
-object toPyKinBodyJoint(KinBody::JointPtr pjoint, PyEnvironmentBasePtr pyenv)
+PyJointPtr toPyKinBodyJoint(KinBody::JointPtr pjoint, PyEnvironmentBasePtr pyenv)
 {
     if( !pjoint ) {
-        return py::none_();
+        return PyJointPtr();
     }
-    return py::to_object(PyJointPtr(new PyJoint(pjoint,pyenv)));
+    return PyJointPtr(new PyJoint(pjoint,pyenv));
 }
 
 KinBody::LinkPtr GetKinBodyLink(object o)
@@ -5007,6 +5007,12 @@ void KinBodyInitializer::init_openravepy_kinbody()
     class_<PyLink, OPENRAVE_SHARED_PTR<PyLink>, PyReadablesContainer > link(kinbody, "Link", DOXY_CLASS(KinBody::Link));
 #else
     class_<PyLink, OPENRAVE_SHARED_PTR<PyLink>, bases<PyReadablesContainer> > link("Link", DOXY_CLASS(KinBody::Link), no_init);
+#endif
+
+#ifdef USE_PYBIND11_PYTHON_BINDINGS
+    class_<PyJoint, OPENRAVE_SHARED_PTR<PyJoint>, PyReadablesContainer > joint(kinbody, "Joint", DOXY_CLASS(KinBody::Joint));
+#else
+    class_<PyJoint, OPENRAVE_SHARED_PTR<PyJoint>, bases<PyReadablesContainer> > joint("Joint", DOXY_CLASS(KinBody::Joint),no_init);
 #endif
 
 #ifdef USE_PYBIND11_PYTHON_BINDINGS
@@ -5736,30 +5742,30 @@ void KinBodyInitializer::init_openravepy_kinbody()
         void (PyKinBody::*psetdofvalues1)(object) = &PyKinBody::SetDOFValues;
         void (PyKinBody::*psetdofvalues2)(object,object) = &PyKinBody::SetDOFValues;
         void (PyKinBody::*psetdofvalues3)(object,object,uint32_t) = &PyKinBody::SetDOFValues;
-        object (PyKinBody::*getdofvalues1)() const = &PyKinBody::GetDOFValues;
-        object (PyKinBody::*getdofvalues2)(object) const = &PyKinBody::GetDOFValues;
-        object (PyKinBody::*getdofvelocities1)() const = &PyKinBody::GetDOFVelocities;
-        object (PyKinBody::*getdofvelocities2)(object) const = &PyKinBody::GetDOFVelocities;
-        object (PyKinBody::*getdoflimits1)() const = &PyKinBody::GetDOFLimits;
-        object (PyKinBody::*getdoflimits2)(object) const = &PyKinBody::GetDOFLimits;
-        object (PyKinBody::*getdofweights1)() const = &PyKinBody::GetDOFWeights;
-        object (PyKinBody::*getdofweights2)(object) const = &PyKinBody::GetDOFWeights;
-        object (PyKinBody::*getdofresolutions1)() const = &PyKinBody::GetDOFResolutions;
-        object (PyKinBody::*getdofresolutions2)(object) const = &PyKinBody::GetDOFResolutions;
-        object (PyKinBody::*getdofvelocitylimits1)() const = &PyKinBody::GetDOFVelocityLimits;
-        object (PyKinBody::*getdofvelocitylimits2)(object) const = &PyKinBody::GetDOFVelocityLimits;
-        object (PyKinBody::*getdofaccelerationlimits1)() const = &PyKinBody::GetDOFAccelerationLimits;
-        object (PyKinBody::*getdofaccelerationlimits2)(object) const = &PyKinBody::GetDOFAccelerationLimits;
-        object (PyKinBody::*getdofjerklimits1)() const = &PyKinBody::GetDOFJerkLimits;
-        object (PyKinBody::*getdofjerklimits2)(object) const = &PyKinBody::GetDOFJerkLimits;
-        object (PyKinBody::*getdofhardvelocitylimits1)() const = &PyKinBody::GetDOFHardVelocityLimits;
-        object (PyKinBody::*getdofhardvelocitylimits2)(object) const = &PyKinBody::GetDOFHardVelocityLimits;
-        object (PyKinBody::*getdofhardaccelerationlimits1)() const = &PyKinBody::GetDOFHardAccelerationLimits;
-        object (PyKinBody::*getdofhardaccelerationlimits2)(object) const = &PyKinBody::GetDOFHardAccelerationLimits;
-        object (PyKinBody::*getdofhardjerklimits1)() const = &PyKinBody::GetDOFHardJerkLimits;
-        object (PyKinBody::*getdofhardjerklimits2)(object) const = &PyKinBody::GetDOFHardJerkLimits;
-        object (PyKinBody::*getdoftorquelimits1)() const = &PyKinBody::GetDOFTorqueLimits;
-        object (PyKinBody::*getdoftorquelimits2)(object) const = &PyKinBody::GetDOFTorqueLimits;
+        py::array_t<dReal> (PyKinBody::*getdofvalues1)() const = &PyKinBody::GetDOFValues;
+        py::array_t<dReal> (PyKinBody::*getdofvalues2)(object) const = &PyKinBody::GetDOFValues;
+        py::array_t<dReal> (PyKinBody::*getdofvelocities1)() const = &PyKinBody::GetDOFVelocities;
+        py::array_t<dReal> (PyKinBody::*getdofvelocities2)(object) const = &PyKinBody::GetDOFVelocities;
+        py::tuple (PyKinBody::*getdoflimits1)() const = &PyKinBody::GetDOFLimits;
+        py::tuple (PyKinBody::*getdoflimits2)(object) const = &PyKinBody::GetDOFLimits;
+        py::array_t<dReal> (PyKinBody::*getdofweights1)() const = &PyKinBody::GetDOFWeights;
+        py::array_t<dReal> (PyKinBody::*getdofweights2)(object) const = &PyKinBody::GetDOFWeights;
+        py::array_t<dReal> (PyKinBody::*getdofresolutions1)() const = &PyKinBody::GetDOFResolutions;
+        py::array_t<dReal> (PyKinBody::*getdofresolutions2)(object) const = &PyKinBody::GetDOFResolutions;
+        py::array_t<dReal> (PyKinBody::*getdofvelocitylimits1)() const = &PyKinBody::GetDOFVelocityLimits;
+        py::array_t<dReal> (PyKinBody::*getdofvelocitylimits2)(object) const = &PyKinBody::GetDOFVelocityLimits;
+        py::array_t<dReal> (PyKinBody::*getdofaccelerationlimits1)() const = &PyKinBody::GetDOFAccelerationLimits;
+        py::array_t<dReal> (PyKinBody::*getdofaccelerationlimits2)(object) const = &PyKinBody::GetDOFAccelerationLimits;
+        py::array_t<dReal> (PyKinBody::*getdofjerklimits1)() const = &PyKinBody::GetDOFJerkLimits;
+        py::array_t<dReal> (PyKinBody::*getdofjerklimits2)(object) const = &PyKinBody::GetDOFJerkLimits;
+        py::array_t<dReal> (PyKinBody::*getdofhardvelocitylimits1)() const = &PyKinBody::GetDOFHardVelocityLimits;
+        py::array_t<dReal> (PyKinBody::*getdofhardvelocitylimits2)(object) const = &PyKinBody::GetDOFHardVelocityLimits;
+        py::array_t<dReal> (PyKinBody::*getdofhardaccelerationlimits1)() const = &PyKinBody::GetDOFHardAccelerationLimits;
+        py::array_t<dReal> (PyKinBody::*getdofhardaccelerationlimits2)(object) const = &PyKinBody::GetDOFHardAccelerationLimits;
+        py::array_t<dReal> (PyKinBody::*getdofhardjerklimits1)() const = &PyKinBody::GetDOFHardJerkLimits;
+        py::array_t<dReal> (PyKinBody::*getdofhardjerklimits2)(object) const = &PyKinBody::GetDOFHardJerkLimits;
+        py::array_t<dReal> (PyKinBody::*getdoftorquelimits1)() const = &PyKinBody::GetDOFTorqueLimits;
+        py::array_t<dReal> (PyKinBody::*getdoftorquelimits2)(object) const = &PyKinBody::GetDOFTorqueLimits;
         py::list (PyKinBody::*getlinks1)() const = &PyKinBody::GetLinks;
         py::list (PyKinBody::*getlinks2)(object) const = &PyKinBody::GetLinks;
         py::list (PyKinBody::*getjoints1)() const = &PyKinBody::GetJoints;
@@ -5770,8 +5776,8 @@ void KinBodyInitializer::init_openravepy_kinbody()
         void (PyKinBody::*setdofvelocities4)(object,object,object,uint32_t) = &PyKinBody::SetDOFVelocities;
         bool (PyKinBody::*pgrab2)(PyKinBodyPtr,object,const std::string&) = &PyKinBody::Grab;
         bool (PyKinBody::*pgrab4)(PyKinBodyPtr,object,object,object,const std::string&) = &PyKinBody::Grab;
-        object (PyKinBody::*GetNonAdjacentLinks1)() const = &PyKinBody::GetNonAdjacentLinks;
-        object (PyKinBody::*GetNonAdjacentLinks2)(int) const = &PyKinBody::GetNonAdjacentLinks;
+        py::list (PyKinBody::*GetNonAdjacentLinks1)() const = &PyKinBody::GetNonAdjacentLinks;
+        py::list (PyKinBody::*GetNonAdjacentLinks2)(int) const = &PyKinBody::GetNonAdjacentLinks;
 #ifdef USE_PYBIND11_PYTHON_BINDINGS
         bool (PyKinBody::*InitFromBoxes1)(const std::vector<std::vector<dReal> >& vboxes, const bool bDraw, const std::string& uri) = &PyKinBody::InitFromBoxes;
         bool (PyKinBody::*InitFromBoxes2)(const py::array_t<dReal>& vboxes, const bool bDraw, const std::string& uri) = &PyKinBody::InitFromBoxes;
@@ -6445,11 +6451,7 @@ void KinBodyInitializer::init_openravepy_kinbody()
             link.attr("GeomProperties") = link.attr("Geometry");
         }
         {
-#ifdef USE_PYBIND11_PYTHON_BINDINGS
-            scope_ joint = class_<PyJoint, OPENRAVE_SHARED_PTR<PyJoint>, PyReadablesContainer >(kinbody, "Joint", DOXY_CLASS(KinBody::Joint))
-#else
-            scope_ joint = class_<PyJoint, OPENRAVE_SHARED_PTR<PyJoint>, bases<PyReadablesContainer> >("Joint", DOXY_CLASS(KinBody::Joint),no_init)
-#endif
+            joint
                            .def("GetId", &PyJoint::GetId, DOXY_FN(KinBody::Joint,GetId))
                            .def("GetName", &PyJoint::GetName, DOXY_FN(KinBody::Joint,GetName))
 #ifdef USE_PYBIND11_PYTHON_BINDINGS

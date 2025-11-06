@@ -696,15 +696,15 @@ RobotBase::ManipulatorPtr PyRobotBase::PyManipulator::GetManipulator() const {
     return _pmanip;
 }
 
-object PyRobotBase::PyManipulator::GetTransform() const {
+py::array_t<dReal> PyRobotBase::PyManipulator::GetTransform() const {
     return ReturnTransform(_pmanip->GetTransform());
 }
 
-object PyRobotBase::PyManipulator::GetTransformPose() const {
+py::array_t<dReal> PyRobotBase::PyManipulator::GetTransformPose() const {
     return toPyArray(_pmanip->GetTransform());
 }
 
-object PyRobotBase::PyManipulator::GetVelocity() const {
+py::array_t<dReal> PyRobotBase::PyManipulator::GetVelocity() const {
     const std::pair<Vector, Vector> velocity = _pmanip->GetVelocity();
 #ifdef USE_PYBIND11_PYTHON_BINDINGS
     py::array_t<dReal> pyvalues(6);
@@ -743,7 +743,7 @@ object PyRobotBase::PyManipulator::GetToolChangerLinkName() const {
     return ConvertStringToUnicode(_pmanip->GetToolChangerLinkName());
 }
 
-object PyRobotBase::PyManipulator::GetRestrictGraspSetNames() const {
+py::list PyRobotBase::PyManipulator::GetRestrictGraspSetNames() const {
     py::list names;
     FOREACHC(itname, _pmanip->GetRestrictGraspSetNames()) {
         names.append(ConvertStringToUnicode(*itname));
@@ -766,26 +766,26 @@ object PyRobotBase::PyManipulator::GetIkSolver() {
     return py::to_object(openravepy::toPyIkSolver(_pmanip->GetIkSolver(),_pyenv));
 }
 
-object PyRobotBase::PyManipulator::GetBase() {
+PyLinkPtr PyRobotBase::PyManipulator::GetBase() {
     return toPyKinBodyLink(_pmanip->GetBase(),_pyenv);
 }
-object PyRobotBase::PyManipulator::GetIkChainEndLink() {
+PyLinkPtr PyRobotBase::PyManipulator::GetIkChainEndLink() {
     return toPyKinBodyLink(_pmanip->GetIkChainEndLink(),_pyenv);
 }
-object PyRobotBase::PyManipulator::GetEndEffector() {
+PyLinkPtr PyRobotBase::PyManipulator::GetEndEffector() {
     return toPyKinBodyLink(_pmanip->GetEndEffector(),_pyenv);
 }
 void PyRobotBase::PyManipulator::ReleaseAllGrabbed() {
     _pmanip->ReleaseAllGrabbed();
 }
-object PyRobotBase::PyManipulator::GetGraspTransform() {
+py::array_t<dReal> PyRobotBase::PyManipulator::GetGraspTransform() {
     RAVELOG_WARN("Robot.Manipulator.GetGraspTransform deprecated, use GetLocalToolTransform\n");
     return ReturnTransform(_pmanip->GetLocalToolTransform());
 }
-object PyRobotBase::PyManipulator::GetLocalToolTransform() {
+py::array_t<dReal> PyRobotBase::PyManipulator::GetLocalToolTransform() {
     return ReturnTransform(_pmanip->GetLocalToolTransform());
 }
-object PyRobotBase::PyManipulator::GetLocalToolTransformPose() {
+py::array_t<dReal> PyRobotBase::PyManipulator::GetLocalToolTransformPose() {
     return toPyArray(_pmanip->GetLocalToolTransform());
 }
 void PyRobotBase::PyManipulator::SetLocalToolTransform(object otrans) {
@@ -1376,16 +1376,16 @@ RobotBase::AttachedSensorPtr PyRobotBase::PyAttachedSensor::GetAttachedSensor() 
 object PyRobotBase::PyAttachedSensor::GetSensor() {
     return py::to_object(openravepy::toPySensor(_pattached->GetSensor(),_pyenv));
 }
-object PyRobotBase::PyAttachedSensor::GetAttachingLink() const {
+PyLinkPtr PyRobotBase::PyAttachedSensor::GetAttachingLink() const {
     return toPyKinBodyLink(_pattached->GetAttachingLink(), _pyenv);
 }
-object PyRobotBase::PyAttachedSensor::GetRelativeTransform() const {
+py::array_t<dReal> PyRobotBase::PyAttachedSensor::GetRelativeTransform() const {
     return ReturnTransform(_pattached->GetRelativeTransform());
 }
-object PyRobotBase::PyAttachedSensor::GetTransform() const {
+py::array_t<dReal> PyRobotBase::PyAttachedSensor::GetTransform() const {
     return ReturnTransform(_pattached->GetTransform());
 }
-object PyRobotBase::PyAttachedSensor::GetTransformPose() const {
+py::array_t<dReal> PyRobotBase::PyAttachedSensor::GetTransformPose() const {
     return toPyArray(_pattached->GetTransform());
 }
 PyRobotBasePtr PyRobotBase::PyAttachedSensor::GetRobot() const {

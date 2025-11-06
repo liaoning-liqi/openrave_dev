@@ -386,9 +386,9 @@ public:
     py::array_t<dReal> GetLocalInertia() const;
     py::array_t<dReal> GetGlobalInertia() const;
     dReal GetMass() const;
-    object GetPrincipalMomentsOfInertia() const;
-    object GetLocalMassFrame() const;
-    object GetGlobalMassFrame() const;
+    py::array_t<dReal> GetPrincipalMomentsOfInertia() const;
+    py::array_t<dReal> GetLocalMassFrame() const;
+    py::array_t<dReal> GetGlobalMassFrame() const;
     void SetLocalMassFrame(object omassframe);
     void SetPrincipalMomentsOfInertia(object oinertiamoments);
     void SetMass(dReal mass);
@@ -421,7 +421,7 @@ public:
 
     void SetVelocity(object olinear, object oangular);
 
-    object GetVelocity() const;
+    py::array_t<dReal> GetVelocity() const;
 
     object GetFloatParameters(object oname=py::none_(), int index=-1) const;
 
@@ -468,8 +468,8 @@ public:
     dReal GetMaxAccel(int iaxis=0) const;
     dReal GetMaxJerk(int iaxis=0) const;
     dReal GetMaxTorque(int iaxis=0) const;
-    object GetInstantaneousTorqueLimits(int iaxis=0) const;
-    object GetNominalTorqueLimits(int iaxis=0) const;
+    py::tuple GetInstantaneousTorqueLimits(int iaxis=0) const;
+    py::tuple GetNominalTorqueLimits(int iaxis=0) const;
 
     dReal GetMaxInertia(int iaxis=0) const;
 
@@ -489,28 +489,28 @@ public:
     bool IsStatic() const;
 
     int GetDOF() const;
-    object GetValues() const;
+    py::array_t<dReal> GetValues() const;
     dReal GetValue(int iaxis) const;
-    object GetVelocities() const;
+    py::array_t<dReal> GetVelocities() const;
 
-    object GetAnchor() const;
-    object GetAxis(int iaxis=0);
+    py::array_t<dReal> GetAnchor() const;
+    py::array_t<dReal> GetAxis(int iaxis=0);
     PyLinkPtr GetHierarchyParentLink() const;
     PyLinkPtr GetHierarchyChildLink() const;
-    object GetInternalHierarchyAxis(int iaxis);
-    object GetInternalHierarchyLeftTransform();
-    object GetInternalHierarchyLeftTransformPose();
-    object GetInternalHierarchyRightTransform();
-    object GetInternalHierarchyRightTransformPose();
+    py::array_t<dReal> GetInternalHierarchyAxis(int iaxis);
+    py::array_t<dReal> GetInternalHierarchyLeftTransform();
+    py::array_t<dReal> GetInternalHierarchyLeftTransformPose();
+    py::array_t<dReal> GetInternalHierarchyRightTransform();
+    py::array_t<dReal> GetInternalHierarchyRightTransformPose();
 
-    object GetLimits() const;
-    object GetVelocityLimits() const;
-    object GetAccelerationLimits() const;
-    object GetJerkLimits() const;
-    object GetHardVelocityLimits() const;
-    object GetHardAccelerationLimits() const;
-    object GetHardJerkLimits() const;
-    object GetTorqueLimits() const;
+    py::tuple GetLimits() const;
+    py::tuple GetVelocityLimits() const;
+    py::array_t<dReal> GetAccelerationLimits() const;
+    py::array_t<dReal> GetJerkLimits() const;
+    py::array_t<dReal> GetHardVelocityLimits() const;
+    py::array_t<dReal> GetHardAccelerationLimits() const;
+    py::array_t<dReal> GetHardJerkLimits() const;
+    py::array_t<dReal> GetTorqueLimits() const;
 
     dReal GetWrapOffset(int iaxis=0);
     void SetWrapOffset(dReal offset, int iaxis=0);
@@ -523,15 +523,15 @@ public:
     void SetHardJerkLimits(object omaxlimits);
     void SetTorqueLimits(object omaxlimits);
 
-    object GetResolutions() const;
+    py::array_t<dReal> GetResolutions() const;
     dReal GetResolution(int iaxis);
     void SetResolution(dReal resolution);
 
-    object GetWeights() const;
+    py::array_t<dReal> GetWeights() const;
     dReal GetWeight(int iaxis);
     void SetWeights(object o);
 
-    object SubtractValues(object ovalues0, object ovalues1);
+    py::array_t<dReal> SubtractValues(object ovalues0, object ovalues1);
 
     dReal SubtractValue(dReal value0, dReal value1, int iaxis);
 

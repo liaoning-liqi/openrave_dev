@@ -65,11 +65,11 @@ public:
 
         RobotBase::ManipulatorPtr GetManipulator() const;
 
-        object GetTransform() const;
+        py::array_t<dReal> GetTransform() const;
 
-        object GetTransformPose() const;
+        py::array_t<dReal> GetTransformPose() const;
 
-        object GetVelocity() const;
+        py::array_t<dReal> GetVelocity() const;
 
         std::string GetId() const;
         object GetName() const;
@@ -81,19 +81,19 @@ public:
         object GetToolChangerConnectedBodyToolName() const;
         object GetToolChangerLinkName() const;
 
-        object GetRestrictGraspSetNames() const;
+        py::list GetRestrictGraspSetNames() const;
 
         PyRobotBasePtr GetRobot();
 
         bool SetIkSolver(PyIkSolverBasePtr iksolver);
         object GetIkSolver();
-        object GetBase();
-        object GetIkChainEndLink();
-        object GetEndEffector();
+        PyLinkPtr GetBase();
+        PyLinkPtr GetIkChainEndLink();
+        PyLinkPtr GetEndEffector();
         void ReleaseAllGrabbed();
-        object GetGraspTransform();
-        object GetLocalToolTransform();
-        object GetLocalToolTransformPose();
+        py::array_t<dReal> GetGraspTransform();
+        py::array_t<dReal> GetLocalToolTransform();
+        py::array_t<dReal> GetLocalToolTransformPose();
         void SetLocalToolTransform(object otrans);
         void SetLocalToolDirection(object odirection);
         py::array_int GetGripperJoints();
@@ -196,10 +196,10 @@ public:
 
         RobotBase::AttachedSensorPtr GetAttachedSensor() const;
         object GetSensor();
-        object GetAttachingLink() const;
-        object GetRelativeTransform() const;
-        object GetTransform() const;
-        object GetTransformPose() const;
+        PyLinkPtr GetAttachingLink() const;
+        py::array_t<dReal> GetRelativeTransform() const;
+        py::array_t<dReal> GetTransform() const;
+        py::array_t<dReal> GetTransformPose() const;
         PyRobotBasePtr GetRobot() const;
         std::string GetId() const;
         object GetName() const;

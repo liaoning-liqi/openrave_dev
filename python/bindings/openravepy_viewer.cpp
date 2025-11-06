@@ -19,6 +19,7 @@
 #include <openravepy/openravepy_sensorbase.h>
 #include <openravepy/openravepy_environmentbase.h>
 #include <openravepy/openravepy_viewer.h>
+#include <openravepy/openravepy_jointinfo.h>
 #include <csignal>
 
 #if defined(_WIN32) && !defined(sighandler_t)
