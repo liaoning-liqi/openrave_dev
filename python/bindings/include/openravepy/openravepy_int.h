@@ -796,8 +796,8 @@ OPENRAVEPY_API py::object toPyIkSolver(IkSolverBasePtr, py::object);
 OPENRAVEPY_API KinBodyPtr GetKinBody(py::object);
 OPENRAVEPY_API KinBodyPtr GetKinBody(PyKinBodyPtr);
 OPENRAVEPY_API PyEnvironmentBasePtr GetPyEnvFromPyKinBody(py::object okinbody);
-OPENRAVEPY_API PyInterfaceBasePtr toPyKinBody(KinBodyPtr, PyEnvironmentBasePtr);
-OPENRAVEPY_API py::object toPyKinBody(KinBodyPtr, py::object opyenv);
+OPENRAVEPY_API PyKinBodyPtr toPyKinBody(KinBodyPtr, PyEnvironmentBasePtr);
+OPENRAVEPY_API PyKinBodyPtr toPyKinBody(KinBodyPtr, py::object opyenv);
 OPENRAVEPY_API py::object toPyKinBodyLink(KinBody::LinkPtr plink, PyEnvironmentBasePtr);
 OPENRAVEPY_API py::object toPyKinBodyLink(KinBody::LinkPtr plink, py::object opyenv);
 OPENRAVEPY_API py::object toPyKinBodyGeometry(KinBody::GeometryPtr pgeom);
@@ -825,7 +825,7 @@ OPENRAVEPY_API py::object toPyPlannerParameters(PlannerBase::PlannerParametersPt
 
 OPENRAVEPY_API RobotBasePtr GetRobot(py::object);
 OPENRAVEPY_API RobotBasePtr GetRobot(PyRobotBasePtr);
-OPENRAVEPY_API PyInterfaceBasePtr toPyRobot(RobotBasePtr, PyEnvironmentBasePtr);
+OPENRAVEPY_API PyRobotBasePtr toPyRobot(RobotBasePtr, PyEnvironmentBasePtr);
 OPENRAVEPY_API RobotBase::ManipulatorPtr GetRobotManipulator(py::object);
 OPENRAVEPY_API py::object toPyRobotManipulator(RobotBase::ManipulatorPtr, PyEnvironmentBasePtr);
 

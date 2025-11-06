@@ -233,12 +233,12 @@ public:
 
     bool RemoveKinBodyByName(const std::string& name);
 
-    object GetKinBody(const std::string &name);
-    object GetRobot(const std::string &name);
+    PyKinBodyPtr GetKinBody(const std::string &name);
+    PyRobotBasePtr GetRobot(const std::string &name);
     object GetSensor(const std::string &name);
 
-    object GetBodyFromEnvironmentId(int id);
-    object GetBodyFromEnvironmentBodyIndex(int id);
+    PyKinBodyPtr GetBodyFromEnvironmentId(int id);
+    PyKinBodyPtr GetBodyFromEnvironmentBodyIndex(int id);
     object GetBodiesFromEnvironmentBodyIndices(object bodyIndices);
 
     int GetMaxEnvironmentBodyIndex();

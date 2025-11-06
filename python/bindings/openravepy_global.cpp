@@ -17,6 +17,7 @@
 #define NO_IMPORT_ARRAY
 #include <openravepy/openravepy_int.h>
 #include <openravepy/openravepy_kinbody.h>
+#include <openravepy/openravepy_robotbase.h>
 #include <openravepy/openravepy_environmentbase.h>
 #include <openravepy/openravepy_configurationspecification.h>
 #include <openravepy/openravepy_viewer.h>
@@ -1067,12 +1068,12 @@ PyInterfaceBasePtr pyRaveClone(PyInterfaceBasePtr pyreference, int cloningoption
     InterfaceBasePtr pclone = OpenRAVE::RaveClone<InterfaceBase>(pyreference->GetInterfaceBase(), cloningoptions, penv);
     switch(pclone->GetInterfaceType()) {
     case PT_Planner: return toPyPlanner(RaveInterfaceCast<PlannerBase>(pclone), pyenv);
-    case PT_Robot: return toPyRobot(RaveInterfaceCast<RobotBase>(pclone), pyenv);
+    case PT_Robot: return static_cast<PyInterfaceBasePtr>(toPyRobot(RaveInterfaceCast<RobotBase>(pclone), pyenv));
     case PT_SensorSystem: return toPySensorSystem(RaveInterfaceCast<SensorSystemBase>(pclone), pyenv);
     case PT_Controller: return toPyController(RaveInterfaceCast<ControllerBase>(pclone), pyenv);
     case PT_Module: return toPyModule(RaveInterfaceCast<ModuleBase>(pclone), pyenv);
     case PT_InverseKinematicsSolver: return toPyIkSolver(RaveInterfaceCast<IkSolverBase>(pclone), pyenv);
-    case PT_KinBody: return toPyKinBody(RaveInterfaceCast<KinBody>(pclone), pyenv);
+    case PT_KinBody: return static_cast<PyInterfaceBasePtr>(toPyKinBody(RaveInterfaceCast<KinBody>(pclone), pyenv));
     case PT_PhysicsEngine: return toPyPhysicsEngine(RaveInterfaceCast<PhysicsEngineBase>(pclone), pyenv);
     case PT_Sensor: return toPySensor(RaveInterfaceCast<SensorBase>(pclone), pyenv);
     case PT_CollisionChecker: return toPyCollisionChecker(RaveInterfaceCast<CollisionCheckerBase>(pclone), pyenv);

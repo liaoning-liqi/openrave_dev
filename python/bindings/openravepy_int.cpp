@@ -2259,37 +2259,37 @@ bool PyEnvironmentBase::RemoveKinBodyByName(const std::string& name) {
     return _penv->RemoveKinBodyByName(name);
 }
 
-object PyEnvironmentBase::GetKinBody(const string &name)
+PyKinBodyPtr PyEnvironmentBase::GetKinBody(const string &name)
 {
     KinBodyPtr pbody = _penv->GetKinBody(name);
     if( !pbody ) {
-        return py::none_();
+        return PyKinBodyPtr();
     }
     if( pbody->IsRobot() ) {
-        return py::to_object(openravepy::toPyRobot(RaveInterfaceCast<RobotBase>(pbody),shared_from_this()));
+        return static_cast<PyKinBodyPtr>(openravepy::toPyRobot(RaveInterfaceCast<RobotBase>(pbody),shared_from_this()));
     }
     else {
-        return py::to_object(openravepy::toPyKinBody(pbody,shared_from_this()));
+        return openravepy::toPyKinBody(pbody,shared_from_this());
     }
 }
-object PyEnvironmentBase::GetRobot(const string &name)
+PyRobotBasePtr PyEnvironmentBase::GetRobot(const string &name)
 {
-    return py::to_object(openravepy::toPyRobot(_penv->GetRobot(name), shared_from_this()));
+    return openravepy::toPyRobot(_penv->GetRobot(name), shared_from_this());
 }
 object PyEnvironmentBase::GetSensor(const string &name)
 {
     return py::to_object(openravepy::toPySensor(_penv->GetSensor(name),shared_from_this()));
 }
 
-object PyEnvironmentBase::GetBodyFromEnvironmentId(int id)
+PyKinBodyPtr PyEnvironmentBase::GetBodyFromEnvironmentId(int id)
 {
     RAVELOG_WARN_FORMAT("env=%d, got call of GetBodyFromEnvironmentId(%d), but should be using GetBodyFromEnvironmentBodyIndex(%d)", _penv->GetId()%id%id);
-    return py::to_object(openravepy::toPyKinBody(_penv->GetBodyFromEnvironmentBodyIndex(id),shared_from_this()));
+    return openravepy::toPyKinBody(_penv->GetBodyFromEnvironmentBodyIndex(id),shared_from_this());
 }
 
-object PyEnvironmentBase::GetBodyFromEnvironmentBodyIndex(int bodyIndex)
+PyKinBodyPtr PyEnvironmentBase::GetBodyFromEnvironmentBodyIndex(int bodyIndex)
 {
-    return py::to_object(openravepy::toPyKinBody(_penv->GetBodyFromEnvironmentBodyIndex(bodyIndex),shared_from_this()));
+    return openravepy::toPyKinBody(_penv->GetBodyFromEnvironmentBodyIndex(bodyIndex),shared_from_this());
 }
 
 object PyEnvironmentBase::GetBodiesFromEnvironmentBodyIndices(object bodyIndices)

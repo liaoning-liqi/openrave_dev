@@ -35,6 +35,7 @@ namespace py = boost::python;
 
 #include <openravepy/openravepy_int.h>
 #include <openravepy/openravepy_module.h>
+#include <openravepy/openravepy_robotbase.h>
 using py::object;
 using py::extract;
 using py::extract_;
@@ -174,7 +175,7 @@ public:
         return _cache->GetInsertionDistanceMult();
     }
 
-    object GetRobot() {
+    openravepy::PyKinBodyPtr GetRobot() {
         return openravepy::toPyKinBody(_cache->GetRobot(), _pyenv);
     }
 

@@ -20,6 +20,7 @@
 #include <openravepy/openravepy_environmentbase.h>
 #include <openravepy/openravepy_collisioncheckerbase.h>
 #include <openravepy/openravepy_collisionreport.h>
+#include <openravepy/openravepy_robotbase.h>  // to cast PyRobotBasePtr to PyKinBodyPtr
 
 namespace openravepy {
 
@@ -4553,24 +4554,24 @@ PyEnvironmentBasePtr toPyEnvironment(PyKinBodyPtr pykinbody)
     return pykinbody->GetEnv();
 }
 
-PyInterfaceBasePtr toPyKinBody(KinBodyPtr pkinbody, PyEnvironmentBasePtr pyenv)
+PyKinBodyPtr toPyKinBody(KinBodyPtr pkinbody, PyEnvironmentBasePtr pyenv)
 {
     if( !pkinbody ) {
-        return PyInterfaceBasePtr();
+        return PyKinBodyPtr();
     }
     if( pkinbody->IsRobot() ) {
-        return toPyRobot(RaveInterfaceCast<RobotBase>(pkinbody), pyenv);
+        return static_cast<PyKinBodyPtr>(toPyRobot(RaveInterfaceCast<RobotBase>(pkinbody), pyenv));
     }
-    return PyInterfaceBasePtr(new PyKinBody(pkinbody,pyenv));
+    return PyKinBodyPtr(new PyKinBody(pkinbody,pyenv));
 }
 
-object toPyKinBody(KinBodyPtr pkinbody, object opyenv)
+PyKinBodyPtr toPyKinBody(KinBodyPtr pkinbody, object opyenv)
 {
     extract_<PyEnvironmentBasePtr> pyenv(opyenv);
     if( pyenv.check() ) {
-        return py::to_object(toPyKinBody(pkinbody,(PyEnvironmentBasePtr)pyenv));
+        return toPyKinBody(pkinbody,(PyEnvironmentBasePtr)pyenv);
     }
-    return py::none_();
+    return PyKinBodyPtr();
 }
 
 PyKinBodyPtr RaveCreateKinBody(PyEnvironmentBasePtr pyenv, const std::string& name)

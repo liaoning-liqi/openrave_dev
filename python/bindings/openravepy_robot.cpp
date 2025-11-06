@@ -2370,9 +2370,9 @@ RobotBasePtr GetRobot(PyRobotBasePtr pyrobot)
     return !pyrobot ? RobotBasePtr() : pyrobot->GetRobot();
 }
 
-PyInterfaceBasePtr toPyRobot(RobotBasePtr probot, PyEnvironmentBasePtr pyenv)
+PyRobotBasePtr toPyRobot(RobotBasePtr probot, PyEnvironmentBasePtr pyenv)
 {
-    return !probot ? PyInterfaceBasePtr() : PyInterfaceBasePtr(new PyRobotBase(probot,pyenv));
+    return !probot ? PyRobotBasePtr() : PyRobotBasePtr(new PyRobotBase(probot,pyenv));
 }
 
 RobotBase::ManipulatorPtr GetRobotManipulator(object o)
