@@ -3877,7 +3877,7 @@ Because race conditions can pop up when trying to lock the openrave environment 
 #ifdef USE_PYBIND11_PYTHON_BINDINGS
                      .def("Save",&PyEnvironmentBase::Save,
                           "filename"_a,
-                          "options"_a = (int) EnvironmentBase::SelectionOptions::SO_Everything,
+                          "options"_a = EnvironmentBase::SelectionOptions::SO_Everything,
                           "atts"_a = py::none_(),
                           DOXY_FN(EnvironmentBase,Save)
                           )
@@ -3887,7 +3887,7 @@ Because race conditions can pop up when trying to lock the openrave environment 
 #ifdef USE_PYBIND11_PYTHON_BINDINGS
                      .def("WriteToMemory",&PyEnvironmentBase::WriteToMemory,
                           "filetype"_a,
-                          "options"_a = (int) EnvironmentBase::SelectionOptions::SO_Everything,
+                          "options"_a = EnvironmentBase::SelectionOptions::SO_Everything,
                           "atts"_a = py::none_(),
                           DOXY_FN(EnvironmentBase,WriteToMemory)
                           )
