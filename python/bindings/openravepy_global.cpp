@@ -236,12 +236,12 @@ py::dict PyAABB::toDict() {
     return d;
 }
 
-PyAABB PyAABB::GetCombined(const PyAABB& rhs) {
-    return PyAABB(ab.GetCombined(rhs.ab));
+PyAABBPtr PyAABB::GetCombined(const PyAABB& rhs) {
+    return PyAABBPtr(new PyAABB(ab.GetCombined(rhs.ab)));
 }
 
-PyAABB PyAABB::GetTransformed(py::object otrans) {
-    return PyAABB(ab.GetTransformed(ExtractTransform(otrans)));
+PyAABBPtr PyAABB::GetTransformed(py::object otrans) {
+    return PyAABBPtr(new PyAABB(ab.GetTransformed(ExtractTransform(otrans))));
 }
 
 std::string PyAABB::__repr__() {
@@ -274,9 +274,9 @@ AABB ExtractAABB(object o)
     return ((OPENRAVE_SHARED_PTR<PyAABB>)pyaabb)->ab;
 }
 
-object toPyAABB(const AABB& ab)
+PyAABBPtr toPyAABB(const AABB& ab)
 {
-    return py::to_object(OPENRAVE_SHARED_PTR<PyAABB>(new PyAABB(ab)));
+    return PyAABBPtr(new PyAABB(ab));
 }
 
 class PyOrientedBox
@@ -1438,7 +1438,7 @@ object OrientedBoxFromAABB(object oab, object otransform)
     return toPyOrientedBox(OrientedBoxFromAABB(ExtractAABB(oab), ExtractTransform(otransform)));
 }
 
-object AABBFromOrientedBox(object oobb)
+PyAABBPtr AABBFromOrientedBox(object oobb)
 {
     return toPyAABB(AABBFromOrientedBox(ExtractOrientedBox(oobb)));
 }

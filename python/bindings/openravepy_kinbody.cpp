@@ -360,7 +360,7 @@ object PyGeometryInfo::ComputeInnerEmptyVolume()
     return py::make_tuple(py::none_(), py::none_());
 }
 
-object PyGeometryInfo::ComputeAABB(object otransform) {
+PyAABBPtr PyGeometryInfo::ComputeAABB(object otransform) {
     KinBody::GeometryInfoPtr pgeominfo = GetGeometryInfo();
     return toPyAABB(pgeominfo->ComputeAABB(ExtractTransform(otransform)));
 }
@@ -1457,7 +1457,7 @@ uint8_t PyGeometry::GetSideWallExists() const {
 object PyGeometry::GetCollisionMesh() {
     return toPyTriMesh(_pgeometry->GetCollisionMesh());
 }
-object PyGeometry::ComputeAABB(object otransform) const {
+PyAABBPtr PyGeometry::ComputeAABB(object otransform) const {
     return toPyAABB(_pgeometry->ComputeAABB(ExtractTransform(otransform)));
 }
 void PyGeometry::SetDraw(bool bDraw) {
@@ -1704,28 +1704,28 @@ bool PyLink::IsParentLink(OPENRAVE_SHARED_PTR<PyLink> pylink) const {
 object PyLink::GetCollisionData() {
     return toPyTriMesh(_plink->GetCollisionData());
 }
-object PyLink::ComputeLocalAABB() const { // TODO object otransform=py::none_()
+PyAABBPtr PyLink::ComputeLocalAABB() const { // TODO object otransform=py::none_()
     //if( IS_PYTHONOBJECT_NONE(otransform) ) {
     return toPyAABB(_plink->ComputeLocalAABB());
 }
 
-object PyLink::ComputeAABB() const {
+PyAABBPtr PyLink::ComputeAABB() const {
     return toPyAABB(_plink->ComputeAABB());
 }
 
-object PyLink::ComputeAABBFromTransform(object otransform) const {
+PyAABBPtr PyLink::ComputeAABBFromTransform(object otransform) const {
     return toPyAABB(_plink->ComputeAABBFromTransform(ExtractTransform(otransform)));
 }
 
-object PyLink::ComputeLocalAABBForGeometryGroup(const std::string& geomgroupname) const {
+PyAABBPtr PyLink::ComputeLocalAABBForGeometryGroup(const std::string& geomgroupname) const {
     return toPyAABB(_plink->ComputeLocalAABBForGeometryGroup(geomgroupname));
 }
 
-object PyLink::ComputeAABBForGeometryGroup(const std::string& geomgroupname) const {
+PyAABBPtr PyLink::ComputeAABBForGeometryGroup(const std::string& geomgroupname) const {
     return toPyAABB(_plink->ComputeAABBForGeometryGroup(geomgroupname));
 }
 
-object PyLink::ComputeAABBForGeometryGroupFromTransform(const std::string& geomgroupname, object otransform) const {
+PyAABBPtr PyLink::ComputeAABBForGeometryGroupFromTransform(const std::string& geomgroupname, object otransform) const {
     return toPyAABB(_plink->ComputeAABBForGeometryGroupFromTransform(geomgroupname, ExtractTransform(otransform)));
 }
 
@@ -3633,12 +3633,12 @@ object PyKinBody::GetLinkAccelerations(object odofaccelerations, object oexterna
 #endif // USE_PYBIND11_PYTHON_BINDINGS
 }
 
-object PyKinBody::ComputeAABB(bool bEnabledOnlyLinks)
+PyAABBPtr PyKinBody::ComputeAABB(bool bEnabledOnlyLinks)
 {
     return toPyAABB(_pbody->ComputeAABB(bEnabledOnlyLinks));
 }
 
-object PyKinBody::ComputeAABBFromTransform(object otransform, bool bEnabledOnlyLinks)
+PyAABBPtr PyKinBody::ComputeAABBFromTransform(object otransform, bool bEnabledOnlyLinks)
 {
     return toPyAABB(_pbody->ComputeAABBFromTransform(ExtractTransform(otransform), bEnabledOnlyLinks));
 }
@@ -3648,22 +3648,22 @@ py::object PyKinBody::ComputeOBBOnAxes(py::object oquat, bool bEnabledOnlyLinks)
     return toPyOrientedBox(_pbody->ComputeOBBOnAxes(ExtractVector4(oquat), bEnabledOnlyLinks));
 }
 
-object PyKinBody::ComputeLocalAABB(bool bEnabledOnlyLinks)
+PyAABBPtr PyKinBody::ComputeLocalAABB(bool bEnabledOnlyLinks)
 {
     return toPyAABB(_pbody->ComputeLocalAABB(bEnabledOnlyLinks));
 }
 
-object PyKinBody::ComputeAABBForGeometryGroup(const std::string& geomgroupname, bool bEnabledOnlyLinks)
+PyAABBPtr PyKinBody::ComputeAABBForGeometryGroup(const std::string& geomgroupname, bool bEnabledOnlyLinks)
 {
     return toPyAABB(_pbody->ComputeAABBForGeometryGroup(geomgroupname, bEnabledOnlyLinks));
 }
 
-object PyKinBody::ComputeAABBForGeometryGroupFromTransform(const std::string& geomgroupname, object otransform, bool bEnabledOnlyLinks)
+PyAABBPtr PyKinBody::ComputeAABBForGeometryGroupFromTransform(const std::string& geomgroupname, object otransform, bool bEnabledOnlyLinks)
 {
     return toPyAABB(_pbody->ComputeAABBForGeometryGroupFromTransform(geomgroupname, ExtractTransform(otransform), bEnabledOnlyLinks));
 }
 
-object PyKinBody::ComputeLocalAABBForGeometryGroup(const std::string& geomgroupname, bool bEnabledOnlyLinks)
+PyAABBPtr PyKinBody::ComputeLocalAABBForGeometryGroup(const std::string& geomgroupname, bool bEnabledOnlyLinks)
 {
     return toPyAABB(_pbody->ComputeLocalAABBForGeometryGroup(geomgroupname, bEnabledOnlyLinks));
 }

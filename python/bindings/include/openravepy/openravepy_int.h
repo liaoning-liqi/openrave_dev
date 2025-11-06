@@ -595,6 +595,9 @@ public:
     RAY r;
 };
 
+class PyAABB;
+typedef OPENRAVE_SHARED_PTR<PyAABB> PyAABBPtr;
+
 class OPENRAVEPY_API PyAABB
 {
 public:
@@ -612,9 +615,9 @@ public:
 
     py::dict toDict();
 
-    PyAABB GetCombined(const PyAABB& rhs);
+    PyAABBPtr GetCombined(const PyAABB& rhs);
 
-    PyAABB GetTransformed(py::object otrans);
+    PyAABBPtr GetTransformed(py::object otrans);
 
     virtual std::string __repr__();
     virtual std::string __str__();
@@ -626,7 +629,7 @@ public:
 OPENRAVEPY_API py::object toPyGraphHandle(const GraphHandlePtr p);
 OPENRAVEPY_API py::object toPyUserData(UserDataPtr p);
 
-OPENRAVEPY_API py::object toPyAABB(const AABB& ab);
+OPENRAVEPY_API PyAABBPtr toPyAABB(const AABB& ab);
 /// \brief PyAABB -> AABB
 OPENRAVEPY_API AABB ExtractAABB(py::object o);
 OPENRAVEPY_API py::object toPyOrientedBox(const OrientedBox& obb);

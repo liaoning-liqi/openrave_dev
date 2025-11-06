@@ -55,7 +55,7 @@ public:
     void Init(const KinBody::GeometryInfo& info);
 
     object ComputeInnerEmptyVolume();
-    object ComputeAABB(object otransform);
+    PyAABBPtr ComputeAABB(object otransform);
     void ConvertUnitScale(dReal fUnitScale);
 
     object SerializeJSON(dReal fUnitScale=1.0, object options=py::none_());
@@ -280,7 +280,7 @@ public:
     uint8_t GetSideWallExists() const;
 
     object GetCollisionMesh();
-    object ComputeAABB(object otransform) const;
+    PyAABBPtr ComputeAABB(object otransform) const;
     void SetDraw(bool bDraw);
     bool SetVisible(bool visible);
     void SetTransparency(float f);
@@ -367,14 +367,14 @@ public:
     bool IsParentLink(OPENRAVE_SHARED_PTR<PyLink> pylink) const;
 
     object GetCollisionData();
-    object ComputeLocalAABB() const;
+    PyAABBPtr ComputeLocalAABB() const;
 
-    object ComputeAABB() const;
-    object ComputeAABBFromTransform(object otransform) const;
+    PyAABBPtr ComputeAABB() const;
+    PyAABBPtr ComputeAABBFromTransform(object otransform) const;
 
-    object ComputeLocalAABBForGeometryGroup(const std::string& geomgroupname) const;
-    object ComputeAABBForGeometryGroup(const std::string& geomgroupname) const;
-    object ComputeAABBForGeometryGroupFromTransform(const std::string& geomgroupname, object otransform) const;
+    PyAABBPtr ComputeLocalAABBForGeometryGroup(const std::string& geomgroupname) const;
+    PyAABBPtr ComputeAABBForGeometryGroup(const std::string& geomgroupname) const;
+    PyAABBPtr ComputeAABBForGeometryGroupFromTransform(const std::string& geomgroupname, object otransform) const;
 
     py::array_t<dReal> GetTransform() const;
     py::array_t<dReal> GetTransformPose() const;
