@@ -100,14 +100,14 @@ public:
         py::array_int GetGripperIndices();
         py::array_int GetArmJoints();
         py::array_int GetArmIndices();
-        object GetArmDOFValues();
-        object GetGripperDOFValues();
+        py::array_t<dReal> GetArmDOFValues();
+        py::array_t<dReal> GetGripperDOFValues();
         int GetArmDOF();
         int GetGripperDOF();
-        object GetClosingDirection();
-        object GetChuckingDirection();
-        object GetDirection();
-        object GetLocalToolDirection();
+        py::array_t<dReal> GetClosingDirection();
+        py::array_t<dReal> GetChuckingDirection();
+        py::array_t<dReal> GetDirection();
+        py::array_t<dReal> GetLocalToolDirection();
         bool IsGrabbing(PyKinBodyPtr pbody);
 
         int GetNumFreeParameters() const;
@@ -146,14 +146,14 @@ public:
 
         object GetIkParameterization(object oparam, bool inworld=true);
 
-        object GetChildJoints();
-        object GetChildDOFIndices();
+        py::list GetChildJoints();
+        py::list GetChildDOFIndices();
 
-        object GetChildLinks();
+        py::list GetChildLinks();
 
         bool IsChildLink(object pylink);
 
-        object GetIndependentLinks();
+        py::list GetIndependentLinks();
 
         object GetArmConfigurationSpecification(const std::string& interpolation="") const;
         object GetIkConfigurationSpecification(IkParameterizationType iktype, const std::string& interpolation="") const;
@@ -166,10 +166,10 @@ public:
         bool CheckIndependentCollision() const;
         bool CheckIndependentCollision(PyCollisionReportPtr pReport) const;
 
-        object CalculateJacobian();
-        object CalculateRotationJacobian();
+        py::array_t<dReal> CalculateJacobian();
+        py::array_t<dReal> CalculateRotationJacobian();
 
-        object CalculateAngularVelocityJacobian();
+        py::array_t<dReal> CalculateAngularVelocityJacobian();
 
         object GetInfo();
         std::string GetStructureHash() const;
@@ -243,25 +243,25 @@ public:
         bool SetActive(int active);
 
         int IsActive();
-        object GetTransform() const;
-        object GetTransformPose() const;
+        py::array_t<dReal> GetTransform() const;
+        py::array_t<dReal> GetTransformPose() const;
 
-        object GetRelativeTransform() const;
-        object GetRelativeTransformPose() const;
+        py::array_t<dReal> GetRelativeTransform() const;
+        py::array_t<dReal> GetRelativeTransformPose() const;
 
         void SetLinkEnable(bool enable);
 
         void SetLinkVisible(bool visible);
 
-        object GetResolvedLinks();
+        py::list GetResolvedLinks();
 
-        object GetResolvedJoints();
+        py::list GetResolvedJoints();
 
-        object GetResolvedManipulators();
+        py::list GetResolvedManipulators();
 
-        object GetResolvedAttachedSensors();
+        py::list GetResolvedAttachedSensors();
 
-        object GetResolvedGripperInfos();
+        py::list GetResolvedGripperInfos();
 
         bool CanProvideManipulator(const std::string& resolvedManipulatorName);
 

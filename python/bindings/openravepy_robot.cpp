@@ -808,7 +808,7 @@ py::array_int PyRobotBase::PyManipulator::GetArmJoints() {
 py::array_int PyRobotBase::PyManipulator::GetArmIndices() {
     return toPyArray(_pmanip->GetArmIndices());
 }
-object PyRobotBase::PyManipulator::GetArmDOFValues()
+py::array_t<dReal> PyRobotBase::PyManipulator::GetArmDOFValues()
 {
     if( _pmanip->GetArmDOF() == 0 ) {
         return py::empty_array_astype<dReal>();
@@ -817,7 +817,7 @@ object PyRobotBase::PyManipulator::GetArmDOFValues()
     _pmanip->GetArmDOFValues(values);
     return toPyArray(values);
 }
-object PyRobotBase::PyManipulator::GetGripperDOFValues()
+py::array_t<dReal> PyRobotBase::PyManipulator::GetGripperDOFValues()
 {
     if( _pmanip->GetGripperDOF() == 0 ) {
         return py::empty_array_astype<dReal>();
@@ -832,17 +832,17 @@ int PyRobotBase::PyManipulator::GetArmDOF() {
 int PyRobotBase::PyManipulator::GetGripperDOF() {
     return _pmanip->GetGripperDOF();
 }
-object PyRobotBase::PyManipulator::GetClosingDirection() {
+py::array_t<dReal> PyRobotBase::PyManipulator::GetClosingDirection() {
     RAVELOG_WARN("GetClosingDirection is deprecated, use GetChuckingDirection\n");
     return toPyArray(_pmanip->GetChuckingDirection());
 }
-object PyRobotBase::PyManipulator::GetChuckingDirection() {
+py::array_t<dReal> PyRobotBase::PyManipulator::GetChuckingDirection() {
     return toPyArray(_pmanip->GetChuckingDirection());
 }
-object PyRobotBase::PyManipulator::GetDirection() {
+py::array_t<dReal> PyRobotBase::PyManipulator::GetDirection() {
     return toPyVector3(_pmanip->GetLocalToolDirection());
 }
-object PyRobotBase::PyManipulator::GetLocalToolDirection() {
+py::array_t<dReal> PyRobotBase::PyManipulator::GetLocalToolDirection() {
     return toPyVector3(_pmanip->GetLocalToolDirection());
 }
 bool PyRobotBase::PyManipulator::IsGrabbing(PyKinBodyPtr pbody) {
@@ -1157,7 +1157,7 @@ object PyRobotBase::PyManipulator::GetIkParameterization(object oparam, bool inw
     return toPyIkParameterization(_pmanip->GetIkParameterization((IkParameterizationType)extract<IkParameterizationType>(oparam),inworld));
 }
 
-object PyRobotBase::PyManipulator::GetChildJoints() {
+py::list PyRobotBase::PyManipulator::GetChildJoints() {
     std::vector<KinBody::JointPtr> vjoints;
     _pmanip->GetChildJoints(vjoints);
     py::list joints;
@@ -1166,7 +1166,7 @@ object PyRobotBase::PyManipulator::GetChildJoints() {
     }
     return joints;
 }
-object PyRobotBase::PyManipulator::GetChildDOFIndices() {
+py::list PyRobotBase::PyManipulator::GetChildDOFIndices() {
     std::vector<int> vdofindices;
     _pmanip->GetChildDOFIndices(vdofindices);
     py::list dofindices;
@@ -1176,7 +1176,7 @@ object PyRobotBase::PyManipulator::GetChildDOFIndices() {
     return dofindices;
 }
 
-object PyRobotBase::PyManipulator::GetChildLinks() {
+py::list PyRobotBase::PyManipulator::GetChildLinks() {
     std::vector<KinBody::LinkPtr> vlinks;
     _pmanip->GetChildLinks(vlinks);
     py::list links;
@@ -1192,7 +1192,7 @@ bool PyRobotBase::PyManipulator::IsChildLink(object pylink)
     return _pmanip->IsChildLink(*GetKinBodyLink(pylink));
 }
 
-object PyRobotBase::PyManipulator::GetIndependentLinks() {
+py::list PyRobotBase::PyManipulator::GetIndependentLinks() {
     std::vector<KinBody::LinkPtr> vlinks;
     _pmanip->GetIndependentLinks(vlinks);
     py::list links;
@@ -1303,7 +1303,7 @@ bool PyRobotBase::PyManipulator::CheckIndependentCollision(PyCollisionReportPtr 
     return bCollision;
 }
 
-object PyRobotBase::PyManipulator::CalculateJacobian()
+py::array_t<dReal> PyRobotBase::PyManipulator::CalculateJacobian()
 {
     std::vector<dReal> vjacobian;
     _pmanip->CalculateJacobian(vjacobian);
@@ -1311,7 +1311,7 @@ object PyRobotBase::PyManipulator::CalculateJacobian()
     return toPyArray(vjacobian,dims);
 }
 
-object PyRobotBase::PyManipulator::CalculateRotationJacobian()
+py::array_t<dReal> PyRobotBase::PyManipulator::CalculateRotationJacobian()
 {
     std::vector<dReal> vjacobian;
     _pmanip->CalculateRotationJacobian(vjacobian);
@@ -1319,7 +1319,7 @@ object PyRobotBase::PyManipulator::CalculateRotationJacobian()
     return toPyArray(vjacobian,dims);
 }
 
-object PyRobotBase::PyManipulator::CalculateAngularVelocityJacobian()
+py::array_t<dReal> PyRobotBase::PyManipulator::CalculateAngularVelocityJacobian()
 {
     std::vector<dReal> vjacobian;
     _pmanip->CalculateAngularVelocityJacobian(vjacobian);
@@ -1477,17 +1477,17 @@ bool PyRobotBase::PyConnectedBody::SetActive(int active) {
 int PyRobotBase::PyConnectedBody::IsActive() {
     return _pconnected->IsActive();
 }
-object PyRobotBase::PyConnectedBody::GetTransform() const {
+py::array_t<dReal> PyRobotBase::PyConnectedBody::GetTransform() const {
     return ReturnTransform(_pconnected->GetTransform());
 }
-object PyRobotBase::PyConnectedBody::GetTransformPose() const {
+py::array_t<dReal> PyRobotBase::PyConnectedBody::GetTransformPose() const {
     return toPyArray(_pconnected->GetTransform());
 }
 
-object PyRobotBase::PyConnectedBody::GetRelativeTransform() const {
+py::array_t<dReal> PyRobotBase::PyConnectedBody::GetRelativeTransform() const {
     return ReturnTransform(_pconnected->GetRelativeTransform());
 }
-object PyRobotBase::PyConnectedBody::GetRelativeTransformPose() const {
+py::array_t<dReal> PyRobotBase::PyConnectedBody::GetRelativeTransformPose() const {
     return toPyArray(_pconnected->GetRelativeTransform());
 }
 
@@ -1499,7 +1499,7 @@ void PyRobotBase::PyConnectedBody::SetLinkVisible(bool visible) {
     _pconnected->SetLinkVisible(visible);
 }
 
-object PyRobotBase::PyConnectedBody::GetResolvedLinks()
+py::list PyRobotBase::PyConnectedBody::GetResolvedLinks()
 {
     py::list olinks;
     std::vector<KinBody::LinkPtr> vlinks;
@@ -1510,7 +1510,7 @@ object PyRobotBase::PyConnectedBody::GetResolvedLinks()
     return olinks;
 }
 
-object PyRobotBase::PyConnectedBody::GetResolvedJoints()
+py::list PyRobotBase::PyConnectedBody::GetResolvedJoints()
 {
     py::list ojoints;
     std::vector<KinBody::JointPtr> vjoints;
@@ -1521,7 +1521,7 @@ object PyRobotBase::PyConnectedBody::GetResolvedJoints()
     return ojoints;
 }
 
-object PyRobotBase::PyConnectedBody::GetResolvedManipulators()
+py::list PyRobotBase::PyConnectedBody::GetResolvedManipulators()
 {
     py::list omanips;
     std::vector<RobotBase::ManipulatorPtr> vmanips;
@@ -1532,7 +1532,7 @@ object PyRobotBase::PyConnectedBody::GetResolvedManipulators()
     return omanips;
 }
 
-object PyRobotBase::PyConnectedBody::GetResolvedAttachedSensors()
+py::list PyRobotBase::PyConnectedBody::GetResolvedAttachedSensors()
 {
     py::list oattachedSensors;
     std::vector<RobotBase::AttachedSensorPtr> vattachedSensors;
@@ -1543,7 +1543,7 @@ object PyRobotBase::PyConnectedBody::GetResolvedAttachedSensors()
     return oattachedSensors;
 }
 
-object PyRobotBase::PyConnectedBody::GetResolvedGripperInfos()
+py::list PyRobotBase::PyConnectedBody::GetResolvedGripperInfos()
 {
     py::list pyGripperInfos;
     std::vector<RobotBase::GripperInfoPtr> vgripperInfos;
