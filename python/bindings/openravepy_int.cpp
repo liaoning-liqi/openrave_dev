@@ -1972,7 +1972,7 @@ bool PyEnvironmentBase::LoadData(const std::string &data, object odictatts) {
     return _penv->LoadData(data, dictatts);
 }
 
-void PyEnvironmentBase::Save(const std::string &filename, const int options, object odictatts) {
+void PyEnvironmentBase::Save(const std::string &filename, const EnvironmentBase::SelectionOptions options, object odictatts) {
     bool bSuccess = false;
     // avoid destined extract failure
     if(!IS_PYTHONOBJECT_NONE(odictatts)) {
@@ -1993,7 +1993,7 @@ void PyEnvironmentBase::Save(const std::string &filename, const int options, obj
     }
 }
 
-object PyEnvironmentBase::WriteToMemory(const std::string &filetype, const int options, object odictatts) {
+object PyEnvironmentBase::WriteToMemory(const std::string &filetype, const EnvironmentBase::SelectionOptions options, object odictatts) {
     std::vector<char> output;
     bool bSuccess = false;
     // avoid destined extract failure
@@ -3567,12 +3567,21 @@ OPENRAVE_PYTHON_MODULE(openravepy_int)
     OpenRAVEBoostPythonExceptionTranslator<boost::filesystem::filesystem_error>();
 #endif
 
+
+
 #ifdef USE_PYBIND11_PYTHON_BINDINGS
     using namespace py::literals;  // "..."_a
-    class_<PyEnvironmentBase, PyEnvironmentBasePtr > classenv(m, "Environment", DOXY_CLASS(EnvironmentBase));
+    class_<PyEnvironmentBase, PyEnvironmentBasePtr > env(m, "Environment", DOXY_CLASS(EnvironmentBase));
 #else
-    class_<PyEnvironmentBase, PyEnvironmentBasePtr > classenv("Environment", DOXY_CLASS(EnvironmentBase));
+    class_<PyEnvironmentBase, PyEnvironmentBasePtr > env("Environment", DOXY_CLASS(EnvironmentBase));
 #endif
+
+#ifdef USE_PYBIND11_PYTHON_BINDINGS
+    enum_<EnvironmentBase::SelectionOptions> selectionoptions(env, "SelectionOptions" DOXY_ENUM(SelectionOptions));
+#else
+    enum_<EnvironmentBase::SelectionOptions> selectionoptions("SelectionOptions" DOXY_ENUM(SelectionOptions));
+#endif
+
     {
         void (PyInterfaceBase::*setuserdata1)(PyUserData) = &PyInterfaceBase::SetUserData;
         void (PyInterfaceBase::*setuserdata2)(object) = &PyInterfaceBase::SetUserData;
@@ -3792,7 +3801,7 @@ Because race conditions can pop up when trying to lock the openrave environment 
         object (PyEnvironmentBase::*readtrimeshdata1)(const std::string&,const std::string&) = &PyEnvironmentBase::ReadTrimeshData;
         object (PyEnvironmentBase::*readtrimeshdata2)(const std::string&,const std::string&,object) = &PyEnvironmentBase::ReadTrimeshData;
 
-        scope_ env = classenv
+        env
 #ifdef USE_PYBIND11_PYTHON_BINDINGS
                      .def(init<int>(), "options"_a = (int) ECO_StartSimulationThread)
                      .def(init<std::string, int>(), "name"_a, "options"_a = (int) ECO_StartSimulationThread)
@@ -4185,11 +4194,7 @@ Because race conditions can pop up when trying to lock the openrave environment 
                      .def("__unicode__",&PyEnvironmentBase::__unicode__)
         ;
 
-#ifdef USE_PYBIND11_PYTHON_BINDINGS
-        object selectionoptions = enum_<EnvironmentBase::SelectionOptions>(env, "SelectionOptions" DOXY_ENUM(SelectionOptions))
-#else
-        object selectionoptions = enum_<EnvironmentBase::SelectionOptions>("SelectionOptions" DOXY_ENUM(SelectionOptions))
-#endif
+        selectionoptions
                                   .value("NoRobots",EnvironmentBase::SelectionOptions::SO_NoRobots)
                                   .value("Robots",EnvironmentBase::SelectionOptions::SO_Robots)
                                   .value("Everything",EnvironmentBase::SelectionOptions::SO_Everything)

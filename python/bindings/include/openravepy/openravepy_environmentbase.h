@@ -192,9 +192,9 @@ public:
     bool LoadData(const std::string &data);
     bool LoadData(const std::string &data, object odictatts);
 
-    void Save(const std::string &filename, const int options = EnvironmentBase::SelectionOptions::SO_Everything, object odictatts = py::none_());
+    void Save(const std::string &filename, const EnvironmentBase::SelectionOptions options = EnvironmentBase::SelectionOptions::SO_Everything, object odictatts = py::none_());
 
-    object WriteToMemory(const std::string &filetype, const int options = EnvironmentBase::SelectionOptions::SO_Everything, object odictatts = py::none_());
+    object WriteToMemory(const std::string &filetype, const EnvironmentBase::SelectionOptions options = EnvironmentBase::SelectionOptions::SO_Everything, object odictatts = py::none_());
 
     /// will be unlocking GIL since doing FS or memory-intensive operations
     //@{
