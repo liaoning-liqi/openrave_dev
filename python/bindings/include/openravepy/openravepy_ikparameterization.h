@@ -86,7 +86,7 @@ public:
     py::tuple GetTranslationZAxisAngleYNorm4D();
     dReal ComputeDistanceSqr(PyIkParameterizationPtr pyikparam);
 
-    object Transform(object otrans) const;
+    PyIkParameterizationPtr Transform(object otrans) const;
 
     void SetCustomValues(const std::string& name, object ovalues);
 

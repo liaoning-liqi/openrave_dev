@@ -21,7 +21,9 @@
 #include <openravepy/openravepy_configurationspecification.h>
 #include <openravepy/openravepy_jointinfo.h>
 #include <openravepy/openravepy_environmentbase.h>
+#include <openravepy/openravepy_ikparameterization.h>
 #include <openravepy/openravepy_iksolverbase.h>
+#include <openravepy/openravepy_robotbase.h>
 #include <openravepy/openravepy_manipulatorinfo.h>
 #include <openravepy/openravepy_robotbase.h>
 
@@ -1147,7 +1149,7 @@ object PyRobotBase::PyManipulator::FindIKSolutions(object oparam, object freepar
     }
 }
 
-object PyRobotBase::PyManipulator::GetIkParameterization(object oparam, bool inworld)
+PyIkParameterizationPtr PyRobotBase::PyManipulator::GetIkParameterization(object oparam, bool inworld)
 {
     IkParameterization ikparam;
     if( ExtractIkParameterization(oparam,ikparam) ) {

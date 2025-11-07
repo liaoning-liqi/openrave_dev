@@ -265,7 +265,7 @@ dReal PyIkParameterization::ComputeDistanceSqr(PyIkParameterizationPtr pyikparam
     return _param.ComputeDistanceSqr(pyikparam->_param);
 }
 
-object PyIkParameterization::Transform(object otrans) const
+PyIkParameterizationPtr PyIkParameterization::Transform(object otrans) const
 {
     return toPyIkParameterization(ExtractTransform(otrans) * _param);
 }
@@ -380,14 +380,14 @@ bool ExtractIkParameterization(object o, IkParameterization& ikparam) {
     return false;
 }
 
-object toPyIkParameterization(const IkParameterization &ikparam)
+PyIkParameterizationPtr toPyIkParameterization(const IkParameterization &ikparam)
 {
-    return py::to_object(PyIkParameterizationPtr(new PyIkParameterization(ikparam)));
+    return PyIkParameterizationPtr(new PyIkParameterization(ikparam));
 }
 
-object toPyIkParameterization(const std::string& serializeddata)
+PyIkParameterizationPtr toPyIkParameterization(const std::string& serializeddata)
 {
-    return py::to_object(PyIkParameterizationPtr(new PyIkParameterization(serializeddata)));
+    return PyIkParameterizationPtr(new PyIkParameterization(serializeddata));
 }
 
 class IkParameterization_pickle_suite

@@ -44,7 +44,7 @@ public:
     object description = py::none_();
     object errorOrigin = py::none_();
     object jointValues = py::none_();
-    object ikparam = py::none_();
+    PyIkParameterizationPtr ikparam = PyIkParameterizationPtr();
     uint32_t statusCode = 0;
 };
 

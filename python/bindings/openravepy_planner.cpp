@@ -22,6 +22,7 @@
 #include <openravepy/openravepy_collisionreport.h>
 #include <openravepy/openravepy_trajectorybase.h>
 #include <openravepy/openravepy_plannerbase.h>
+#include <openravepy/openravepy_ikparameterization.h>
 
 namespace openravepy {
 

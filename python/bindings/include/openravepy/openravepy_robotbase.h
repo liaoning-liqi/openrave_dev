@@ -144,7 +144,7 @@ public:
         object FindIKSolutions(object oparam, int filteroptions, bool ikreturn=false, bool releasegil=false, PyIkFailureAccumulatorBasePtr=nullptr) const;
         object FindIKSolutions(object oparam, object freeparams, int filteroptions, bool ikreturn=false, bool releasegil=false, PyIkFailureAccumulatorBasePtr=nullptr) const;
 
-        object GetIkParameterization(object oparam, bool inworld=true);
+        PyIkParameterizationPtr GetIkParameterization(object oparam, bool inworld=true);
 
         py::list GetChildJoints();
         py::list GetChildDOFIndices();

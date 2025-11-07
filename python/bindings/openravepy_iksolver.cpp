@@ -19,6 +19,7 @@
 #include <openravepy/openravepy_environmentbase.h>
 #include <openravepy/openravepy_collisionreport.h>
 #include <openravepy/openravepy_iksolverbase.h>
+#include <openravepy/openravepy_ikparameterization.h>
 #include <openrave/utils.h>
 
 namespace openravepy {
@@ -58,7 +59,7 @@ object PyIkFailureInfo::GetConfiguration() {
 }
 object PyIkFailureInfo::GetIkParam() {
     if( _ikFailureInfo.HasValidIkParam() ) {
-        return toPyIkParameterization(_ikFailureInfo.GetIkParam());
+        return py::to_object(toPyIkParameterization(_ikFailureInfo.GetIkParam()));
     }
     else {
         return py::none_();

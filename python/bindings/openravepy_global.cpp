@@ -21,6 +21,7 @@
 #include <openravepy/openravepy_environmentbase.h>
 #include <openravepy/openravepy_configurationspecification.h>
 #include <openravepy/openravepy_viewer.h>
+#include <openravepy/openravepy_ikparameterization.h>
 #include <openrave/xmlreaders.h>
 #include <openrave/utils.h>
 
@@ -691,7 +692,7 @@ object PyConfigurationSpecification::ExtractIkParameterization(object odata, int
     std::vector<dReal> vdata = ExtractArray<dReal>(odata);
     bool bfound = _spec.ExtractIkParameterization(ikparam, vdata.begin(), timederivative, robotname, manipulatorname);
     if( bfound ) {
-        return toPyIkParameterization(ikparam);
+        return py::to_object(toPyIkParameterization(ikparam));
     }
     else {
         return py::none_();

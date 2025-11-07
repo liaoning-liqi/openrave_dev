@@ -170,8 +170,8 @@ OPENRAVEPY_API py::list toPyArray(const std::vector<KinBody::GeometryInfoPtr>& i
 OPENRAVEPY_API ReadablePtr ExtractReadable(py::object o);
 OPENRAVEPY_API py::object toPyReadable(ReadablePtr p);
 OPENRAVEPY_API bool ExtractIkParameterization(py::object o, IkParameterization& ikparam);
-OPENRAVEPY_API py::object toPyIkParameterization(const IkParameterization& ikparam);
-OPENRAVEPY_API py::object toPyIkParameterization(const std::string& serializeddata);
+OPENRAVEPY_API PyIkParameterizationPtr toPyIkParameterization(const IkParameterization& ikparam);
+OPENRAVEPY_API PyIkParameterizationPtr toPyIkParameterization(const std::string& serializeddata);
 OPENRAVEPY_API py::object toPyObject(const PyGeometryInfoPtr& pygeom);
 //@}
 
