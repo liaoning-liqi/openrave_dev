@@ -3577,10 +3577,19 @@ OPENRAVE_PYTHON_MODULE(openravepy_int)
 #endif
 
 #ifdef USE_PYBIND11_PYTHON_BINDINGS
-    enum_<EnvironmentBase::SelectionOptions> selectionoptions(env, "SelectionOptions" DOXY_ENUM(SelectionOptions));
+    object selectionoptions = enum_<EnvironmentBase::SelectionOptions>(env, "SelectionOptions" DOXY_ENUM(SelectionOptions))
 #else
-    enum_<EnvironmentBase::SelectionOptions> selectionoptions("SelectionOptions" DOXY_ENUM(SelectionOptions));
+    object selectionoptions = enum_<EnvironmentBase::SelectionOptions>("SelectionOptions" DOXY_ENUM(SelectionOptions))
 #endif
+    .value("NoRobots",EnvironmentBase::SelectionOptions::SO_NoRobots)
+    .value("Robots",EnvironmentBase::SelectionOptions::SO_Robots)
+    .value("Everything",EnvironmentBase::SelectionOptions::SO_Everything)
+    .value("Body",EnvironmentBase::SelectionOptions::SO_Body)
+    .value("AllExceptBody",EnvironmentBase::SelectionOptions::SO_AllExceptBody)
+#ifdef USE_PYBIND11_PYTHON_BINDINGS
+    .export_values()
+#endif
+    ;
 
     {
         void (PyInterfaceBase::*setuserdata1)(PyUserData) = &PyInterfaceBase::SetUserData;
@@ -4194,16 +4203,6 @@ Because race conditions can pop up when trying to lock the openrave environment 
                      .def("__unicode__",&PyEnvironmentBase::__unicode__)
         ;
 
-        selectionoptions
-                                  .value("NoRobots",EnvironmentBase::SelectionOptions::SO_NoRobots)
-                                  .value("Robots",EnvironmentBase::SelectionOptions::SO_Robots)
-                                  .value("Everything",EnvironmentBase::SelectionOptions::SO_Everything)
-                                  .value("Body",EnvironmentBase::SelectionOptions::SO_Body)
-                                  .value("AllExceptBody",EnvironmentBase::SelectionOptions::SO_AllExceptBody)
-#ifdef USE_PYBIND11_PYTHON_BINDINGS
-                                  .export_values()
-#endif
-        ;
         env.attr("TriangulateOptions") = selectionoptions;
     }
 
