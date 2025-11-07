@@ -22,6 +22,7 @@
 #include <openravepy/openravepy_configurationspecification.h>
 #include <openravepy/openravepy_viewer.h>
 #include <openravepy/openravepy_ikparameterization.h>
+#include <openravepy/openravepy_trajectorybase.h>
 #include <openrave/xmlreaders.h>
 #include <openrave/utils.h>
 
@@ -1078,7 +1079,7 @@ PyInterfaceBasePtr pyRaveClone(PyInterfaceBasePtr pyreference, int cloningoption
     case PT_PhysicsEngine: return toPyPhysicsEngine(RaveInterfaceCast<PhysicsEngineBase>(pclone), pyenv);
     case PT_Sensor: return toPySensor(RaveInterfaceCast<SensorBase>(pclone), pyenv);
     case PT_CollisionChecker: return toPyCollisionChecker(RaveInterfaceCast<CollisionCheckerBase>(pclone), pyenv);
-    case PT_Trajectory: return toPyTrajectory(RaveInterfaceCast<TrajectoryBase>(pclone), pyenv);
+    case PT_Trajectory: return static_cast<PyInterfaceBasePtr>(toPyTrajectory(RaveInterfaceCast<TrajectoryBase>(pclone), pyenv));
     case PT_Viewer: return static_cast<PyInterfaceBasePtr>(toPyViewer(RaveInterfaceCast<ViewerBase>(pclone), pyenv));
     case PT_SpaceSampler: return toPySpaceSampler(RaveInterfaceCast<SpaceSamplerBase>(pclone), pyenv);
     }

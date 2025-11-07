@@ -126,8 +126,8 @@ void PyPlannerBase::PyPlannerParameters::SetConfigurationSpecification(PyEnviron
     _paramswrite->SetConfigurationSpecification(openravepy::GetEnvironment(pyenv), openravepy::GetConfigurationSpecification(pyspec));
 }
 
-object PyPlannerBase::PyPlannerParameters::GetConfigurationSpecification() const {
-    return py::to_object(openravepy::toPyConfigurationSpecification(_paramswrite->_configurationspecification));
+PyConfigurationSpecificationPtr PyPlannerBase::PyPlannerParameters::GetConfigurationSpecification() const {
+    return openravepy::toPyConfigurationSpecification(_paramswrite->_configurationspecification);
 }
 
 void PyPlannerBase::PyPlannerParameters::SetExtraParameters(const std::string& s) {

@@ -4128,15 +4128,15 @@ void PyKinBody::SetNonCollidingConfiguration()
     _pbody->SetNonCollidingConfiguration();
 }
 
-object PyKinBody::GetConfigurationSpecification(const std::string& interpolation) const
+PyConfigurationSpecificationPtr PyKinBody::GetConfigurationSpecification(const std::string& interpolation) const
 {
-    return py::to_object(openravepy::toPyConfigurationSpecification(_pbody->GetConfigurationSpecification(interpolation)));
+    return openravepy::toPyConfigurationSpecification(_pbody->GetConfigurationSpecification(interpolation));
 }
 
-object PyKinBody::GetConfigurationSpecificationIndices(object oindices,const std::string& interpolation) const
+PyConfigurationSpecificationPtr PyKinBody::GetConfigurationSpecificationIndices(object oindices,const std::string& interpolation) const
 {
     std::vector<int> vindices = ExtractArray<int>(oindices);
-    return py::to_object(openravepy::toPyConfigurationSpecification(_pbody->GetConfigurationSpecificationIndices(vindices,interpolation)));
+    return openravepy::toPyConfigurationSpecification(_pbody->GetConfigurationSpecificationIndices(vindices,interpolation));
 }
 
 void PyKinBody::SetConfigurationValues(object ovalues, uint32_t checklimits)

@@ -195,7 +195,7 @@ public:
         virtual ~PyAttachedSensor();
 
         RobotBase::AttachedSensorPtr GetAttachedSensor() const;
-        object GetSensor();
+        PySensorBasePtr GetSensor();
         PyLinkPtr GetAttachingLink() const;
         py::array_t<dReal> GetRelativeTransform() const;
         py::array_t<dReal> GetTransform() const;

@@ -45,11 +45,11 @@ public:
 
     int GetNumberOfValues(object o);
 
-    object GetConfigurationSpecification();
+    PyConfigurationSpecificationPtr GetConfigurationSpecification();
 
-    object GetConfigurationSpecification(object ointerpolation, const std::string& robotname="", const std::string& manipname="");
+    PyConfigurationSpecificationPtr GetConfigurationSpecification(object ointerpolation, const std::string& robotname="", const std::string& manipname="");
 
-    static object GetConfigurationSpecificationFromType(IkParameterizationType iktype, const std::string& interpolation="", const std::string& robotname="", const std::string& manipname="");
+    static PyConfigurationSpecificationPtr GetConfigurationSpecificationFromType(IkParameterizationType iktype, const std::string& interpolation="", const std::string& robotname="", const std::string& manipname="");
     void SetTransform6D(object o);
     void SetRotation3D(object o);
     void SetTranslation3D(object o);

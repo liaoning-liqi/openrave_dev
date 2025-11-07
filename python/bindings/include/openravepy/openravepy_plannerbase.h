@@ -72,7 +72,7 @@ public:
 
         void SetConfigurationSpecification(PyEnvironmentBasePtr pyenv, PyConfigurationSpecificationPtr pyspec);
 
-        object GetConfigurationSpecification() const;
+        PyConfigurationSpecificationPtr GetConfigurationSpecification() const;
 
         void SetExtraParameters(const std::string& s);
 

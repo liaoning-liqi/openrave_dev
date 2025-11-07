@@ -26,6 +26,7 @@
 #include <openravepy/openravepy_robotbase.h>
 #include <openravepy/openravepy_manipulatorinfo.h>
 #include <openravepy/openravepy_robotbase.h>
+#include <openravepy/openravepy_sensorbase.h>
 
 namespace openravepy {
 
@@ -1375,8 +1376,8 @@ PyRobotBase::PyAttachedSensor::~PyAttachedSensor() {
 RobotBase::AttachedSensorPtr PyRobotBase::PyAttachedSensor::GetAttachedSensor() const {
     return _pattached;
 }
-object PyRobotBase::PyAttachedSensor::GetSensor() {
-    return py::to_object(openravepy::toPySensor(_pattached->GetSensor(),_pyenv));
+PySensorBasePtr PyRobotBase::PyAttachedSensor::GetSensor() {
+    return openravepy::toPySensor(_pattached->GetSensor(),_pyenv);
 }
 PyLinkPtr PyRobotBase::PyAttachedSensor::GetAttachingLink() const {
     return toPyKinBodyLink(_pattached->GetAttachingLink(), _pyenv);

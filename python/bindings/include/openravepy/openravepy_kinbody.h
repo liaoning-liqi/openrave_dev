@@ -311,8 +311,8 @@ public:
     py::list GetAttachedEnvironmentBodyIndices() const;
     void SetZeroConfiguration();
     void SetNonCollidingConfiguration();
-    py::object GetConfigurationSpecification(const std::string& interpolation="") const;
-    py::object GetConfigurationSpecificationIndices(py::object oindices,const std::string& interpolation="") const;
+    PyConfigurationSpecificationPtr GetConfigurationSpecification(const std::string& interpolation="") const;
+    PyConfigurationSpecificationPtr GetConfigurationSpecificationIndices(py::object oindices,const std::string& interpolation="") const;
     void SetConfigurationValues(py::object ovalues, uint32_t checklimits=KinBody::CLA_CheckLimits);
     py::array_t<dReal> GetConfigurationValues() const;
     bool Grab(PyKinBodyPtr pbody, py::object pylink_or_linkstoignore, const string& grippername=std::string());

@@ -637,7 +637,7 @@ bool PyCollisionCheckerBase::CheckCollision(OPENRAVE_SHARED_PTR<PyRay> pyray, Py
     return bCollision;
 }
 
-object PyCollisionCheckerBase::CheckCollisionRays(object rays, PyKinBodyPtr pbody, bool bFrontFacingOnly, object oCheckPreemptFn)
+py::tuple PyCollisionCheckerBase::CheckCollisionRays(object rays, PyKinBodyPtr pbody, bool bFrontFacingOnly, object oCheckPreemptFn)
 {
     object shape = rays.attr("shape");
     const int num = extract<int>(shape[0]);

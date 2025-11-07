@@ -1085,7 +1085,7 @@ PyInterfaceBasePtr PyEnvironmentBase::_toPyInterface(InterfaceBasePtr pinterface
     case PT_PhysicsEngine: return openravepy::toPyPhysicsEngine(OPENRAVE_STATIC_POINTER_CAST<PhysicsEngineBase>(pinterface),shared_from_this());
     case PT_Sensor: return openravepy::toPySensor(OPENRAVE_STATIC_POINTER_CAST<SensorBase>(pinterface),shared_from_this());
     case PT_CollisionChecker: return openravepy::toPyCollisionChecker(OPENRAVE_STATIC_POINTER_CAST<CollisionCheckerBase>(pinterface),shared_from_this());
-    case PT_Trajectory: return openravepy::toPyTrajectory(OPENRAVE_STATIC_POINTER_CAST<TrajectoryBase>(pinterface),shared_from_this());
+    case PT_Trajectory: return static_cast<PyInterfaceBasePtr>(openravepy::toPyTrajectory(OPENRAVE_STATIC_POINTER_CAST<TrajectoryBase>(pinterface),shared_from_this()));
     case PT_Viewer: return static_cast<PyInterfaceBasePtr>(openravepy::toPyViewer(OPENRAVE_STATIC_POINTER_CAST<ViewerBase>(pinterface),shared_from_this()));
     case PT_SpaceSampler: return openravepy::toPySpaceSampler(OPENRAVE_STATIC_POINTER_CAST<SpaceSamplerBase>(pinterface),shared_from_this());
     }
@@ -3299,13 +3299,13 @@ py::object GetPyEnvironmentObject(EnvironmentBasePtr penv)
     return py::to_object(PyEnvironmentBasePtr(new PyEnvironmentBase(penv)));
 }
 
-object toPyEnvironment(object o)
+PyEnvironmentBasePtr toPyEnvironment(object o)
 {
     extract_<PyInterfaceBasePtr> pyinterface(o);
     if( pyinterface.check() ) {
-        return py::to_object(((PyInterfaceBasePtr)pyinterface)->GetEnv());
+        return ((PyInterfaceBasePtr)pyinterface)->GetEnv();
     }
-    return py::none_();
+    return PyEnvironmentBasePtr();
 }
 
 void LockEnvironment(PyEnvironmentBasePtr pyenv)

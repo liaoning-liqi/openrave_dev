@@ -830,7 +830,7 @@ OPENRAVEPY_API RobotBase::ManipulatorPtr GetRobotManipulator(py::object);
 OPENRAVEPY_API py::object toPyRobotManipulator(RobotBase::ManipulatorPtr, PyEnvironmentBasePtr);
 
 OPENRAVEPY_API SensorBasePtr GetSensor(PySensorBasePtr);
-OPENRAVEPY_API PyInterfaceBasePtr toPySensor(SensorBasePtr, PyEnvironmentBasePtr);
+OPENRAVEPY_API PySensorBasePtr toPySensor(SensorBasePtr, PyEnvironmentBasePtr);
 OPENRAVEPY_API py::object toPySensorData(SensorBasePtr, PyEnvironmentBasePtr);
 #ifdef USE_PYBIND11_PYTHON_BINDINGS
 void init_openravepy_sensorsystem(py::module& m);
@@ -849,11 +849,11 @@ OPENRAVEPY_API PyInterfaceBasePtr toPySpaceSampler(SpaceSamplerBasePtr, PyEnviro
 
 OPENRAVEPY_API TrajectoryBasePtr GetTrajectory(py::object);
 OPENRAVEPY_API TrajectoryBasePtr GetTrajectory(PyTrajectoryBasePtr);
-OPENRAVEPY_API PyInterfaceBasePtr toPyTrajectory(TrajectoryBasePtr, PyEnvironmentBasePtr);
-OPENRAVEPY_API py::object toPyTrajectory(TrajectoryBasePtr, py::object opyenv);
+OPENRAVEPY_API PyTrajectoryBasePtr toPyTrajectory(TrajectoryBasePtr, PyEnvironmentBasePtr);
+OPENRAVEPY_API PyTrajectoryBasePtr toPyTrajectory(TrajectoryBasePtr, py::object opyenv);
 OPENRAVEPY_API PyEnvironmentBasePtr toPyEnvironment(PyTrajectoryBasePtr);
 // input can be class derived from PyInterfaceBase
-OPENRAVEPY_API py::object toPyEnvironment(py::object opyinterface);
+OPENRAVEPY_API PyEnvironmentBasePtr toPyEnvironment(py::object opyinterface);
 OPENRAVEPY_API PyEnvironmentBasePtr toPyEnvironment(PyKinBodyPtr);
 #ifdef USE_PYBIND11_PYTHON_BINDINGS
 void init_openravepy_viewer(py::module& m);

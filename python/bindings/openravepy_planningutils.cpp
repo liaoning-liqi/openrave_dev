@@ -80,14 +80,14 @@ void pyComputeTrajectoryDerivatives(PyTrajectoryBasePtr pytraj, int maxderiv)
     OpenRAVE::planningutils::ComputeTrajectoryDerivatives(openravepy::GetTrajectory(pytraj),maxderiv);
 }
 
-object pyReverseTrajectory(PyTrajectoryBasePtr pytraj)
+PyTrajectoryBasePtr pyReverseTrajectory(PyTrajectoryBasePtr pytraj)
 {
-    return py::to_object(openravepy::toPyTrajectory(OpenRAVE::planningutils::ReverseTrajectory(openravepy::GetTrajectory(pytraj)),openravepy::toPyEnvironment(pytraj)));
+    return openravepy::toPyTrajectory(OpenRAVE::planningutils::ReverseTrajectory(openravepy::GetTrajectory(pytraj)),openravepy::toPyEnvironment(pytraj));
 }
 
-object pyGetReverseTrajectory(PyTrajectoryBasePtr pytraj)
+PyTrajectoryBasePtr pyGetReverseTrajectory(PyTrajectoryBasePtr pytraj)
 {
-    return py::to_object(openravepy::toPyTrajectory(OpenRAVE::planningutils::GetReverseTrajectory(openravepy::GetTrajectory(pytraj)),openravepy::toPyEnvironment(pytraj)));
+    return openravepy::toPyTrajectory(OpenRAVE::planningutils::GetReverseTrajectory(openravepy::GetTrajectory(pytraj)),openravepy::toPyEnvironment(pytraj));
 }
 
 void pyVerifyTrajectory(object pyparameters, PyTrajectoryBasePtr pytraj, dReal samplingstep, bool releasegil=true)
@@ -356,13 +356,13 @@ void pySegmentTrajectory(PyTrajectoryBasePtr pytraj, dReal starttime, dReal endt
     OpenRAVE::planningutils::SegmentTrajectory(openravepy::GetTrajectory(pytraj), starttime, endtime);
 }
 
-object pyGetTrajectorySegment(PyTrajectoryBasePtr pytraj, dReal starttime, dReal endtime)
+PyTrajectoryBasePtr pyGetTrajectorySegment(PyTrajectoryBasePtr pytraj, dReal starttime, dReal endtime)
 {
     PyEnvironmentBasePtr pyenv = openravepy::toPyEnvironment(pytraj);
-    return py::to_object(openravepy::toPyTrajectory(OpenRAVE::planningutils::GetTrajectorySegment(openravepy::GetTrajectory(pytraj), starttime, endtime), pyenv));
+    return openravepy::toPyTrajectory(OpenRAVE::planningutils::GetTrajectorySegment(openravepy::GetTrajectory(pytraj), starttime, endtime), pyenv);
 }
 
-object pyMergeTrajectories(object pytrajectories)
+PyTrajectoryBasePtr pyMergeTrajectories(object pytrajectories)
 {
     std::list<TrajectoryBaseConstPtr> listtrajectories;
     PyEnvironmentBasePtr pyenv;
@@ -377,7 +377,7 @@ object pyMergeTrajectories(object pytrajectories)
         }
         listtrajectories.push_back(openravepy::GetTrajectory(pytrajectory));
     }
-    return py::to_object(openravepy::toPyTrajectory(OpenRAVE::planningutils::MergeTrajectories(listtrajectories),pyenv));
+    return openravepy::toPyTrajectory(OpenRAVE::planningutils::MergeTrajectories(listtrajectories),pyenv);
 }
 
 class PyDHParameter

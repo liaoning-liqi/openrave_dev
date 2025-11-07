@@ -655,9 +655,9 @@ SensorBasePtr GetSensor(PySensorBasePtr pysensor)
     return !pysensor ? SensorBasePtr() : pysensor->GetSensor();
 }
 
-PyInterfaceBasePtr toPySensor(SensorBasePtr psensor, PyEnvironmentBasePtr pyenv)
+PySensorBasePtr toPySensor(SensorBasePtr psensor, PyEnvironmentBasePtr pyenv)
 {
-    return !psensor ? PyInterfaceBasePtr() : PyInterfaceBasePtr(new PySensorBase(psensor,pyenv));
+    return !psensor ? PySensorBasePtr() : PySensorBasePtr(new PySensorBase(psensor,pyenv));
 }
 
 object toPySensorData(SensorBasePtr psensor, PyEnvironmentBasePtr pyenv)
