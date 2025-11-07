@@ -303,8 +303,8 @@ public:
     void SetSensorGeometry(PySensorGeometryPtr pygeometry);
 
     void SetTransform(object transform);
-    object GetTransform();
-    object GetTransformPose();
+    py::array_t<dReal> GetTransform();
+    py::array_t<dReal> GetTransformPose();
 
     object GetName() const;
 

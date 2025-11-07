@@ -324,9 +324,9 @@ public:
     PyAttachedSensorPtr AddAttachedSensor(PyAttachedSensorInfoPtr pattsensorinfo, bool removeduplicate=false);
     bool RemoveAttachedSensor(PyAttachedSensorPtr pyattsensor);
 
-    object GetSensors();
+    py::list GetSensors();
 
-    object GetAttachedSensors();
+    py::list GetAttachedSensors();
     OPENRAVE_SHARED_PTR<PyAttachedSensor> GetSensor(const std::string& sensorname);
 
     OPENRAVE_SHARED_PTR<PyAttachedSensor> GetAttachedSensor(const std::string& sensorname);
@@ -335,11 +335,11 @@ public:
 
     bool RemoveConnectedBody(PyConnectedBodyPtr pConnectedBody);
 
-    object GetConnectedBodies();
+    py::list GetConnectedBodies();
 
     PyConnectedBodyPtr GetConnectedBody(const std::string& bodyname);
 
-    object GetConnectedBodyActiveStates() const;
+    py::array_t<int8_t> GetConnectedBodyActiveStates() const;
 
     void SetConnectedBodyActiveStates(object oactivestates);
 
@@ -347,7 +347,7 @@ public:
     bool RemoveGripperInfo(const std::string& name);
 
     object GetGripperInfo(const std::string& name);
-    object GetGripperInfos();
+    py::list GetGripperInfos();
 
     object GetController() const;
 
@@ -365,7 +365,7 @@ public:
     int GetAffineDOF() const;
     int GetAffineDOFIndex(DOFAffine dof) const;
 
-    object GetAffineRotationAxis() const;
+    py::array_t<dReal> GetAffineRotationAxis() const;
     void SetAffineTranslationLimits(object lower, object upper);
     void SetAffineRotationAxisLimits(object lower, object upper);
     void SetAffineRotation3DLimits(object lower, object upper);
@@ -383,60 +383,60 @@ public:
     void SetAffineRotation3DWeights(object weights);
     void SetAffineRotationQuatWeights(dReal weights);
 
-    object GetAffineTranslationLimits() const;
+    py::tuple GetAffineTranslationLimits() const;
 
-    object GetAffineRotationAxisLimits() const;
-    object GetAffineRotation3DLimits() const;
-    object GetAffineRotationQuatLimits() const;
-    object GetAffineTranslationMaxVels() const;
-    object GetAffineRotationAxisMaxVels() const;
-    object GetAffineRotation3DMaxVels() const;
+    py::tuple GetAffineRotationAxisLimits() const;
+    py::tuple GetAffineRotation3DLimits() const;
+    py::array_t<dReal> GetAffineRotationQuatLimits() const;
+    py::array_t<dReal> GetAffineTranslationMaxVels() const;
+    py::array_t<dReal> GetAffineRotationAxisMaxVels() const;
+    py::array_t<dReal> GetAffineRotation3DMaxVels() const;
     dReal GetAffineRotationQuatMaxVels() const;
-    object GetAffineTranslationResolution() const;
-    object GetAffineRotationAxisResolution() const;
-    object GetAffineRotation3DResolution() const;
+    py::array_t<dReal> GetAffineTranslationResolution() const;
+    py::array_t<dReal> GetAffineRotationAxisResolution() const;
+    py::array_t<dReal> GetAffineRotation3DResolution() const;
     dReal GetAffineRotationQuatResolution() const;
-    object GetAffineTranslationWeights() const;
-    object GetAffineRotationAxisWeights() const;
-    object GetAffineRotation3DWeights() const;
+    py::array_t<dReal> GetAffineTranslationWeights() const;
+    py::array_t<dReal> GetAffineRotationAxisWeights() const;
+    py::array_t<dReal> GetAffineRotation3DWeights() const;
     dReal GetAffineRotationQuatWeights() const;
 
     void SetActiveDOFValues(object values, uint32_t checklimits=KinBody::CLA_CheckLimits) const;
-    object GetActiveDOFValues() const;
+    py::array_t<dReal> GetActiveDOFValues() const;
 
-    object GetActiveDOFWeights() const;
+    py::array_t<dReal> GetActiveDOFWeights() const;
 
     void SetActiveDOFVelocities(object velocities, uint32_t checklimits=KinBody::CLA_CheckLimits);
-    object GetActiveDOFVelocities() const;
+    py::array_t<dReal> GetActiveDOFVelocities() const;
 
-    object GetActiveDOFLimits() const;
+    py::tuple GetActiveDOFLimits() const;
 
-    object GetActiveDOFMaxVel() const;
+    py::array_t<dReal> GetActiveDOFMaxVel() const;
 
-    object GetActiveDOFMaxAccel() const;
+    py::array_t<dReal> GetActiveDOFMaxAccel() const;
 
-    object GetActiveDOFMaxJerk() const;
+    py::array_t<dReal> GetActiveDOFMaxJerk() const;
 
-    object GetActiveDOFHardMaxVel() const;
+    py::array_t<dReal> GetActiveDOFHardMaxVel() const;
 
-    object GetActiveDOFHardMaxAccel() const;
+    py::array_t<dReal> GetActiveDOFHardMaxAccel() const;
 
-    object GetActiveDOFHardMaxJerk() const;
+    py::array_t<dReal> GetActiveDOFHardMaxJerk() const;
 
-    object GetActiveDOFResolutions() const;
+    py::array_t<dReal> GetActiveDOFResolutions() const;
 
     object GetActiveConfigurationSpecification(const std::string& interpolation="") const;
 
-    object GetActiveJointIndices();
-    object GetActiveDOFIndices();
+    py::array_t<int> GetActiveJointIndices();
+    py::array_t<int> GetActiveDOFIndices();
 
-    object SubtractActiveDOFValues(object ovalues0, object ovalues1);
+    py::array_t<dReal> SubtractActiveDOFValues(object ovalues0, object ovalues1);
 
-    object CalculateActiveJacobian(int index, object offset) const;
+    py::array_t<dReal> CalculateActiveJacobian(int index, object offset) const;
 
-    object CalculateActiveRotationJacobian(int index, object q) const;
+    py::array_t<dReal> CalculateActiveRotationJacobian(int index, object q) const;
 
-    object CalculateActiveAngularVelocityJacobian(int index) const;
+    py::array_t<dReal> CalculateActiveAngularVelocityJacobian(int index) const;
 
     bool Grab(PyKinBodyPtr pbody, const string& grippername=std::string());
 

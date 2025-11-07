@@ -67,24 +67,24 @@ public:
     void SetTranslationYAxisAngleXNorm4D(object otrans, dReal angle);
     void SetTranslationZAxisAngleYNorm4D(object otrans, dReal angle);
 
-    object GetTransform6D();
-    object GetTransform6DPose();
-    object GetRotation3D();
-    object GetTranslation3D();
-    object GetDirection3D();
+    py::array_t<dReal> GetTransform6D();
+    py::array_t<dReal> GetTransform6DPose();
+    py::array_t<dReal> GetRotation3D();
+    py::array_t<dReal> GetTranslation3D();
+    py::array_t<dReal> GetDirection3D();
     PyRay GetRay4D();
-    object GetLookat3D();
+    py::array_t<dReal> GetLookat3D();
     PyRay GetTranslationDirection5D();
-    object GetTranslationXY2D();
-    object GetTranslationXYOrientation3D();
-    object GetTranslationLocalGlobal6D();
-    object GetTranslationXAxisAngle4D();
-    object GetTranslationYAxisAngle4D();
-    object GetTranslationZAxisAngle4D();
-    object GetTranslationXAxisAngleZNorm4D();
-    object GetTranslationYAxisAngleXNorm4D();
-    object GetTranslationZAxisAngleYNorm4D();
-    dReal ComputeDistanceSqr(OPENRAVE_SHARED_PTR<PyIkParameterization> pyikparam);
+    py::array_t<dReal> GetTranslationXY2D();
+    py::array_t<dReal> GetTranslationXYOrientation3D();
+    py::tuple GetTranslationLocalGlobal6D();
+    py::tuple GetTranslationXAxisAngle4D();
+    py::tuple GetTranslationYAxisAngle4D();
+    py::tuple GetTranslationZAxisAngle4D();
+    py::tuple GetTranslationXAxisAngleZNorm4D();
+    py::tuple GetTranslationYAxisAngleXNorm4D();
+    py::tuple GetTranslationZAxisAngleYNorm4D();
+    dReal ComputeDistanceSqr(PyIkParameterizationPtr pyikparam);
 
     object Transform(object otrans) const;
 

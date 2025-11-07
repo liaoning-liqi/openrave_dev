@@ -624,10 +624,10 @@ void PySensorBase::SetSensorGeometry(PySensorGeometryPtr pygeometry) {
 void PySensorBase::SetTransform(object transform) {
     _psensor->SetTransform(ExtractTransform(transform));
 }
-object PySensorBase::GetTransform() {
+py::array_t<dReal> PySensorBase::GetTransform() {
     return ReturnTransform(_psensor->GetTransform());
 }
-object PySensorBase::GetTransformPose() {
+py::array_t<dReal> PySensorBase::GetTransformPose() {
     return toPyArray(_psensor->GetTransform());
 }
 

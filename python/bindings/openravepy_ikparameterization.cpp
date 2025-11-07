@@ -203,64 +203,64 @@ void PyIkParameterization::SetTranslationZAxisAngleYNorm4D(object otrans, dReal 
     _param.SetTranslationZAxisAngleYNorm4D(ExtractVector3(otrans),angle);
 }
 
-object PyIkParameterization::GetTransform6D() {
+py::array_t<dReal> PyIkParameterization::GetTransform6D() {
     return ReturnTransform(_param.GetTransform6D());
 }
-object PyIkParameterization::GetTransform6DPose() {
+py::array_t<dReal> PyIkParameterization::GetTransform6DPose() {
     return toPyArray(_param.GetTransform6D());
 }
-object PyIkParameterization::GetRotation3D() {
+py::array_t<dReal> PyIkParameterization::GetRotation3D() {
     return toPyVector4(_param.GetRotation3D());
 }
-object PyIkParameterization::GetTranslation3D() {
+py::array_t<dReal> PyIkParameterization::GetTranslation3D() {
     return toPyVector3(_param.GetTranslation3D());
 }
-object PyIkParameterization::GetDirection3D() {
+py::array_t<dReal> PyIkParameterization::GetDirection3D() {
     return toPyVector3(_param.GetDirection3D());
 }
 PyRay PyIkParameterization::GetRay4D() {
     return PyRay(_param.GetRay4D());
 }
-object PyIkParameterization::GetLookat3D() {
+py::array_t<dReal> PyIkParameterization::GetLookat3D() {
     return toPyVector3(_param.GetLookat3D());
 }
 PyRay PyIkParameterization::GetTranslationDirection5D() {
     return PyRay(_param.GetTranslationDirection5D());
 }
-object PyIkParameterization::GetTranslationXY2D() {
+py::array_t<dReal> PyIkParameterization::GetTranslationXY2D() {
     return toPyVector2(_param.GetTranslationXY2D());
 }
-object PyIkParameterization::GetTranslationXYOrientation3D() {
+py::array_t<dReal> PyIkParameterization::GetTranslationXYOrientation3D() {
     return toPyVector3(_param.GetTranslationXYOrientation3D());
 }
-object PyIkParameterization::GetTranslationLocalGlobal6D() {
+py::tuple PyIkParameterization::GetTranslationLocalGlobal6D() {
     return py::make_tuple(toPyVector3(_param.GetTranslationLocalGlobal6D().first),toPyVector3(_param.GetTranslationLocalGlobal6D().second));
 }
-object PyIkParameterization::GetTranslationXAxisAngle4D() {
+py::tuple PyIkParameterization::GetTranslationXAxisAngle4D() {
     std::pair<Vector,dReal> p = _param.GetTranslationXAxisAngle4D();
     return py::make_tuple(toPyVector3(p.first), py::to_object(p.second));
 }
-object PyIkParameterization::GetTranslationYAxisAngle4D() {
+py::tuple PyIkParameterization::GetTranslationYAxisAngle4D() {
     std::pair<Vector,dReal> p = _param.GetTranslationYAxisAngle4D();
     return py::make_tuple(toPyVector3(p.first), py::to_object(p.second));
 }
-object PyIkParameterization::GetTranslationZAxisAngle4D() {
+py::tuple PyIkParameterization::GetTranslationZAxisAngle4D() {
     std::pair<Vector,dReal> p = _param.GetTranslationZAxisAngle4D();
     return py::make_tuple(toPyVector3(p.first), py::to_object(p.second));
 }
-object PyIkParameterization::GetTranslationXAxisAngleZNorm4D() {
+py::tuple PyIkParameterization::GetTranslationXAxisAngleZNorm4D() {
     std::pair<Vector,dReal> p = _param.GetTranslationXAxisAngleZNorm4D();
     return py::make_tuple(toPyVector3(p.first), py::to_object(p.second));
 }
-object PyIkParameterization::GetTranslationYAxisAngleXNorm4D() {
+py::tuple PyIkParameterization::GetTranslationYAxisAngleXNorm4D() {
     std::pair<Vector,dReal> p = _param.GetTranslationYAxisAngleXNorm4D();
     return py::make_tuple(toPyVector3(p.first), py::to_object(p.second));
 }
-object PyIkParameterization::GetTranslationZAxisAngleYNorm4D() {
+py::tuple PyIkParameterization::GetTranslationZAxisAngleYNorm4D() {
     std::pair<Vector,dReal> p = _param.GetTranslationZAxisAngleYNorm4D();
     return py::make_tuple(toPyVector3(p.first), py::to_object(p.second));
 }
-dReal PyIkParameterization::ComputeDistanceSqr(OPENRAVE_SHARED_PTR<PyIkParameterization> pyikparam)
+dReal PyIkParameterization::ComputeDistanceSqr(PyIkParameterizationPtr pyikparam)
 {
     return _param.ComputeDistanceSqr(pyikparam->_param);
 }

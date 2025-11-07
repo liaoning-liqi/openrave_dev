@@ -1740,13 +1740,13 @@ bool PyRobotBase::RemoveAttachedSensor(PyAttachedSensorPtr pyattsensor) {
     return _probot->RemoveAttachedSensor(*pyattsensor->GetAttachedSensor());
 }
 
-object PyRobotBase::GetSensors()
+py::list PyRobotBase::GetSensors()
 {
     RAVELOG_WARN("GetSensors is deprecated, please use GetAttachedSensors\n");
     return GetAttachedSensors();
 }
 
-object PyRobotBase::GetAttachedSensors()
+py::list PyRobotBase::GetAttachedSensors()
 {
     py::list sensors;
     FOREACH(itsensor, _probot->GetAttachedSensors()) {
@@ -1773,7 +1773,7 @@ bool PyRobotBase::RemoveConnectedBody(PyConnectedBodyPtr pConnectedBody) {
     return _probot->RemoveConnectedBody(*pConnectedBody->GetConnectedBody());
 }
 
-object PyRobotBase::GetConnectedBodies()
+py::list PyRobotBase::GetConnectedBodies()
 {
     py::list bodies;
     FOREACH(itbody, _probot->GetConnectedBodies()) {
@@ -1792,7 +1792,7 @@ PyConnectedBodyPtr PyRobotBase::GetConnectedBody(const std::string& bodyname)
     return PyConnectedBodyPtr();
 }
 
-object PyRobotBase::GetConnectedBodyActiveStates() const
+py::array_t<int8_t> PyRobotBase::GetConnectedBodyActiveStates() const
 {
     std::vector<int8_t> activestates;
     _probot->GetConnectedBodyActiveStates(activestates);
@@ -1835,7 +1835,7 @@ object PyRobotBase::GetGripperInfo(const std::string& name)
     return toPyObject(rGripperInfo);
 }
 
-object PyRobotBase::GetGripperInfos()
+py::list PyRobotBase::GetGripperInfos()
 {
     py::list pyGripperInfos;
     FOREACHC(itGripperInfo, _probot->GetGripperInfos()) {
@@ -1897,7 +1897,7 @@ int PyRobotBase::GetAffineDOFIndex(DOFAffine dof) const {
     return _probot->GetAffineDOFIndex(dof);
 }
 
-object PyRobotBase::GetAffineRotationAxis() const {
+py::array_t<dReal> PyRobotBase::GetAffineRotationAxis() const {
     return toPyVector3(_probot->GetAffineRotationAxis());
 }
 void PyRobotBase::SetAffineTranslationLimits(object lower, object upper) {
@@ -1949,59 +1949,59 @@ void PyRobotBase::SetAffineRotationQuatWeights(dReal weights) {
     _probot->SetAffineRotationQuatWeights(weights);
 }
 
-object PyRobotBase::GetAffineTranslationLimits() const
+py::tuple PyRobotBase::GetAffineTranslationLimits() const
 {
     Vector lower, upper;
     _probot->GetAffineTranslationLimits(lower,upper);
     return py::make_tuple(toPyVector3(lower),toPyVector3(upper));
 }
-object PyRobotBase::GetAffineRotationAxisLimits() const
+py::tuple PyRobotBase::GetAffineRotationAxisLimits() const
 {
     Vector lower, upper;
     _probot->GetAffineRotationAxisLimits(lower,upper);
     return py::make_tuple(toPyVector3(lower),toPyVector3(upper));
 }
-object PyRobotBase::GetAffineRotation3DLimits() const
+py::tuple PyRobotBase::GetAffineRotation3DLimits() const
 {
     Vector lower, upper;
     _probot->GetAffineRotation3DLimits(lower,upper);
     return py::make_tuple(toPyVector3(lower),toPyVector3(upper));
 }
-object PyRobotBase::GetAffineRotationQuatLimits() const
+py::array_t<dReal> PyRobotBase::GetAffineRotationQuatLimits() const
 {
     return toPyVector4(_probot->GetAffineRotationQuatLimits());
 }
-object PyRobotBase::GetAffineTranslationMaxVels() const {
+py::array_t<dReal> PyRobotBase::GetAffineTranslationMaxVels() const {
     return toPyVector3(_probot->GetAffineTranslationMaxVels());
 }
-object PyRobotBase::GetAffineRotationAxisMaxVels() const {
+py::array_t<dReal> PyRobotBase::GetAffineRotationAxisMaxVels() const {
     return toPyVector3(_probot->GetAffineRotationAxisMaxVels());
 }
-object PyRobotBase::GetAffineRotation3DMaxVels() const {
+py::array_t<dReal> PyRobotBase::GetAffineRotation3DMaxVels() const {
     return toPyVector3(_probot->GetAffineRotation3DMaxVels());
 }
 dReal PyRobotBase::GetAffineRotationQuatMaxVels() const {
     return _probot->GetAffineRotationQuatMaxVels();
 }
-object PyRobotBase::GetAffineTranslationResolution() const {
+py::array_t<dReal> PyRobotBase::GetAffineTranslationResolution() const {
     return toPyVector3(_probot->GetAffineTranslationResolution());
 }
-object PyRobotBase::GetAffineRotationAxisResolution() const {
+py::array_t<dReal> PyRobotBase::GetAffineRotationAxisResolution() const {
     return toPyVector4(_probot->GetAffineRotationAxisResolution());
 }
-object PyRobotBase::GetAffineRotation3DResolution() const {
+py::array_t<dReal> PyRobotBase::GetAffineRotation3DResolution() const {
     return toPyVector3(_probot->GetAffineRotation3DResolution());
 }
 dReal PyRobotBase::GetAffineRotationQuatResolution() const {
     return _probot->GetAffineRotationQuatResolution();
 }
-object PyRobotBase::GetAffineTranslationWeights() const {
+py::array_t<dReal> PyRobotBase::GetAffineTranslationWeights() const {
     return toPyVector3(_probot->GetAffineTranslationWeights());
 }
-object PyRobotBase::GetAffineRotationAxisWeights() const {
+py::array_t<dReal> PyRobotBase::GetAffineRotationAxisWeights() const {
     return toPyVector4(_probot->GetAffineRotationAxisWeights());
 }
-object PyRobotBase::GetAffineRotation3DWeights() const {
+py::array_t<dReal> PyRobotBase::GetAffineRotation3DWeights() const {
     return toPyVector3(_probot->GetAffineRotation3DWeights());
 }
 dReal PyRobotBase::GetAffineRotationQuatWeights() const {
@@ -2018,7 +2018,7 @@ void PyRobotBase::SetActiveDOFValues(object values, uint32_t checklimits) const
         OPENRAVE_ASSERT_OP_FORMAT((int)vvalues.size(),>=,_probot->GetActiveDOF(), "not enough values %d<%d",vvalues.size()%_probot->GetActiveDOF(),ORE_InvalidArguments);
     }
 }
-object PyRobotBase::GetActiveDOFValues() const
+py::array_t<dReal> PyRobotBase::GetActiveDOFValues() const
 {
     if( _probot->GetActiveDOF() == 0 ) {
         return py::empty_array_astype<dReal>();
@@ -2028,7 +2028,7 @@ object PyRobotBase::GetActiveDOFValues() const
     return toPyArray(values);
 }
 
-object PyRobotBase::GetActiveDOFWeights() const
+py::array_t<dReal> PyRobotBase::GetActiveDOFWeights() const
 {
     if( _probot->GetActiveDOF() == 0 ) {
         return py::empty_array_astype<dReal>();
@@ -2042,7 +2042,7 @@ void PyRobotBase::SetActiveDOFVelocities(object velocities, uint32_t checklimits
 {
     _probot->SetActiveDOFVelocities(ExtractArray<dReal>(velocities), checklimits);
 }
-object PyRobotBase::GetActiveDOFVelocities() const
+py::array_t<dReal> PyRobotBase::GetActiveDOFVelocities() const
 {
     if( _probot->GetActiveDOF() == 0 ) {
         return py::empty_array_astype<dReal>();
@@ -2052,7 +2052,7 @@ object PyRobotBase::GetActiveDOFVelocities() const
     return toPyArray(values);
 }
 
-object PyRobotBase::GetActiveDOFLimits() const
+py::tuple PyRobotBase::GetActiveDOFLimits() const
 {
     if( _probot->GetActiveDOF() == 0 ) {
         return py::make_tuple(py::empty_array_astype<dReal>(), py::empty_array_astype<dReal>()); // always need 2 since users can do lower, upper = GetDOFLimits()
@@ -2062,7 +2062,7 @@ object PyRobotBase::GetActiveDOFLimits() const
     return py::make_tuple(toPyArray(lower),toPyArray(upper));
 }
 
-object PyRobotBase::GetActiveDOFMaxVel() const
+py::array_t<dReal> PyRobotBase::GetActiveDOFMaxVel() const
 {
     if( _probot->GetActiveDOF() == 0 ) {
         return py::empty_array_astype<dReal>();
@@ -2072,7 +2072,7 @@ object PyRobotBase::GetActiveDOFMaxVel() const
     return toPyArray(values);
 }
 
-object PyRobotBase::GetActiveDOFMaxAccel() const
+py::array_t<dReal> PyRobotBase::GetActiveDOFMaxAccel() const
 {
     if( _probot->GetActiveDOF() == 0 ) {
         return py::empty_array_astype<dReal>();
@@ -2082,7 +2082,7 @@ object PyRobotBase::GetActiveDOFMaxAccel() const
     return toPyArray(values);
 }
 
-object PyRobotBase::GetActiveDOFMaxJerk() const
+py::array_t<dReal> PyRobotBase::GetActiveDOFMaxJerk() const
 {
     if( _probot->GetActiveDOF() == 0 ) {
         return py::empty_array_astype<dReal>();
@@ -2092,7 +2092,7 @@ object PyRobotBase::GetActiveDOFMaxJerk() const
     return toPyArray(values);
 }
 
-object PyRobotBase::GetActiveDOFHardMaxVel() const
+py::array_t<dReal> PyRobotBase::GetActiveDOFHardMaxVel() const
 {
     if( _probot->GetActiveDOF() == 0 ) {
         return py::empty_array_astype<dReal>();
@@ -2102,7 +2102,7 @@ object PyRobotBase::GetActiveDOFHardMaxVel() const
     return toPyArray(values);
 }
 
-object PyRobotBase::GetActiveDOFHardMaxAccel() const
+py::array_t<dReal> PyRobotBase::GetActiveDOFHardMaxAccel() const
 {
     if( _probot->GetActiveDOF() == 0 ) {
         return py::empty_array_astype<dReal>();
@@ -2112,7 +2112,7 @@ object PyRobotBase::GetActiveDOFHardMaxAccel() const
     return toPyArray(values);
 }
 
-object PyRobotBase::GetActiveDOFHardMaxJerk() const
+py::array_t<dReal> PyRobotBase::GetActiveDOFHardMaxJerk() const
 {
     if( _probot->GetActiveDOF() == 0 ) {
         return py::empty_array_astype<dReal>();
@@ -2122,7 +2122,7 @@ object PyRobotBase::GetActiveDOFHardMaxJerk() const
     return toPyArray(values);
 }
 
-object PyRobotBase::GetActiveDOFResolutions() const
+py::array_t<dReal> PyRobotBase::GetActiveDOFResolutions() const
 {
     if( _probot->GetActiveDOF() == 0 ) {
         return py::empty_array_astype<dReal>();
@@ -2136,14 +2136,14 @@ object PyRobotBase::GetActiveConfigurationSpecification(const std::string& inter
     return py::to_object(openravepy::toPyConfigurationSpecification(_probot->GetActiveConfigurationSpecification(interpolation)));
 }
 
-object PyRobotBase::GetActiveJointIndices() {
+py::array_t<int> PyRobotBase::GetActiveJointIndices() {
     RAVELOG_WARN("GetActiveJointIndices deprecated. Use GetActiveDOFIndices\n"); return toPyArray(_probot->GetActiveDOFIndices());
 }
-object PyRobotBase::GetActiveDOFIndices() {
+py::array_t<int> PyRobotBase::GetActiveDOFIndices() {
     return toPyArray(_probot->GetActiveDOFIndices());
 }
 
-object PyRobotBase::SubtractActiveDOFValues(object ovalues0, object ovalues1)
+py::array_t<dReal> PyRobotBase::SubtractActiveDOFValues(object ovalues0, object ovalues1)
 {
     std::vector<dReal> values0 = ExtractArray<dReal>(ovalues0);
     std::vector<dReal> values1 = ExtractArray<dReal>(ovalues1);
@@ -2153,7 +2153,7 @@ object PyRobotBase::SubtractActiveDOFValues(object ovalues0, object ovalues1)
     return toPyArray(values0);
 }
 
-object PyRobotBase::CalculateActiveJacobian(int index, object offset) const
+py::array_t<dReal> PyRobotBase::CalculateActiveJacobian(int index, object offset) const
 {
     std::vector<dReal> vjacobian;
     _probot->CalculateActiveJacobian(index,ExtractVector3(offset),vjacobian);
@@ -2161,7 +2161,7 @@ object PyRobotBase::CalculateActiveJacobian(int index, object offset) const
     return toPyArray(vjacobian,dims);
 }
 
-object PyRobotBase::CalculateActiveRotationJacobian(int index, object q) const
+py::array_t<dReal> PyRobotBase::CalculateActiveRotationJacobian(int index, object q) const
 {
     std::vector<dReal> vjacobian;
     _probot->CalculateActiveRotationJacobian(index,ExtractVector4(q),vjacobian);
@@ -2169,7 +2169,7 @@ object PyRobotBase::CalculateActiveRotationJacobian(int index, object q) const
     return toPyArray(vjacobian,dims);
 }
 
-object PyRobotBase::CalculateActiveAngularVelocityJacobian(int index) const
+py::array_t<dReal> PyRobotBase::CalculateActiveAngularVelocityJacobian(int index) const
 {
     std::vector<dReal> vjacobian;
     _probot->CalculateActiveAngularVelocityJacobian(index,vjacobian);
