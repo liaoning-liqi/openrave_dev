@@ -399,7 +399,7 @@ public:
     void SetTorque(object otorque, bool bAdd);
 
     py::list GetGeometries() const;
-    PyGeometryPtr GetGeometry(const std::string& geomname) const;
+    py::typing::Optional<PyGeometryPtr> GetGeometry(const std::string& geomname) const;
 
     void InitGeometries(object ogeometryinfos);
 

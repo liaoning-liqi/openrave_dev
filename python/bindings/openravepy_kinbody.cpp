@@ -1844,10 +1844,10 @@ py::list PyLink::GetGeometries() const
     return geoms;
 }
 
-PyGeometryPtr PyLink::GetGeometry(const std::string& geomname) const
+py::typing::Optional<PyGeometryPtr> PyLink::GetGeometry(const std::string& geomname) const
 {
     KinBody::GeometryPtr pgeometry = _plink->GetGeometry(geomname);
-    return !pgeometry ? PyGeometryPtr() : PyGeometryPtr(new PyGeometry(pgeometry));
+    return !pgeometry ? py::none_() : py::to_object(PyGeometryPtr(new PyGeometry(pgeometry)));
 }
 
 void PyLink::InitGeometries(object ogeometryinfos)
@@ -3319,10 +3319,10 @@ py::list PyKinBody::GetLinks(object oindices) const
     return links;
 }
 
-PyLinkPtr PyKinBody::GetLink(const std::string& linkname) const
+py::typing::Optional<PyLinkPtr> PyKinBody::GetLink(const std::string& linkname) const
 {
     KinBody::LinkPtr plink = _pbody->GetLink(linkname);
-    return !plink ? PyLinkPtr() : PyLinkPtr(new PyLink(plink,GetEnv()));
+    return !plink ? py::none_() : py::to_object(PyLinkPtr(new PyLink(plink,GetEnv())));
 }
 
 py::list PyKinBody::GetJoints() const
@@ -3429,16 +3429,16 @@ int PyKinBody::GetJointIndex(const std::string& jointname) const
     return _pbody->GetJointIndex(jointname);
 }
 
-PyJointPtr PyKinBody::GetJoint(const std::string& jointname) const
+py::typing::Optional<PyJointPtr> PyKinBody::GetJoint(const std::string& jointname) const
 {
     KinBody::JointPtr pjoint = _pbody->GetJoint(jointname);
-    return !pjoint ? PyJointPtr() : PyJointPtr(new PyJoint(pjoint,GetEnv()));
+    return !pjoint ? py::none_() : py::to_object(PyJointPtr(new PyJoint(pjoint,GetEnv())));
 }
 
-PyJointPtr PyKinBody::GetJointFromDOFIndex(int dofindex) const
+py::typing::Optional<PyJointPtr> PyKinBody::GetJointFromDOFIndex(int dofindex) const
 {
     KinBody::JointPtr pjoint = _pbody->GetJointFromDOFIndex(dofindex);
-    return !pjoint ? PyJointPtr() : PyJointPtr(new PyJoint(pjoint,GetEnv()));
+    return !pjoint ? py::none_() : py::to_object(PyJointPtr(new PyJoint(pjoint,GetEnv())));
 }
 
 py::array_t<dReal> PyKinBody::GetTransform() const {

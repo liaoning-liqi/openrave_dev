@@ -233,7 +233,7 @@ public:
     py::array_t<dReal> GetDOFResolutions(py::object oindices) const;
     py::list GetLinks() const;
     py::list GetLinks(py::object oindices) const;
-    PyLinkPtr GetLink(const std::string& linkname) const;
+    py::typing::Optional<PyLinkPtr> GetLink(const std::string& linkname) const;
     py::list GetJoints() const;
     py::list GetJoints(py::object oindices) const;
     py::list GetPassiveJoints();
@@ -244,8 +244,8 @@ public:
     py::list GetChain(int linkindex1, int linkindex2,bool returnjoints = true) const;
     bool IsDOFInChain(int linkindex1, int linkindex2, int dofindex) const;
     int GetJointIndex(const std::string& jointname) const;
-    PyJointPtr GetJoint(const std::string& jointname) const;
-    PyJointPtr GetJointFromDOFIndex(int dofindex) const;
+    py::typing::Optional<PyJointPtr> GetJoint(const std::string& jointname) const;
+    py::typing::Optional<PyJointPtr> GetJointFromDOFIndex(int dofindex) const;
     py::array_t<dReal> GetTransform() const;
     py::array_t<dReal> GetTransformPose() const;
     py::list GetLinkTransformations(bool returndoflastvlaues=false) const;

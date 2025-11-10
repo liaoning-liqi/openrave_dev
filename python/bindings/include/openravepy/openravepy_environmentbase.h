@@ -233,12 +233,12 @@ public:
 
     bool RemoveKinBodyByName(const std::string& name);
 
-    PyKinBodyPtr GetKinBody(const std::string &name);
-    PyRobotBasePtr GetRobot(const std::string &name);
-    object GetSensor(const std::string &name);
+    py::typing::Optional<PyKinBodyPtr> GetKinBody(const std::string &name);
+    py::typing::Optional<PyRobotBasePtr> GetRobot(const std::string &name);
+    py::typing::Optional<PySensorBasePtr> GetSensor(const std::string &name);
 
-    PyKinBodyPtr GetBodyFromEnvironmentId(int id);
-    PyKinBodyPtr GetBodyFromEnvironmentBodyIndex(int id);
+    py::typing::Optional<PyKinBodyPtr> GetBodyFromEnvironmentId(int id);
+    py::typing::Optional<PyKinBodyPtr> GetBodyFromEnvironmentBodyIndex(int id);
     py::list GetBodiesFromEnvironmentBodyIndices(object bodyIndices);
 
     int GetMaxEnvironmentBodyIndex();
@@ -289,7 +289,7 @@ public:
     /// \brief sets the default viewer
     bool SetDefaultViewer(bool showviewer=true);
 
-    PyViewerBasePtr GetViewer();
+    py::typing::Optional<PyViewerBasePtr> GetViewer();
 
     /// returns the number of points
     static size_t _getGraphPoints(object opoints, std::vector<float>&vpoints);

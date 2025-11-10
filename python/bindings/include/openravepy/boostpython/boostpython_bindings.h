@@ -12,6 +12,11 @@
 
 namespace boost {
 namespace python {
+namespace typing {
+template <typename T>
+using Optional = boost::python::object;
+}
+
 template <typename T>
 inline object to_object(const T& t) {
     return object(t);

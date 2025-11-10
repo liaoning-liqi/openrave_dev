@@ -29,7 +29,7 @@ public:
     PyIkFailureInfo(const IkFailureInfo& ikFailureInfo);
     IkReturnAction GetAction();
     py::array_t<dReal> GetConfiguration();
-    object GetIkParam();
+    py::typing::Optional<PyIkParameterizationPtr> GetIkParam();
     object GetCollisionReport();
     std::string GetDescription();
     object GetMapData(uint64_t key);

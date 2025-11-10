@@ -2259,37 +2259,37 @@ bool PyEnvironmentBase::RemoveKinBodyByName(const std::string& name) {
     return _penv->RemoveKinBodyByName(name);
 }
 
-PyKinBodyPtr PyEnvironmentBase::GetKinBody(const string &name)
+py::typing::Optional<PyKinBodyPtr> PyEnvironmentBase::GetKinBody(const string &name)
 {
     KinBodyPtr pbody = _penv->GetKinBody(name);
     if( !pbody ) {
-        return PyKinBodyPtr();
+        return py::none_();
     }
     if( pbody->IsRobot() ) {
-        return static_cast<PyKinBodyPtr>(openravepy::toPyRobot(RaveInterfaceCast<RobotBase>(pbody),shared_from_this()));
+        return py::to_object(openravepy::toPyRobot(RaveInterfaceCast<RobotBase>(pbody),shared_from_this()));
     }
     else {
-        return openravepy::toPyKinBody(pbody,shared_from_this());
+        return py::to_object(openravepy::toPyKinBody(pbody,shared_from_this()));
     }
 }
-PyRobotBasePtr PyEnvironmentBase::GetRobot(const string &name)
+py::typing::Optional<PyRobotBasePtr> PyEnvironmentBase::GetRobot(const string &name)
 {
-    return openravepy::toPyRobot(_penv->GetRobot(name), shared_from_this());
+    return py::to_object(openravepy::toPyRobot(_penv->GetRobot(name), shared_from_this()));
 }
-object PyEnvironmentBase::GetSensor(const string &name)
+py::typing::Optional<PySensorBasePtr> PyEnvironmentBase::GetSensor(const string &name)
 {
     return py::to_object(openravepy::toPySensor(_penv->GetSensor(name),shared_from_this()));
 }
 
-PyKinBodyPtr PyEnvironmentBase::GetBodyFromEnvironmentId(int id)
+py::typing::Optional<PyKinBodyPtr> PyEnvironmentBase::GetBodyFromEnvironmentId(int id)
 {
     RAVELOG_WARN_FORMAT("env=%d, got call of GetBodyFromEnvironmentId(%d), but should be using GetBodyFromEnvironmentBodyIndex(%d)", _penv->GetId()%id%id);
-    return openravepy::toPyKinBody(_penv->GetBodyFromEnvironmentBodyIndex(id),shared_from_this());
+    return py::to_object(openravepy::toPyKinBody(_penv->GetBodyFromEnvironmentBodyIndex(id),shared_from_this()));
 }
 
-PyKinBodyPtr PyEnvironmentBase::GetBodyFromEnvironmentBodyIndex(int bodyIndex)
+py::typing::Optional<PyKinBodyPtr> PyEnvironmentBase::GetBodyFromEnvironmentBodyIndex(int bodyIndex)
 {
-    return openravepy::toPyKinBody(_penv->GetBodyFromEnvironmentBodyIndex(bodyIndex),shared_from_this());
+    return py::to_object(openravepy::toPyKinBody(_penv->GetBodyFromEnvironmentBodyIndex(bodyIndex),shared_from_this()));
 }
 
 py::list PyEnvironmentBase::GetBodiesFromEnvironmentBodyIndices(object bodyIndices)
@@ -2538,9 +2538,9 @@ bool PyEnvironmentBase::SetDefaultViewer(bool showviewer)
     return false;
 }
 
-PyViewerBasePtr PyEnvironmentBase::GetViewer()
+py::typing::Optional<PyViewerBasePtr> PyEnvironmentBase::GetViewer()
 {
-    return openravepy::toPyViewer(_penv->GetViewer(),shared_from_this());
+    return py::to_object(openravepy::toPyViewer(_penv->GetViewer(),shared_from_this()));
 }
 
 /// returns the number of points

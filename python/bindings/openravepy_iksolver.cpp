@@ -57,7 +57,7 @@ IkReturnAction PyIkFailureInfo::GetAction() {
 py::array_t<dReal> PyIkFailureInfo::GetConfiguration() {
     return toPyArray(_ikFailureInfo._vconfig);
 }
-object PyIkFailureInfo::GetIkParam() {
+py::typing::Optional<PyIkParameterizationPtr> PyIkFailureInfo::GetIkParam() {
     if( _ikFailureInfo.HasValidIkParam() ) {
         return py::to_object(toPyIkParameterization(_ikFailureInfo.GetIkParam()));
     }
