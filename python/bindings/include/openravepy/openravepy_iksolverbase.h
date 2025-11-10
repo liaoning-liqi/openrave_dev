@@ -28,7 +28,7 @@ class OPENRAVEPY_API PyIkFailureInfo
 public:
     PyIkFailureInfo(const IkFailureInfo& ikFailureInfo);
     IkReturnAction GetAction();
-    object GetConfiguration();
+    py::array_t<dReal> GetConfiguration();
     object GetIkParam();
     object GetCollisionReport();
     std::string GetDescription();

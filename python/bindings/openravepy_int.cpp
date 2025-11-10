@@ -2292,7 +2292,7 @@ PyKinBodyPtr PyEnvironmentBase::GetBodyFromEnvironmentBodyIndex(int bodyIndex)
     return openravepy::toPyKinBody(_penv->GetBodyFromEnvironmentBodyIndex(bodyIndex),shared_from_this());
 }
 
-object PyEnvironmentBase::GetBodiesFromEnvironmentBodyIndices(object bodyIndices)
+py::list PyEnvironmentBase::GetBodiesFromEnvironmentBodyIndices(object bodyIndices)
 {
     const std::vector<int> vBodyIndices = ExtractArray<int>(bodyIndices);
 
@@ -2339,7 +2339,7 @@ bool PyEnvironmentBase::Remove(PyInterfaceBasePtr obj) {
     return _penv->Remove(obj->GetInterfaceBase());
 }
 
-object PyEnvironmentBase::GetModules()
+py::list PyEnvironmentBase::GetModules()
 {
     std::list<ModuleBasePtr> listModules;
     _penv->GetModules(listModules);

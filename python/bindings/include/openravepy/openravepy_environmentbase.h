@@ -239,7 +239,7 @@ public:
 
     PyKinBodyPtr GetBodyFromEnvironmentId(int id);
     PyKinBodyPtr GetBodyFromEnvironmentBodyIndex(int id);
-    object GetBodiesFromEnvironmentBodyIndices(object bodyIndices);
+    py::list GetBodiesFromEnvironmentBodyIndices(object bodyIndices);
 
     int GetMaxEnvironmentBodyIndex();
 
@@ -247,7 +247,7 @@ public:
     bool RemoveProblem(PyModuleBasePtr prob);
     bool Remove(PyInterfaceBasePtr obj);
 
-    object GetModules();
+    py::list GetModules();
 
     bool SetPhysicsEngine(PyPhysicsEngineBasePtr pengine);
     object GetPhysicsEngine();

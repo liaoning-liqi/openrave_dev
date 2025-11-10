@@ -404,7 +404,7 @@ public:
 
     PyJointPtr joint = PyJointPtr();
     int parentindex = -1;
-    py::object transform = ReturnTransform(Transform());
+    py::array_t<dReal> transform = ReturnTransform(Transform());
     dReal d = 0.0;
     dReal a = 0.0;
     dReal theta = 0.0;

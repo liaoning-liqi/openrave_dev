@@ -54,7 +54,7 @@ PyIkFailureInfo::PyIkFailureInfo(const IkFailureInfo& ikFailureInfo) : _ikFailur
 IkReturnAction PyIkFailureInfo::GetAction() {
     return _ikFailureInfo._action;
 }
-object PyIkFailureInfo::GetConfiguration() {
+py::array_t<dReal> PyIkFailureInfo::GetConfiguration() {
     return toPyArray(_ikFailureInfo._vconfig);
 }
 object PyIkFailureInfo::GetIkParam() {
