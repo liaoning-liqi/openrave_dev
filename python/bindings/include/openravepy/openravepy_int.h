@@ -587,8 +587,8 @@ public:
     PyRay(py::object newpos, py::object newdir);
     PyRay(const RAY& newr) : r(newr) {
     }
-    py::object dir();
-    py::object pos();
+    py::array_t<dReal> dir();
+    py::array_t<dReal> pos();
     virtual std::string __repr__();
     virtual std::string __str__();
     virtual py::object __unicode__();
@@ -603,6 +603,7 @@ class OPENRAVEPY_API PyAABB
 public:
     PyAABB() {
     }
+    virtual ~PyAABB() {}
     PyAABB(py::object newpos, py::object newextents) {
         ab.pos = ExtractVector3(newpos);
         ab.extents = ExtractVector3(newextents);

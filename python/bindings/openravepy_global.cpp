@@ -59,10 +59,10 @@ PyRay::PyRay(object newpos, object newdir)
     r.dir = ExtractVector3(newdir);
 }
 
-object PyRay::dir() {
+py::array_t<dReal> PyRay::dir() {
     return toPyVector3(r.dir);
 }
-object PyRay::pos() {
+py::array_t<dReal> PyRay::pos() {
     return toPyVector3(r.pos);
 }
 
