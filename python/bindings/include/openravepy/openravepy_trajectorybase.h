@@ -93,7 +93,7 @@ public:
 
     void deserialize(const string& s);
 
-    std::string serialize(object options=py::none_());
+    py::bytes serialize(object options=py::none_());
 
     void SaveToFile(const std::string& filename, object options=py::none_());
 

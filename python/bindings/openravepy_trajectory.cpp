@@ -583,7 +583,7 @@ void PyTrajectoryBase::deserialize(const string& s)
     _ptrajectory->deserialize(ss);
 }
 
-std::string PyTrajectoryBase::serialize(object options)
+py::bytes PyTrajectoryBase::serialize(object options)
 {
     std::stringstream ss;
     ss << std::setprecision(std::numeric_limits<dReal>::digits10+1);
