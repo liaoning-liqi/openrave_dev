@@ -42,8 +42,8 @@ public:
     std::string __str__() const;
     py::str __unicode__() const;
 
-    py::object ExtractFirstBodyLinkGeomNames();
-    py::object ExtractSecondBodyLinkGeomNames();
+    py::tuple ExtractFirstBodyLinkGeomNames();
+    py::tuple ExtractSecondBodyLinkGeomNames();
 
     std::string bodyLinkGeom1Name;
     std::string bodyLinkGeom2Name;

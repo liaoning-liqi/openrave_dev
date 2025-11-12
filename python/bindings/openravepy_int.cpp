@@ -1353,7 +1353,7 @@ bool PyEnvironmentBase::SetCollisionChecker(PyCollisionCheckerBasePtr pchecker)
 {
     return _penv->SetCollisionChecker(openravepy::GetCollisionChecker(pchecker));
 }
-object PyEnvironmentBase::GetCollisionChecker()
+py::typing::Optional<PyCollisionCheckerBasePtr> PyEnvironmentBase::GetCollisionChecker()
 {
     return py::to_object(openravepy::toPyCollisionChecker(_penv->GetCollisionChecker(), shared_from_this()));
 }
@@ -2988,7 +2988,7 @@ void PyEnvironmentBase::UpdatePublishedBodies()
     _penv->UpdatePublishedBodies();
 }
 
-object PyEnvironmentBase::GetPublishedBodies(uint64_t timeout)
+py::list PyEnvironmentBase::GetPublishedBodies(uint64_t timeout)
 {
     std::vector<KinBody::BodyState> vbodystates;
     _penv->GetPublishedBodies(vbodystates, timeout);
@@ -3016,7 +3016,7 @@ object PyEnvironmentBase::GetPublishedBodies(uint64_t timeout)
     return ostates;
 }
 
-object PyEnvironmentBase::GetPublishedBody(const std::string &name, uint64_t timeout)
+py::dict PyEnvironmentBase::GetPublishedBody(const std::string &name, uint64_t timeout)
 {
     KinBody::BodyState bodystate;
     if( !_penv->GetPublishedBody(name, bodystate, timeout) ) {
@@ -3044,7 +3044,7 @@ object PyEnvironmentBase::GetPublishedBody(const std::string &name, uint64_t tim
     return ostate;
 }
 
-object PyEnvironmentBase::GetPublishedBodyJointValues(const std::string &name, uint64_t timeout)
+py::typing::Optional<py::array_t<dReal> > PyEnvironmentBase::GetPublishedBodyJointValues(const std::string &name, uint64_t timeout)
 {
     std::vector<dReal> jointValues;
     if( !_penv->GetPublishedBodyJointValues(name, jointValues, timeout) ) {

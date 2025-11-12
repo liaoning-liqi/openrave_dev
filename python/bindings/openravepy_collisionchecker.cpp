@@ -91,7 +91,7 @@ py::str PyCollisionPairInfo::__unicode__() const
     return ConvertStringToUnicode(__str__());
 }
 
-py::object PyCollisionPairInfo::ExtractFirstBodyLinkGeomNames()
+py::tuple PyCollisionPairInfo::ExtractFirstBodyLinkGeomNames()
 {
     CollisionPairInfo cpinfo;
     cpinfo.bodyLinkGeom1Name = bodyLinkGeom1Name;
@@ -100,7 +100,7 @@ py::object PyCollisionPairInfo::ExtractFirstBodyLinkGeomNames()
     return py::make_tuple(ConvertStringToUnicode(std::string(bodyname)), ConvertStringToUnicode(std::string(linkname)), ConvertStringToUnicode(std::string(geomname)));
 }
 
-py::object PyCollisionPairInfo::ExtractSecondBodyLinkGeomNames()
+py::tuple PyCollisionPairInfo::ExtractSecondBodyLinkGeomNames()
 {
     CollisionPairInfo cpinfo;
     cpinfo.bodyLinkGeom2Name = bodyLinkGeom2Name;
@@ -869,9 +869,9 @@ CollisionCheckerBasePtr GetCollisionChecker(PyCollisionCheckerBasePtr pyCollisio
     return !pyCollisionChecker ? CollisionCheckerBasePtr() : pyCollisionChecker->GetCollisionChecker();
 }
 
-PyInterfaceBasePtr toPyCollisionChecker(CollisionCheckerBasePtr pCollisionChecker, PyEnvironmentBasePtr pyenv)
+PyCollisionCheckerBasePtr toPyCollisionChecker(CollisionCheckerBasePtr pCollisionChecker, PyEnvironmentBasePtr pyenv)
 {
-    return !pCollisionChecker ? PyInterfaceBasePtr() : PyInterfaceBasePtr(new PyCollisionCheckerBase(pCollisionChecker,pyenv));
+    return !pCollisionChecker ? PyCollisionCheckerBasePtr() : PyCollisionCheckerBasePtr(new PyCollisionCheckerBase(pCollisionChecker,pyenv));
 }
 
 bool IsCollisionReport(object o)

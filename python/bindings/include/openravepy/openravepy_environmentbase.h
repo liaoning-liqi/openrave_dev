@@ -144,7 +144,7 @@ public:
     void Clone(PyEnvironmentBasePtr pyreference, const std::string& clonedEnvName, int options);
 
     bool SetCollisionChecker(PyCollisionCheckerBasePtr pchecker);
-    object GetCollisionChecker();
+    py::typing::Optional<PyCollisionCheckerBasePtr> GetCollisionChecker();
     bool CheckCollision(PyKinBodyPtr pbody1);
     bool CheckCollision(PyKinBodyPtr pbody1, PyCollisionReportPtr pReport);
 
@@ -337,11 +337,11 @@ public:
 
     void UpdatePublishedBodies();
 
-    object GetPublishedBodies(uint64_t timeout=0);
+    py::list GetPublishedBodies(uint64_t timeout=0);
 
-    object GetPublishedBody(const std::string &name, uint64_t timeout = 0);
+    py::dict GetPublishedBody(const std::string &name, uint64_t timeout = 0);
 
-    object GetPublishedBodyJointValues(const std::string &name, uint64_t timeout=0);
+    py::typing::Optional<py::array_t<dReal> > GetPublishedBodyJointValues(const std::string &name, uint64_t timeout=0);
 
     object GetPublishedBodyTransformsMatchingPrefix(const std::string &prefix, uint64_t timeout=0);
 

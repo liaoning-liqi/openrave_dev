@@ -781,7 +781,7 @@ OPENRAVEPY_API int RaveGetEnvironmentId(PyEnvironmentBasePtr pyenv);
 OPENRAVEPY_API PyEnvironmentBasePtr RaveGetEnvironment(int id);
 
 OPENRAVEPY_API CollisionCheckerBasePtr GetCollisionChecker(PyCollisionCheckerBasePtr);
-OPENRAVEPY_API PyInterfaceBasePtr toPyCollisionChecker(CollisionCheckerBasePtr, PyEnvironmentBasePtr);
+OPENRAVEPY_API PyCollisionCheckerBasePtr toPyCollisionChecker(CollisionCheckerBasePtr, PyEnvironmentBasePtr);
 OPENRAVEPY_API bool IsCollisionReport(py::object);
 OPENRAVEPY_API bool UpdateCollisionReport(py::object, const CollisionReport&);
 OPENRAVEPY_API PyCollisionReportPtr toPyCollisionReport(const CollisionReportPtr& p);

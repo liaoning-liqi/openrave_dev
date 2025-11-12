@@ -228,7 +228,7 @@ public:
     PyJointInfo();
     PyJointInfo(const KinBody::JointInfo& info);
     KinBody::JointInfoPtr GetJointInfo();
-    object GetDOF();
+    int GetDOF();
     object SerializeJSON(dReal fUnitScale=1.0, object options=py::none_());
     void DeserializeJSON(object obj, dReal fUnitScale=1.0, object options=py::none_());
 

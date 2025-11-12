@@ -1191,17 +1191,9 @@ void PyJointInfo::_Update(const KinBody::JointInfo& info) {
     _readableInterfaces = ReturnReadableInterfaces(info._mReadableInterfaces);
 }
 
-object PyJointInfo::GetDOF() {
+int PyJointInfo::GetDOF() {
     KinBody::JointInfoPtr pInfo = GetJointInfo();
-#ifdef USE_PYBIND11_PYTHON_BINDINGS
-#if PY_MAJOR_VERSION >= 3
-    return py::handle_to_object(PyLong_FromLong(pInfo->GetDOF()));
-#else
-    return py::handle_to_object(PyInt_FromLong(pInfo->GetDOF()));
-#endif
-#else
-    return py::to_object(py::handle<>(PyInt_FromLong(pInfo->GetDOF())));
-#endif
+    return pInfo->GetDOF();
 }
 
 KinBody::JointInfoPtr PyJointInfo::GetJointInfo() {
