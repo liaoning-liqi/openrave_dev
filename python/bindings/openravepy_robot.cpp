@@ -685,7 +685,7 @@ std::string PyRobotBase::PyRobotBaseInfo::__str__() {
 #endif
 }
 
-py::object PyRobotBase::PyRobotBaseInfo::__unicode__() {
+py::str PyRobotBase::PyRobotBaseInfo::__unicode__() {
     return ConvertStringToUnicode(__str__());
 }
 
@@ -730,19 +730,19 @@ std::string PyRobotBase::PyManipulator::GetId() const {
     return _pmanip->GetId();
 }
 
-object PyRobotBase::PyManipulator::GetName() const {
+py::str PyRobotBase::PyManipulator::GetName() const {
     return ConvertStringToUnicode(_pmanip->GetName());
 }
 
-object PyRobotBase::PyManipulator::GetGripperName() const {
+py::str PyRobotBase::PyManipulator::GetGripperName() const {
     return ConvertStringToUnicode(_pmanip->GetGripperName());
 }
 
-object PyRobotBase::PyManipulator::GetToolChangerConnectedBodyToolName() const {
+py::str PyRobotBase::PyManipulator::GetToolChangerConnectedBodyToolName() const {
     return ConvertStringToUnicode(_pmanip->GetToolChangerConnectedBodyToolName());
 }
 
-object PyRobotBase::PyManipulator::GetToolChangerLinkName() const {
+py::str PyRobotBase::PyManipulator::GetToolChangerLinkName() const {
     return ConvertStringToUnicode(_pmanip->GetToolChangerLinkName());
 }
 
@@ -1350,7 +1350,7 @@ std::string PyRobotBase::PyManipulator::__repr__() {
 std::string PyRobotBase::PyManipulator::__str__() {
     return boost::str(boost::format("<manipulator:%s, parent=%s>")%_pmanip->GetName()%_pmanip->GetRobot()->GetName());
 }
-object PyRobotBase::PyManipulator::__unicode__() {
+py::str PyRobotBase::PyManipulator::__unicode__() {
     return ConvertStringToUnicode(__str__());
 }
 bool PyRobotBase::PyManipulator::__eq__(OPENRAVE_SHARED_PTR<PyManipulator> p) {
@@ -1397,7 +1397,7 @@ PyRobotBasePtr PyRobotBase::PyAttachedSensor::GetRobot() const {
 std::string PyRobotBase::PyAttachedSensor::GetId() const {
     return _pattached->GetId();
 }
-object PyRobotBase::PyAttachedSensor::GetName() const {
+py::str PyRobotBase::PyAttachedSensor::GetName() const {
     return ConvertStringToUnicode(_pattached->GetName());
 }
 
@@ -1431,7 +1431,7 @@ std::string PyRobotBase::PyAttachedSensor::__repr__() {
 std::string PyRobotBase::PyAttachedSensor::__str__() {
     return boost::str(boost::format("<attachedsensor:%s, parent=%s>")%_pattached->GetName()%_pattached->GetRobot()->GetName());
 }
-object PyRobotBase::PyAttachedSensor::__unicode__() {
+py::str PyRobotBase::PyAttachedSensor::__unicode__() {
     return ConvertStringToUnicode(__str__());
 }
 bool PyRobotBase::PyAttachedSensor::__eq__(OPENRAVE_SHARED_PTR<PyAttachedSensor> p) {
@@ -1465,7 +1465,7 @@ std::string PyRobotBase::PyConnectedBody::GetId() const {
     return _pconnected->GetId();
 }
 
-object PyRobotBase::PyConnectedBody::GetName() const {
+py::str PyRobotBase::PyConnectedBody::GetName() const {
     return ConvertStringToUnicode(_pconnected->GetName());
 }
 
@@ -1582,7 +1582,7 @@ std::string PyRobotBase::PyConnectedBody::__str__() {
                       _pconnected->GetRobot()->GetName());
 }
 
-object PyRobotBase::PyConnectedBody::__unicode__() {
+py::str PyRobotBase::PyConnectedBody::__unicode__() {
     return ConvertStringToUnicode(__str__());
 }
 
@@ -1643,7 +1643,7 @@ std::string PyRobotBase::PyRobotStateSaver::__str__() {
     }
     return boost::str(boost::format("robot state for %s")%pbody->GetName());
 }
-object PyRobotBase::PyRobotStateSaver::__unicode__() {
+py::str PyRobotBase::PyRobotStateSaver::__unicode__() {
     return ConvertStringToUnicode(__str__());
 }
 
@@ -2295,7 +2295,7 @@ std::string PyRobotBase::__repr__() {
 std::string PyRobotBase::__str__() {
     return boost::str(boost::format("<%s:%s - %s (%s)>")%RaveGetInterfaceName(_probot->GetInterfaceType())%_probot->GetXMLId()%_probot->GetName()%_probot->GetRobotStructureHash());
 }
-object PyRobotBase::__unicode__() {
+py::str PyRobotBase::__unicode__() {
     return ConvertStringToUnicode(__str__());
 }
 void PyRobotBase::__enter__()

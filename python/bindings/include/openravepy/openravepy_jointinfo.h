@@ -314,9 +314,9 @@ public:
     py::array_t<dReal> GetContainerBottomCross() const;
     py::array_t<dReal> GetContainerBottom() const;
     py::array_t<dReal> GetRenderScale() const;
-    object GetRenderFilename() const;
+    py::str GetRenderFilename() const;
     std::string GetId() const;
-    object GetName() const;
+    py::str GetName() const;
     float GetFriction() const;
     float GetTransparency() const;
     py::array_t<dReal> GetDiffuseColor() const;
@@ -328,7 +328,7 @@ public:
     py::tuple GetCalibrationBoardNumDots() const;
     py::tuple GetCalibrationBoardDotsDistances() const;
     py::array_t<dReal> GetCalibrationBoardDotColor() const;
-    object GetCalibrationBoardPatternName() const;
+    py::str GetCalibrationBoardPatternName() const;
     py::tuple GetCalibrationBoardDotDiameterDistanceRatios() const;
     int GetNumberOfAxialSlices() const;
     object GetInfo();
@@ -350,7 +350,7 @@ public:
     KinBody::LinkPtr GetLink();
 
     std::string GetId() const;
-    object GetName() const;
+    py::str GetName() const;
     int GetIndex();
     void Enable(bool bEnable);
     bool IsEnabled() const;
@@ -441,7 +441,7 @@ public:
 
     std::string __repr__();
     std::string __str__();
-    object __unicode__();
+    py::str __unicode__();
     bool __eq__(OPENRAVE_SHARED_PTR<PyLink> p);
     bool __ne__(OPENRAVE_SHARED_PTR<PyLink> p);
     long __hash__();
@@ -458,7 +458,7 @@ public:
     KinBody::JointPtr GetJoint();
 
     std::string GetId() const;
-    object GetName() const;
+    py::str GetName() const;
     bool IsMimic(int iaxis=-1);
     string GetMimicEquation(int iaxis=0, int itype=0, const std::string& format="");
     object GetMimicDOFIndices(int iaxis=0);
@@ -556,7 +556,7 @@ public:
 
     std::string __repr__();
     std::string __str__();
-    object __unicode__();
+    py::str __unicode__();
     bool __eq__(OPENRAVE_SHARED_PTR<PyJoint> p);
     bool __ne__(OPENRAVE_SHARED_PTR<PyJoint> p);
     long __hash__();
@@ -580,7 +580,7 @@ public:
     void Release();
 
     std::string __str__();
-    object __unicode__();
+    py::str __unicode__();
 };
 typedef OPENRAVE_SHARED_PTR<PyKinBodyStateSaver> PyKinBodyStateSaverPtr;
 
@@ -605,7 +605,7 @@ public:
 
     string __repr__();
     string __str__();
-    object __unicode__();
+    py::str __unicode__();
     bool __eq__(OPENRAVE_SHARED_PTR<PyManageData> p);
     bool __ne__(OPENRAVE_SHARED_PTR<PyManageData> p);
     long __hash__();

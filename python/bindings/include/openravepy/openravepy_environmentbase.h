@@ -106,10 +106,10 @@ public:
         py::list _keywords;
         py::object _vBodyInfos = py::none_();
         py::object _name = py::none_();
-        py::object _description = py::none_();
+        py::str _description = py::none_();
 #endif
         virtual std::string __str__();
-        virtual py::object __unicode__();
+        virtual py::str __unicode__();
 
 protected:
         void _Update(const EnvironmentBase::EnvironmentBaseInfo& info);
@@ -370,13 +370,13 @@ public:
 
     int GetRevision() const;
 
-    py::object GetName() const;
+    py::str GetName() const;
 
-    py::object GetNameId() const;
+    py::str GetNameId() const;
 
     void SetDescription(const std::string& sceneDescription);
 
-    py::object GetDescription() const;
+    py::str GetDescription() const;
 
     void SetKeywords(object oSceneKeywords);
 
@@ -403,7 +403,7 @@ public:
     long __hash__();
     std::string __repr__();
     std::string __str__();
-    object __unicode__();
+    py::str __unicode__();
 
     EnvironmentBasePtr GetEnv() const;
 };

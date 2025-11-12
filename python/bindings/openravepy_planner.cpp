@@ -275,7 +275,7 @@ std::string PyPlannerBase::PyPlannerParameters::__repr__() {
 std::string PyPlannerBase::PyPlannerParameters::__str__() {
     return boost::str(boost::format("<PlannerParameters, dof=%d>")%_paramsread->GetDOF());
 }
-object PyPlannerBase::PyPlannerParameters::__unicode__() {
+py::str PyPlannerBase::PyPlannerParameters::__unicode__() {
     return ConvertStringToUnicode(__str__());
 }
 bool PyPlannerBase::PyPlannerParameters::__eq__(OPENRAVE_SHARED_PTR<PyPlannerParameters> p) {

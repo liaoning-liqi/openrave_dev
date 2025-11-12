@@ -35,7 +35,7 @@ public:
     virtual void Release() = 0;
     virtual void Close() = 0;
     virtual std::string __str__() = 0;
-    virtual py::object __unicode__() = 0;
+    virtual py::str __unicode__() = 0;
 };
 
 /// \brief simple wrapper around a save state that manages  enter/exit scope
@@ -80,7 +80,7 @@ public:
     std::string __str__() {
         return _state->__str__();
     }
-    py::object __unicode__() {
+    py::str __unicode__() {
         return _state->__unicode__();
     }
 };
@@ -100,10 +100,10 @@ public:
 
         void DeserializeJSON(py::object obj, dReal fUnitScale=1.0, py::object options=py::none_());
 
-        py::object GetGrabbedInfoHash() const;
+        py::str GetGrabbedInfoHash() const;
 
         std::string __str__();
-        py::object __unicode__();
+        py::str __unicode__();
 
 private:
         void _Update(const RobotBase::GrabbedInfo& info);
@@ -165,7 +165,7 @@ public:
         py::object _files = py::none_();
 
         virtual std::string __str__();
-        virtual py::object __unicode__();
+        virtual py::str __unicode__();
 
 protected:
         void _Update(const KinBody::KinBodyInfo& info);
@@ -200,7 +200,7 @@ public:
     void SetLinkGeometriesFromGroup(const std::string& geomname, const bool propagateGroupNameToSelfCollisionChecker);
     void SetLinkGroupGeometries(const std::string& geomname, py::object olinkgeometryinfos);
     void SetName(const std::string& name);
-    py::object GetName() const;
+    py::str GetName() const;
     void SetId(const std::string& bodyid);
     std::string GetId() const;
     int GetDOF() const;
@@ -332,8 +332,8 @@ public:
     int GetEnvironmentId() const;
     int DoesAffect(int jointindex, int linkindex ) const;
     int DoesDOFAffectLink(int dofindex, int linkindex ) const;
-    py::object GetURI() const;
-    py::object GetReferenceURI() const;
+    py::str GetURI() const;
+    py::str GetReferenceURI() const;
     py::list GetNonAdjacentLinks() const;
     py::list GetNonAdjacentLinks(int adjacentoptions) const;
     void SetAdjacentLinks(int linkindex0, int linkindex1);
@@ -355,7 +355,7 @@ public:
     virtual PyStateRestoreContextBase* CreateStateSaver(py::object options);
     virtual std::string __repr__();
     virtual std::string __str__();
-    virtual py::object __unicode__();
+    virtual py::str __unicode__();
     virtual void __enter__();
     virtual void __exit__(py::object type, py::object value, py::object traceback);
 

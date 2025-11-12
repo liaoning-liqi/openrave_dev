@@ -93,7 +93,7 @@ std::string PyIkParameterization::GetId() const {
     return _param.GetId();
 }
 
-object PyIkParameterization::GetName() const {
+py::str PyIkParameterization::GetName() const {
     return ConvertStringToUnicode(_param.GetName());
 }
 
@@ -358,7 +358,7 @@ std::string PyIkParameterization::__str__() {
     ss << _param;
     return ss.str();
 }
-object PyIkParameterization::__unicode__() {
+py::str PyIkParameterization::__unicode__() {
     return ConvertStringToUnicode(__str__());
 }
 PyIkParameterizationPtr PyIkParameterization::__mul__(object otrans)

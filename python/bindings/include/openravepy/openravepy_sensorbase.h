@@ -306,13 +306,13 @@ public:
     py::array_t<dReal> GetTransform();
     py::array_t<dReal> GetTransformPose();
 
-    object GetName() const;
+    py::str GetName() const;
 
     void SetName(const std::string& name);
 
     virtual std::string __repr__();
     virtual std::string __str__();
-    virtual object __unicode__();
+    virtual py::str __unicode__();
 };
 
 struct SensorBaseInitializer

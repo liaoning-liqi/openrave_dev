@@ -1192,7 +1192,7 @@ void PyEnvironmentBase::PyEnvironmentBaseInfo::_Update(const EnvironmentBase::En
 #else
     py::list vKeywords;
     FOREACHC(itKeyword, info._keywords) {
-        py::object keyword = ConvertStringToUnicode(*itKeyword);
+        py::str keyword = ConvertStringToUnicode(*itKeyword);
         vKeywords.append(keyword);
     }
     _keywords = vKeywords;
@@ -1206,7 +1206,7 @@ std::string PyEnvironmentBase::PyEnvironmentBaseInfo::__str__() {
     return "<EnvironmentBaseInfo>";
 }
 
-py::object PyEnvironmentBase::PyEnvironmentBaseInfo::__unicode__() {
+py::str PyEnvironmentBase::PyEnvironmentBaseInfo::__unicode__() {
     return ConvertStringToUnicode(__str__());
 }
 
@@ -3169,12 +3169,12 @@ int PyEnvironmentBase::GetRevision() const
     return _penv->GetRevision();
 }
 
-py::object PyEnvironmentBase::GetName() const
+py::str PyEnvironmentBase::GetName() const
 {
     return ConvertStringToUnicode(_penv->GetName());
 }
 
-py::object PyEnvironmentBase::GetNameId() const
+py::str PyEnvironmentBase::GetNameId() const
 {
     return ConvertStringToUnicode(_penv->GetNameId());
 }
@@ -3184,7 +3184,7 @@ void PyEnvironmentBase::SetDescription(const std::string& sceneDescription)
     _penv->SetDescription(sceneDescription);
 }
 
-py::object PyEnvironmentBase::GetDescription() const
+py::str PyEnvironmentBase::GetDescription() const
 {
     return ConvertStringToUnicode(_penv->GetDescription());
 }
@@ -3235,7 +3235,7 @@ std::string PyEnvironmentBase::__repr__() {
 std::string PyEnvironmentBase::__str__() {
     return boost::str(boost::format("<env %d>")%RaveGetEnvironmentId(_penv));
 }
-object PyEnvironmentBase::__unicode__() {
+py::str PyEnvironmentBase::__unicode__() {
     return ConvertStringToUnicode(__str__());
 }
 
@@ -3398,7 +3398,7 @@ BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(PyEnvironmentBaseInfo_SerializeJSON_overl
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(PyEnvironmentBaseInfo_DeserializeJSON_overloads, DeserializeJSON, 1, 3)
 
 
-object get_openrave_exception_unicode(OpenRAVEException* p)
+py::str get_openrave_exception_unicode(OpenRAVEException* p)
 {
     std::string s = p->message();
     return ConvertStringToUnicode(s);
@@ -3409,7 +3409,7 @@ std::string get_openrave_exception_repr(OpenRAVEException* p)
     return boost::str(boost::format("<OpenRAVEException('%s','%s')>")%p->message()%RaveGetErrorCodeString(p->GetCode()));
 }
 
-object get_std_runtime_error_unicode(std::runtime_error* p)
+py::str get_std_runtime_error_unicode(std::runtime_error* p)
 {
     std::string s(p->what());
     return ConvertStringToUnicode(s);
@@ -3425,7 +3425,7 @@ std::string get_boost_filesystem_error_message(boost::filesystem::filesystem_err
     return std::string(p->what())+" ("+p->path1().native()+")";
 }
 
-object get_boost_filesystem_error_unicode(boost::filesystem::filesystem_error* p)
+py::str get_boost_filesystem_error_unicode(boost::filesystem::filesystem_error* p)
 {
     return ConvertStringToUnicode(get_boost_filesystem_error_message(p));
 }
@@ -3435,7 +3435,7 @@ std::string get_boost_filesystem_error_repr(boost::filesystem::filesystem_error*
     return boost::str(boost::format("<boost::filesystem::filesystem_error('%s')>")%get_boost_filesystem_error_message(p));
 }
 
-py::object GetCodeStringOpenRAVEException(OpenRAVEException* p)
+py::str GetCodeStringOpenRAVEException(OpenRAVEException* p)
 {
     return ConvertStringToUnicode(RaveGetErrorCodeString(p->GetCode()));
 }
@@ -3512,22 +3512,22 @@ OPENRAVE_PYTHON_MODULE(openravepy_int)
             }
         }
         catch( const boost::bad_function_call& e ) {
-            py::object pyerrdata = ConvertStringToUnicode(e.what());
+            py::str pyerrdata = ConvertStringToUnicode(e.what());
             pyerrdata.inc_ref(); // since passing to PyErr_SetObject
             PyErr_SetObject(PyExc_TypeError, pyerrdata.ptr() );
         }
         catch( const boost::filesystem::filesystem_error& e ) {
-            py::object pyerrdata = ConvertStringToUnicode(std::string(e.what())+" ("+e.path1().native()+")");
+            py::str pyerrdata = ConvertStringToUnicode(std::string(e.what())+" ("+e.path1().native()+")");
             pyerrdata.inc_ref(); // since passing to PyErr_SetObject
             PyErr_SetObject(PyExc_RuntimeError, pyerrdata.ptr() );
         }
         catch( const std::runtime_error& e ) {
-            py::object pyerrdata = ConvertStringToUnicode(e.what());
+            py::str pyerrdata = ConvertStringToUnicode(e.what());
             pyerrdata.inc_ref(); // since passing to PyErr_SetObject
             PyErr_SetObject(PyExc_RuntimeError, pyerrdata.ptr() );
         }
         catch( const OpenRAVEException &e ) {
-            py::object pyerrdata = py::make_tuple(ConvertStringToUnicode(e.message()), ConvertStringToUnicode(RaveGetErrorCodeString(e.GetCode())));
+            py::tuple pyerrdata = py::make_tuple(ConvertStringToUnicode(e.message()), ConvertStringToUnicode(RaveGetErrorCodeString(e.GetCode())));
             pyerrdata.inc_ref(); // since passing to PyErr_SetObject
             PyErr_SetObject(pyOpenRAVEException.ptr(), pyerrdata.ptr() );
         }

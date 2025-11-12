@@ -59,9 +59,9 @@ namespace openravepy {
 
 namespace py = boost::python;
 
-inline py::object ConvertStringToUnicode(const std::string& s)
+inline py::str ConvertStringToUnicode(const std::string& s)
 {
-    return py::handle_to_object(PyUnicode_Decode(s.c_str(), s.size(), "utf-8", nullptr));
+    return py::str(py::handle<>(PyUnicode_Decode(s.c_str(), s.size(), "utf-8", nullptr)));
 }
 
 #ifdef OPENRAVE_BINDINGS_PYARRAY

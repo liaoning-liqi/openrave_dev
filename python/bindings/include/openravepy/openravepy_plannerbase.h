@@ -120,7 +120,7 @@ public:
 
         std::string __repr__();
         std::string __str__();
-        object __unicode__();
+        py::str __unicode__();
         bool __eq__(OPENRAVE_SHARED_PTR<PyPlannerParameters> p);
         bool __ne__(OPENRAVE_SHARED_PTR<PyPlannerParameters> p);
         long __hash__();

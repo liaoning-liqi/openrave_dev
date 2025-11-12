@@ -46,9 +46,9 @@ public:
 
     bool SetBodyGeometryGroup(PyKinBodyPtr pybody, const std::string& groupname);
 
-    object GetGeometryGroup();
+    py::str GetGeometryGroup();
 
-    object GetBodyGeometryGroup(PyKinBodyPtr pybody);
+    py::str GetBodyGeometryGroup(PyKinBodyPtr pybody);
 
     void RemoveKinBody(PyKinBodyPtr pbody);
 

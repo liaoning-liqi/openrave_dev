@@ -44,7 +44,7 @@ public:
         py::object _vConnectedBodyInfos = py::none_();
         py::object _vGripperInfos = py::none_();
         virtual std::string __str__();
-        virtual py::object __unicode__();
+        virtual py::str __unicode__();
 
 protected:
         void _Update(const RobotBase::RobotBaseInfo& info);
@@ -72,14 +72,14 @@ public:
         py::array_t<dReal> GetVelocity() const;
 
         std::string GetId() const;
-        object GetName() const;
+        py::str GetName() const;
 
         void SetName(const std::string& s);
 
-        object GetGripperName() const;
+        py::str GetGripperName() const;
 
-        object GetToolChangerConnectedBodyToolName() const;
-        object GetToolChangerLinkName() const;
+        py::str GetToolChangerConnectedBodyToolName() const;
+        py::str GetToolChangerLinkName() const;
 
         py::list GetRestrictGraspSetNames() const;
 
@@ -178,7 +178,7 @@ public:
 
         std::string __repr__();
         std::string __str__();
-        object __unicode__();
+        py::str __unicode__();
         bool __eq__(OPENRAVE_SHARED_PTR<PyManipulator> p);
         bool __ne__(OPENRAVE_SHARED_PTR<PyManipulator> p);
         long __hash__();
@@ -202,7 +202,7 @@ public:
         py::array_t<dReal> GetTransformPose() const;
         PyRobotBasePtr GetRobot() const;
         std::string GetId() const;
-        object GetName() const;
+        py::str GetName() const;
 
         object GetData();
 
@@ -217,7 +217,7 @@ public:
 
         std::string __repr__();
         std::string __str__();
-        object __unicode__();
+        py::str __unicode__();
         bool __eq__(OPENRAVE_SHARED_PTR<PyAttachedSensor> p);
         bool __ne__(OPENRAVE_SHARED_PTR<PyAttachedSensor> p);
         long __hash__();
@@ -236,7 +236,7 @@ public:
         RobotBase::ConnectedBodyPtr GetConnectedBody() const;
 
         std::string GetId() const;
-        object GetName() const;
+        py::str GetName() const;
 
         object GetInfo();
 
@@ -271,7 +271,7 @@ public:
 
         std::string __str__();
 
-        object __unicode__();
+        py::str __unicode__();
 
         bool __eq__(OPENRAVE_SHARED_PTR<PyConnectedBody> p);
 
@@ -300,7 +300,7 @@ public:
         void Release();
 
         std::string __str__();
-        object __unicode__();
+        py::str __unicode__();
     };
     typedef OPENRAVE_SHARED_PTR<PyRobotStateSaver> PyRobotStateSaverPtr;
 
@@ -459,7 +459,7 @@ public:
 
     virtual std::string __repr__();
     virtual std::string __str__();
-    virtual object __unicode__();
+    virtual py::str __unicode__();
     virtual void __enter__();
 };
 

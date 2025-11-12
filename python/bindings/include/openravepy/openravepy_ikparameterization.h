@@ -35,7 +35,7 @@ public:
 
     IkParameterizationType GetType() const;
     std::string GetId() const;
-    object GetName() const;
+    py::str GetName() const;
 
     int GetDOF();
 
@@ -111,7 +111,7 @@ public:
 
     std::string __repr__();
     std::string __str__();
-    object __unicode__();
+    py::str __unicode__();
 
     PyIkParameterizationPtr __mul__(object otrans);
 

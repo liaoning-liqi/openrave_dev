@@ -72,7 +72,7 @@ std::string PyRay::__repr__() {
 std::string PyRay::__str__() {
     return boost::str(boost::format("<%.15e %.15e %.15e %.15e %.15e %.15e>")%r.pos.x%r.pos.y%r.pos.z%r.dir.x%r.dir.y%r.dir.z);
 }
-object PyRay::__unicode__() {
+py::str PyRay::__unicode__() {
     return ConvertStringToUnicode(__str__());
 }
 
@@ -91,7 +91,7 @@ public:
         return _readable->GetXMLId();
     }
 
-    object SerializeXML(int options=0) {
+    py::typing::Optional<py::str> SerializeXML(int options=0) {
         // some readable are not xml readable and does not get serialized here
         if (!_readable) {
             return py::none_();
@@ -255,7 +255,7 @@ std::string PyAABB::__str__() {
     return boost::str(boost::format("<%.15e %.15e %.15e %.15e %.15e %.15e>")%ab.pos.x%ab.pos.y%ab.pos.z%ab.extents.x%ab.extents.y%ab.extents.z);
 }
 
-py::object PyAABB::__unicode__() {
+py::str PyAABB::__unicode__() {
     return ConvertStringToUnicode(__str__());
 }
 
@@ -318,7 +318,7 @@ public:
     virtual std::string __str__() {
         return boost::str(boost::format("<%s>")%__repr__());
     }
-    virtual object __unicode__() {
+    virtual py::str __unicode__() {
         return ConvertStringToUnicode(__str__());
     }
 
@@ -522,7 +522,7 @@ public:
     std::string __str__() {
         return boost::str(boost::format("<trimesh: verts %d, tris=%d>")%len(vertices)%len(indices));
     }
-    object __unicode__() {
+    py::str __unicode__() {
         return ConvertStringToUnicode(__str__());
     }
 
@@ -850,7 +850,7 @@ std::string PyConfigurationSpecification::__str__() {
     ss << "<configuration dof=\"" << _spec.GetDOF() << "\">";
     return ss.str();
 }
-object PyConfigurationSpecification::__unicode__() {
+py::str PyConfigurationSpecification::__unicode__() {
     return ConvertStringToUnicode(__str__());
 }
 
@@ -1014,7 +1014,7 @@ void pyRaveSetDataAccess(object oaccess)
 }
 
 // return None if nothing found
-object pyRaveInvertFileLookup(const std::string& filename)
+py::typing::Optional<py::str> pyRaveInvertFileLookup(const std::string& filename)
 {
     std::string newfilename;
     if( OpenRAVE::RaveInvertFileLookup(newfilename, filename) ) {

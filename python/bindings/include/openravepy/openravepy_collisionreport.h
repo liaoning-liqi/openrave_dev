@@ -29,7 +29,7 @@ struct PYCONTACT
     PYCONTACT(const CONTACT& c);
 
     std::string __str__() const;
-    object __unicode__() const;
+    py::str __unicode__() const;
     object pos = py::none_();
     object norm = py::none_();
     dReal depth;
@@ -40,7 +40,7 @@ class OPENRAVEPY_API PyCollisionPairInfo
 public:
     PyCollisionPairInfo(const CollisionPairInfo& cpinfo);
     std::string __str__() const;
-    object __unicode__() const;
+    py::str __unicode__() const;
 
     py::object ExtractFirstBodyLinkGeomNames();
     py::object ExtractSecondBodyLinkGeomNames();
@@ -59,7 +59,7 @@ public:
     void Init(const CollisionReport& report);
 
     std::string __str__() const;
-    object __unicode__() const;
+    py::str __unicode__() const;
     void Reset(int coloptions=0);
 
     py::list collisionInfos; // list of PyCollisionPairInfo

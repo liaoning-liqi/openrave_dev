@@ -66,7 +66,7 @@ std::string PYCONTACT::__str__() const
     ss << "pos=["<<vpos.x<<", "<<vpos.y<<", "<<vpos.z<<"], norm=["<<vnorm.x<<", "<<vnorm.y<<", "<<vnorm.z<<"]";
     return ss.str();
 }
-object PYCONTACT::__unicode__() const
+py::str PYCONTACT::__unicode__() const
 {
     return ConvertStringToUnicode(__str__());
 }
@@ -86,7 +86,7 @@ std::string PyCollisionPairInfo::__str__() const
     ss << "<(" << bodyLinkGeom1Name << ")x(" << bodyLinkGeom2Name << ") c=" << py::len(contacts) << ">";
     return ss.str();
 }
-object PyCollisionPairInfo::__unicode__() const
+py::str PyCollisionPairInfo::__unicode__() const
 {
     return ConvertStringToUnicode(__str__());
 }
@@ -154,7 +154,7 @@ std::string PyCollisionReport::__str__() const
     return s.str();
 }
 
-object PyCollisionReport::__unicode__() const
+py::str PyCollisionReport::__unicode__() const
 {
     return ConvertStringToUnicode(__str__());
 }
@@ -200,12 +200,12 @@ bool PyCollisionCheckerBase::SetBodyGeometryGroup(PyKinBodyPtr pybody, const std
     return _pCollisionChecker->SetBodyGeometryGroup(openravepy::GetKinBody(pybody), groupname);
 }
 
-object PyCollisionCheckerBase::GetGeometryGroup()
+py::str PyCollisionCheckerBase::GetGeometryGroup()
 {
     return ConvertStringToUnicode(_pCollisionChecker->GetGeometryGroup());
 }
 
-object PyCollisionCheckerBase::GetBodyGeometryGroup(PyKinBodyPtr pybody)
+py::str PyCollisionCheckerBase::GetBodyGeometryGroup(PyKinBodyPtr pybody)
 {
     return ConvertStringToUnicode(_pCollisionChecker->GetBodyGeometryGroup(openravepy::GetKinBody(pybody)));
 }

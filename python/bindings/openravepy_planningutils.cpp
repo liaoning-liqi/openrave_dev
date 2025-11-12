@@ -398,7 +398,7 @@ public:
         TransformMatrix tm = ExtractTransformMatrix(transform);
         return boost::str(boost::format("<joint %s, transform [[%f, %f, %f, %f], [%f, %f, %f, %f], [%f, %f, %f, %f]], parentindex %d>")%strPyKinBodyJoint(py::to_object(joint))%tm.m[0]%tm.m[1]%tm.m[2]%tm.trans[0]%tm.m[4]%tm.m[5]%tm.m[6]%tm.trans[1]%tm.m[8]%tm.m[9]%tm.m[10]%tm.trans[2]%parentindex);
     }
-    object __unicode__() {
+    py::str __unicode__() {
         return ConvertStringToUnicode(__str__());
     }
 

@@ -631,7 +631,7 @@ py::array_t<dReal> PySensorBase::GetTransformPose() {
     return toPyArray(_psensor->GetTransform());
 }
 
-object PySensorBase::GetName() const {
+py::str PySensorBase::GetName() const {
     return ConvertStringToUnicode(_psensor->GetName());
 }
 
@@ -646,7 +646,7 @@ std::string PySensorBase::__repr__() {
 std::string PySensorBase::__str__() {
     return boost::str(boost::format("<%s:%s - %s>")%RaveGetInterfaceName(_psensor->GetInterfaceType())%_psensor->GetXMLId()%_psensor->GetName());
 }
-object PySensorBase::__unicode__() {
+py::str PySensorBase::__unicode__() {
     return ConvertStringToUnicode(__str__());
 }
 

@@ -591,7 +591,7 @@ public:
     py::array_t<dReal> pos();
     virtual std::string __repr__();
     virtual std::string __str__();
-    virtual py::object __unicode__();
+    virtual py::str __unicode__();
     RAY r;
 };
 
@@ -622,7 +622,7 @@ public:
 
     virtual std::string __repr__();
     virtual std::string __str__();
-    virtual py::object __unicode__();
+    virtual py::str __unicode__();
 
     AABB ab;
 };
@@ -693,7 +693,7 @@ public:
     std::string GetPluginName() const {
         return _pbase->GetPluginName();
     }
-    py::object GetDescription() const {
+    py::str GetDescription() const {
         return ConvertStringToUnicode(_pbase->GetDescription());
     }
     void SetDescription(const std::string& s) {
@@ -735,7 +735,7 @@ public:
     virtual string __str__() {
         return boost::str(boost::format("<%s:%s>")%RaveGetInterfaceName(_pbase->GetInterfaceType())%_pbase->GetXMLId());
     }
-    virtual py::object __unicode__() {
+    virtual py::str __unicode__() {
         return ConvertStringToUnicode(__str__());
     }
     virtual long __hash__() {

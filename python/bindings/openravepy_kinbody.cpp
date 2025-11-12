@@ -1561,14 +1561,14 @@ py::array_t<dReal> PyGeometry::GetContainerBottom() const {
 py::array_t<dReal> PyGeometry::GetRenderScale() const {
     return toPyVector3(_pgeometry->GetRenderScale());
 }
-object PyGeometry::GetRenderFilename() const {
+py::str PyGeometry::GetRenderFilename() const {
     return ConvertStringToUnicode(_pgeometry->GetRenderFilename());
 }
 
 std::string PyGeometry::GetId() const {
     return _pgeometry->GetId();
 }
-object PyGeometry::GetName() const {
+py::str PyGeometry::GetName() const {
     return ConvertStringToUnicode(_pgeometry->GetName());
 }
 float PyGeometry::GetFriction() const {
@@ -1607,7 +1607,7 @@ py::tuple PyGeometry::GetCalibrationBoardDotsDistances() const {
 py::array_t<dReal> PyGeometry::GetCalibrationBoardDotColor() const {
     return toPyVector3(_pgeometry->GetCalibrationBoardDotColor());
 }
-object PyGeometry::GetCalibrationBoardPatternName() const {
+py::str PyGeometry::GetCalibrationBoardPatternName() const {
     return ConvertStringToUnicode(_pgeometry->GetCalibrationBoardPatternName());
 }
 py::tuple PyGeometry::GetCalibrationBoardDotDiameterDistanceRatios() const {
@@ -1647,7 +1647,7 @@ KinBody::LinkPtr PyLink::GetLink() {
 std::string PyLink::GetId() const {
     return _plink->GetId();
 }
-object PyLink::GetName() const {
+py::str PyLink::GetName() const {
     return ConvertStringToUnicode(_plink->GetName());
 }
 int PyLink::GetIndex() {
@@ -2000,7 +2000,7 @@ std::string PyLink::__repr__() {
 std::string PyLink::__str__() {
     return boost::str(boost::format("<link:%s (%d), parent=%s>")%_plink->GetName()%_plink->GetIndex()%_plink->GetParent()->GetName());
 }
-object PyLink::__unicode__() {
+py::str PyLink::__unicode__() {
     return ConvertStringToUnicode(__str__());
 }
 bool PyLink::__eq__(OPENRAVE_SHARED_PTR<PyLink> p) {
@@ -2030,7 +2030,7 @@ KinBody::JointPtr PyJoint::GetJoint() {
 std::string PyJoint::GetId() const {
     return _pjoint->GetId();
 }
-object PyJoint::GetName() const {
+py::str PyJoint::GetName() const {
     return ConvertStringToUnicode(_pjoint->GetName());
 }
 bool PyJoint::IsMimic(int iaxis) {
@@ -2361,7 +2361,7 @@ std::string PyJoint::__repr__() {
 std::string PyJoint::__str__() {
     return boost::str(boost::format("<joint:%s (%d), dof=%d, parent=%s>")%_pjoint->GetName()%_pjoint->GetJointIndex()%_pjoint->GetDOFIndex()%_pjoint->GetParent()->GetName());
 }
-object PyJoint::__unicode__() {
+py::str PyJoint::__unicode__() {
     return ConvertStringToUnicode(__str__());
 }
 bool PyJoint::__eq__(OPENRAVE_SHARED_PTR<PyJoint> p) {
@@ -2441,7 +2441,7 @@ std::string PyKinBodyStateSaver::__str__() {
     }
     return boost::str(boost::format("state for %s")%pbody->GetName());
 }
-object PyKinBodyStateSaver::__unicode__() {
+py::str PyKinBodyStateSaver::__unicode__() {
     return ConvertStringToUnicode(__str__());
 }
 
@@ -2487,7 +2487,7 @@ std::string PyManageData::__str__() {
     std::string systemname = !psystem ? "(NONE)" : psystem->GetXMLId();
     return boost::str(boost::format("<managedata:%s, parent=%s:%s>")%systemname%plink->GetParent()->GetName()%plink->GetName());
 }
-object PyManageData::__unicode__() {
+py::str PyManageData::__unicode__() {
     return ConvertStringToUnicode(__str__());
 }
 bool PyManageData::__eq__(OPENRAVE_SHARED_PTR<PyManageData> p) {
@@ -2566,7 +2566,7 @@ void PyKinBody::PyGrabbedInfo::DeserializeJSON(py::object obj, dReal fUnitScale,
     _Update(info);
 }
 
-py::object PyKinBody::PyGrabbedInfo::GetGrabbedInfoHash() const
+py::str PyKinBody::PyGrabbedInfo::GetGrabbedInfoHash() const
 {
     KinBody::GrabbedInfoPtr pInfo = GetGrabbedInfo();
     return ConvertStringToUnicode(pInfo->GetGrabbedInfoHash());
@@ -2607,7 +2607,7 @@ void PyKinBody::PyGrabbedInfo::_Update(const RobotBase::GrabbedInfo& info) {
     _grabbedUserData = toPyObject(info._rGrabbedUserData);
 }
 
-py::object PyKinBody::PyGrabbedInfo::__unicode__() {
+py::str PyKinBody::PyGrabbedInfo::__unicode__() {
     return ConvertStringToUnicode(__str__());
 }
 
@@ -2754,7 +2754,7 @@ std::string PyKinBody::PyKinBodyInfo::__str__() {
 #endif
 }
 
-py::object PyKinBody::PyKinBodyInfo::__unicode__() {
+py::str PyKinBody::PyKinBodyInfo::__unicode__() {
     return ConvertStringToUnicode(__str__());
 }
 
@@ -2958,7 +2958,7 @@ void PyKinBody::SetName(const std::string& name)
 {
     _pbody->SetName(name);
 }
-object PyKinBody::GetName() const
+py::str PyKinBody::GetName() const
 {
     return ConvertStringToUnicode(_pbody->GetName());
 }
@@ -4292,12 +4292,12 @@ int PyKinBody::DoesDOFAffectLink(int dofindex, int linkindex ) const
     return _pbody->DoesDOFAffectLink(dofindex,linkindex);
 }
 
-object PyKinBody::GetURI() const
+py::str PyKinBody::GetURI() const
 {
     return ConvertStringToUnicode(_pbody->GetURI());
 }
 
-object PyKinBody::GetReferenceURI() const
+py::str PyKinBody::GetReferenceURI() const
 {
     return ConvertStringToUnicode(_pbody->GetReferenceURI());
 }
@@ -4433,7 +4433,7 @@ string PyKinBody::__str__()
     return boost::str(boost::format("<%s:%s - %s (%s)>")%RaveGetInterfaceName(_pbody->GetInterfaceType())%_pbody->GetXMLId()%_pbody->GetName()%_pbody->GetKinematicsGeometryHash());
 }
 
-object PyKinBody::__unicode__()
+py::str PyKinBody::__unicode__()
 {
     return ConvertStringToUnicode(__str__());
 }
