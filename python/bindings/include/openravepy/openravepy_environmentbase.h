@@ -331,9 +331,9 @@ public:
     py::list GetBodiesWithReadableInterface(const std::string& readableInterfaceName);
     int GetNumBodies();
 
-    object GetRobots();
+    py::list GetRobots();
 
-    object GetSensors();
+    py::list GetSensors();
 
     void UpdatePublishedBodies();
 
@@ -343,7 +343,7 @@ public:
 
     py::typing::Optional<py::array_t<dReal> > GetPublishedBodyJointValues(const std::string &name, uint64_t timeout=0);
 
-    object GetPublishedBodyTransformsMatchingPrefix(const std::string &prefix, uint64_t timeout=0);
+    py::dict GetPublishedBodyTransformsMatchingPrefix(const std::string &prefix, uint64_t timeout=0);
 
     object Triangulate(PyKinBodyPtr pbody);
 

@@ -2961,7 +2961,7 @@ int PyEnvironmentBase::GetNumBodies()
     return _penv->GetNumBodies();
 }
 
-object PyEnvironmentBase::GetRobots()
+py::list PyEnvironmentBase::GetRobots()
 {
     std::vector<RobotBasePtr> vrobots;
     _penv->GetRobots(vrobots);
@@ -2972,7 +2972,7 @@ object PyEnvironmentBase::GetRobots()
     return robots;
 }
 
-object PyEnvironmentBase::GetSensors()
+py::list PyEnvironmentBase::GetSensors()
 {
     std::vector<SensorBasePtr> vsensors;
     _penv->GetSensors(vsensors);
@@ -3053,7 +3053,7 @@ py::typing::Optional<py::array_t<dReal> > PyEnvironmentBase::GetPublishedBodyJoi
     return toPyArray(jointValues);
 }
 
-object PyEnvironmentBase::GetPublishedBodyTransformsMatchingPrefix(const string &prefix, uint64_t timeout) {
+py::dict PyEnvironmentBase::GetPublishedBodyTransformsMatchingPrefix(const string &prefix, uint64_t timeout) {
     std::vector< std::pair<std::string, Transform> > nameTransfPairs;
     _penv->GetPublishedBodyTransformsMatchingPrefix(prefix, nameTransfPairs, timeout);
 
