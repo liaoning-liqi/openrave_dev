@@ -40,7 +40,14 @@ if (PYBIND11_STUBGEN)
         COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/python/openravepy-stubs/_openravepy_
         COMMAND ${COPY_COMMAND} ${CMAKE_CURRENT_BINARY_DIR}/python/_openravepy_-stubs/. ${CMAKE_CURRENT_BINARY_DIR}/python/openravepy-stubs/_openravepy_/
         COMMAND ${CMAKE_COMMAND} -E echo "from ._openravepy_ import *" > ${CMAKE_CURRENT_BINARY_DIR}/python/openravepy-stubs/__init__.pyi
-        COMMAND ${CMAKE_COMMAND} -E echo "from ._openravepy_ import __author__, __copyright__, __docformat__, __license__, __version__" >> ${CMAKE_CURRENT_BINARY_DIR}/python/openravepy-stubs/__init__.pyi
+        COMMAND ${CMAKE_COMMAND} -E echo "from ._openravepy_ import __author__ as __author__" >> ${CMAKE_CURRENT_BINARY_DIR}/python/openravepy-stubs/__init__.pyi
+        COMMAND ${CMAKE_COMMAND} -E echo "from ._openravepy_ import __copyright__ as __copyright__" >> ${CMAKE_CURRENT_BINARY_DIR}/python/openravepy-stubs/__init__.pyi
+        COMMAND ${CMAKE_COMMAND} -E echo "from ._openravepy_ import __docformat__ as __docformat__" >> ${CMAKE_CURRENT_BINARY_DIR}/python/openravepy-stubs/__init__.pyi
+        COMMAND ${CMAKE_COMMAND} -E echo "from ._openravepy_ import __license__ as __license__" >> ${CMAKE_CURRENT_BINARY_DIR}/python/openravepy-stubs/__init__.pyi
+        COMMAND ${CMAKE_COMMAND} -E echo "from ._openravepy_ import __version__ as __version__" >> ${CMAKE_CURRENT_BINARY_DIR}/python/openravepy-stubs/__init__.pyi
+        COMMAND ${CMAKE_COMMAND} -E echo "from ._openravepy_.misc import *" > ${CMAKE_CURRENT_BINARY_DIR}/python/openravepy-stubs/misc.pyi
+        COMMAND ${CMAKE_COMMAND} -E echo "from ._openravepy_.openrave_ext import *" > ${CMAKE_CURRENT_BINARY_DIR}/python/openravepy-stubs/openravepy_ext.pyi
+        COMMAND ${CMAKE_COMMAND} -E echo "from ._openravepy_.openrave_int import *" > ${CMAKE_CURRENT_BINARY_DIR}/python/openravepy-stubs/openravepy_int.pyi
         COMMAND ${Python3_EXECUTABLE} -c [=[from mypy.stubgen import main\; main\(\)]=] -o ${CMAKE_CURRENT_BINARY_DIR}/python -m openravepy.misc
         COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/python/openravepy/misc.pyi ${CMAKE_CURRENT_BINARY_DIR}/python/openravepy-stubs/_openravepy_/misc/__init__.pyi
         COMMAND ${Python3_EXECUTABLE} -c [=[from mypy.stubgen import main\; main\(\)]=] -o ${CMAKE_CURRENT_BINARY_DIR}/python -m openravepy.openravepy_ext
