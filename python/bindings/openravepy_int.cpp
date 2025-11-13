@@ -1044,7 +1044,7 @@ object PyInterfaceBase::SendJSONCommand(const string& cmd, object input, bool re
     return toPyObject(out);
 }
 
-object PyReadablesContainer::GetReadableInterfaces()
+py::dict PyReadablesContainer::GetReadableInterfaces()
 {
     py::dict ointerfaces;
     boost::shared_lock< boost::shared_mutex > lock(_pbase->GetReadableInterfaceMutex());
@@ -2028,7 +2028,7 @@ object PyEnvironmentBase::WriteToMemory(const std::string &filetype, const Envir
     }
 }
 
-object PyEnvironmentBase::ReadRobotURI(const string &filename)
+py::typing::Optional<PyRobotBasePtr> PyEnvironmentBase::ReadRobotURI(const string &filename)
 {
     RobotBasePtr probot;
     {
@@ -2038,7 +2038,7 @@ object PyEnvironmentBase::ReadRobotURI(const string &filename)
     return py::to_object(openravepy::toPyRobot(probot,shared_from_this()));
 }
 
-object PyEnvironmentBase::ReadRobotURI(const string &filename, object odictatts)
+py::typing::Optional<PyRobotBasePtr> PyEnvironmentBase::ReadRobotURI(const string &filename, object odictatts)
 {
     AttributesList dictatts = toAttributesList(odictatts);
     RobotBasePtr probot;
@@ -2049,7 +2049,7 @@ object PyEnvironmentBase::ReadRobotURI(const string &filename, object odictatts)
     return py::to_object(openravepy::toPyRobot(probot,shared_from_this()));
 }
 
-object PyEnvironmentBase::ReadRobotData(const string &data, object odictatts, const std::string& uri)
+PyRobotBasePtr PyEnvironmentBase::ReadRobotData(const string &data, object odictatts, const std::string& uri)
 {
     AttributesList dictatts;
     if( !IS_PYTHONOBJECT_NONE(odictatts) ) {
@@ -2060,10 +2060,10 @@ object PyEnvironmentBase::ReadRobotData(const string &data, object odictatts, co
         openravepy::PythonThreadSaver threadsaver;
         probot = _penv->ReadRobotData(RobotBasePtr(), data, dictatts, uri);
     }
-    return py::to_object(openravepy::toPyRobot(probot,shared_from_this()));
+    return openravepy::toPyRobot(probot,shared_from_this());
 }
 
-object PyEnvironmentBase::ReadRobotJSON(py::object oEnvInfo, object odictatts, const string& uri)
+PyRobotBasePtr PyEnvironmentBase::ReadRobotJSON(py::object oEnvInfo, object odictatts, const string& uri)
 {
     AttributesList dictatts = toAttributesList(odictatts);
     rapidjson::Document rEnvInfo;
@@ -2073,51 +2073,51 @@ object PyEnvironmentBase::ReadRobotJSON(py::object oEnvInfo, object odictatts, c
         openravepy::PythonThreadSaver threadsaver;
         probot = _penv->ReadRobotJSON(RobotBasePtr(), rEnvInfo, dictatts, uri);
     }
-    return py::to_object(openravepy::toPyRobot(probot, shared_from_this()));
+    return openravepy::toPyRobot(probot, shared_from_this());
 }
 
-object PyEnvironmentBase::ReadKinBodyURI(const string &filename)
+py::typing::Optional<PyKinBodyPtr> PyEnvironmentBase::ReadKinBodyURI(const string &filename)
 {
     KinBodyPtr pbody;
     {
         openravepy::PythonThreadSaver threadsaver;
-        pbody = _penv->ReadKinBodyURI(filename);
+        pbody = _penv->ReadKinBodyURI(filename);  // can be nullptr
     }
     return py::to_object(openravepy::toPyKinBody(pbody, shared_from_this()));
 }
 
-object PyEnvironmentBase::ReadKinBodyURI(const string &filename, object odictatts)
+py::typing::Optional<PyKinBodyPtr> PyEnvironmentBase::ReadKinBodyURI(const string &filename, object odictatts)
 {
     AttributesList dictatts = toAttributesList(odictatts);
     KinBodyPtr pbody;
     {
         openravepy::PythonThreadSaver threadsaver;
-        pbody = _penv->ReadKinBodyURI(KinBodyPtr(), filename, dictatts);
+        pbody = _penv->ReadKinBodyURI(KinBodyPtr(), filename, dictatts);  // can be nullptr
     }
     return py::to_object(openravepy::toPyKinBody(pbody, shared_from_this()));
 }
-object PyEnvironmentBase::ReadKinBodyData(const string &data)
+PyKinBodyPtr PyEnvironmentBase::ReadKinBodyData(const string &data)
 {
     KinBodyPtr pbody;
     {
         openravepy::PythonThreadSaver threadsaver;
-        pbody = _penv->ReadKinBodyData(KinBodyPtr(), data, AttributesList());
+        pbody = _penv->ReadKinBodyData(KinBodyPtr(), data, AttributesList());  // can throw exception
     }
-    return py::to_object(openravepy::toPyKinBody(pbody,shared_from_this()));
+    return openravepy::toPyKinBody(pbody,shared_from_this());
 }
 
-object PyEnvironmentBase::ReadKinBodyData(const string &data, object odictatts)
+PyKinBodyPtr PyEnvironmentBase::ReadKinBodyData(const string &data, object odictatts)
 {
     AttributesList dictatts = toAttributesList(odictatts);
     KinBodyPtr pbody;
     {
         openravepy::PythonThreadSaver threadsaver;
-        pbody = _penv->ReadKinBodyData(KinBodyPtr(), data, dictatts);
+        pbody = _penv->ReadKinBodyData(KinBodyPtr(), data, dictatts);  // can throw exception
     }
-    return py::to_object(openravepy::toPyKinBody(pbody,shared_from_this()));
+    return openravepy::toPyKinBody(pbody,shared_from_this());
 }
 
-object PyEnvironmentBase::ReadKinBodyJSON(py::object oEnvInfo, object odictatts, const string& uri)
+PyKinBodyPtr PyEnvironmentBase::ReadKinBodyJSON(py::object oEnvInfo, object odictatts, const string& uri)
 {
     AttributesList dictatts = toAttributesList(odictatts);
     rapidjson::Document rEnvInfo;
@@ -2125,9 +2125,9 @@ object PyEnvironmentBase::ReadKinBodyJSON(py::object oEnvInfo, object odictatts,
     KinBodyPtr pbody;
     {
         openravepy::PythonThreadSaver threadsaver;
-        pbody = _penv->ReadKinBodyJSON(RobotBasePtr(), rEnvInfo, dictatts, uri);
+        pbody = _penv->ReadKinBodyJSON(RobotBasePtr(), rEnvInfo, dictatts, uri);  // can throw exception
     }
-    return py::to_object(openravepy::toPyKinBody(pbody, shared_from_this()));
+    return openravepy::toPyKinBody(pbody, shared_from_this());
 }
 
 PyInterfaceBasePtr PyEnvironmentBase::ReadInterfaceURI(const std::string& filename)
@@ -3797,12 +3797,12 @@ Because race conditions can pop up when trying to lock the openrave environment 
         bool (PyEnvironmentBase::*load2)(const std::string &, object) = &PyEnvironmentBase::Load;
         bool (PyEnvironmentBase::*loaddata1)(const std::string &) = &PyEnvironmentBase::LoadData;
         bool (PyEnvironmentBase::*loaddata2)(const std::string &, object) = &PyEnvironmentBase::LoadData;
-        object (PyEnvironmentBase::*readrobotxmlfile1)(const std::string &) = &PyEnvironmentBase::ReadRobotURI;
-        object (PyEnvironmentBase::*readrobotxmlfile2)(const std::string &,object) = &PyEnvironmentBase::ReadRobotURI;
-        object (PyEnvironmentBase::*readkinbodyxmlfile1)(const std::string &) = &PyEnvironmentBase::ReadKinBodyURI;
-        object (PyEnvironmentBase::*readkinbodyxmlfile2)(const std::string &,object) = &PyEnvironmentBase::ReadKinBodyURI;
-        object (PyEnvironmentBase::*readkinbodyxmldata1)(const std::string &) = &PyEnvironmentBase::ReadKinBodyData;
-        object (PyEnvironmentBase::*readkinbodyxmldata2)(const std::string &,object) = &PyEnvironmentBase::ReadKinBodyData;
+        py::typing::Optional<PyRobotBasePtr> (PyEnvironmentBase::*readrobotxmlfile1)(const std::string &) = &PyEnvironmentBase::ReadRobotURI;
+        py::typing::Optional<PyRobotBasePtr> (PyEnvironmentBase::*readrobotxmlfile2)(const std::string &,object) = &PyEnvironmentBase::ReadRobotURI;
+        py::typing::Optional<PyKinBodyPtr> (PyEnvironmentBase::*readkinbodyxmlfile1)(const std::string &) = &PyEnvironmentBase::ReadKinBodyURI;
+        py::typing::Optional<PyKinBodyPtr> (PyEnvironmentBase::*readkinbodyxmlfile2)(const std::string &,object) = &PyEnvironmentBase::ReadKinBodyURI;
+        PyKinBodyPtr (PyEnvironmentBase::*readkinbodyxmldata1)(const std::string &) = &PyEnvironmentBase::ReadKinBodyData;
+        PyKinBodyPtr (PyEnvironmentBase::*readkinbodyxmldata2)(const std::string &,object) = &PyEnvironmentBase::ReadKinBodyData;
         PyInterfaceBasePtr (PyEnvironmentBase::*readinterfacexmlfile1)(const std::string &) = &PyEnvironmentBase::ReadInterfaceURI;
         PyInterfaceBasePtr (PyEnvironmentBase::*readinterfacexmlfile2)(const std::string &,object) = &PyEnvironmentBase::ReadInterfaceURI;
         object (PyEnvironmentBase::*readtrimeshfile1)(const std::string&) = &PyEnvironmentBase::ReadTrimeshURI;

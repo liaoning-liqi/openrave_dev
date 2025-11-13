@@ -667,7 +667,7 @@ public:
     }
     virtual ~PyReadablesContainer() = default;
 
-    virtual py::object GetReadableInterfaces();
+    virtual py::dict GetReadableInterfaces();
     virtual py::object GetReadableInterface(const std::string& xmltag);
     virtual bool HasReadableInterface(const std::string& xmltag);
 

@@ -198,15 +198,15 @@ public:
 
     /// will be unlocking GIL since doing FS or memory-intensive operations
     //@{
-    object ReadRobotURI(const std::string &filename);
-    object ReadRobotURI(const std::string &filename, object odictatts);
-    object ReadRobotData(const std::string &data, object odictatts=py::none_(), const std::string&uri=std::string());
-    object ReadRobotJSON(py::object oEnvInfo, object odictatts=py::none_(), const std::string &uri = std::string());
-    object ReadKinBodyURI(const std::string &filename);
-    object ReadKinBodyURI(const std::string &filename, object odictatts);
-    object ReadKinBodyData(const std::string &data);
-    object ReadKinBodyData(const std::string &data, object odictatts);
-    object ReadKinBodyJSON(py::object oEnvInfo, object odictatts=py::none_(), const std::string &uri = std::string());
+    py::typing::Optional<PyRobotBasePtr> ReadRobotURI(const std::string &filename);
+    py::typing::Optional<PyRobotBasePtr> ReadRobotURI(const std::string &filename, object odictatts);
+    PyRobotBasePtr ReadRobotData(const std::string &data, object odictatts=py::none_(), const std::string&uri=std::string());
+    PyRobotBasePtr ReadRobotJSON(py::object oEnvInfo, object odictatts=py::none_(), const std::string &uri = std::string());
+    py::typing::Optional<PyKinBodyPtr> ReadKinBodyURI(const std::string &filename);
+    py::typing::Optional<PyKinBodyPtr> ReadKinBodyURI(const std::string &filename, object odictatts);
+    PyKinBodyPtr ReadKinBodyData(const std::string &data);
+    PyKinBodyPtr ReadKinBodyData(const std::string &data, object odictatts);
+    PyKinBodyPtr ReadKinBodyJSON(py::object oEnvInfo, object odictatts=py::none_(), const std::string &uri = std::string());
     PyInterfaceBasePtr ReadInterfaceURI(const std::string& filename);
     PyInterfaceBasePtr ReadInterfaceURI(const std::string& filename, object odictatts);
     //@}
