@@ -1587,8 +1587,8 @@ py::array_t<dReal> PyGeometry::GetNegativeCropContainerEmptyMargins() const {
 py::array_t<dReal> PyGeometry::GetPositiveCropContainerEmptyMargins() const {
     return toPyVector3(_pgeometry->GetPositiveCropContainerEmptyMargins());
 }
-object PyGeometry::GetInfo() {
-    return py::to_object(PyGeometryInfoPtr(new PyGeometryInfo(_pgeometry->GetInfo())));
+PyGeometryInfoPtr PyGeometry::GetInfo() {
+    return PyGeometryInfoPtr(new PyGeometryInfo(_pgeometry->GetInfo()));
 }
 py::tuple PyGeometry::GetCalibrationBoardNumDots() const {
     return py::make_tuple(_pgeometry->GetCalibrationBoardNumDotsX(), _pgeometry->GetCalibrationBoardNumDotsY());
@@ -1979,11 +1979,11 @@ void PyLink::SetStringParameters(const std::string& key, object ovalue)
 void PyLink::UpdateInfo() {
     _plink->UpdateInfo();
 }
-object PyLink::GetInfo() {
-    return py::to_object(PyLinkInfoPtr(new PyLinkInfo(_plink->GetInfo())));
+PyLinkInfoPtr PyLink::GetInfo() {
+    return PyLinkInfoPtr(new PyLinkInfo(_plink->GetInfo()));
 }
-object PyLink::UpdateAndGetInfo() {
-    return py::to_object(PyLinkInfoPtr(new PyLinkInfo(_plink->UpdateAndGetInfo())));
+PyLinkInfoPtr PyLink::UpdateAndGetInfo() {
+    return PyLinkInfoPtr(new PyLinkInfo(_plink->UpdateAndGetInfo()));
 }
 
 std::string PyLink::__repr__() {
@@ -2340,11 +2340,11 @@ JointControlMode PyJoint::GetControlMode() const {
 void PyJoint::UpdateInfo() {
     _pjoint->UpdateInfo();
 }
-object PyJoint::GetInfo() {
-    return py::to_object(PyJointInfoPtr(new PyJointInfo(_pjoint->GetInfo())));
+PyJointInfoPtr PyJoint::GetInfo() {
+    return PyJointInfoPtr(new PyJointInfo(_pjoint->GetInfo()));
 }
-object PyJoint::UpdateAndGetInfo() {
-    return py::to_object(PyJointInfoPtr(new PyJointInfo(_pjoint->UpdateAndGetInfo())));
+PyJointInfoPtr PyJoint::UpdateAndGetInfo() {
+    return PyJointInfoPtr(new PyJointInfo(_pjoint->UpdateAndGetInfo()));
 }
 
 std::string PyJoint::__repr__() {

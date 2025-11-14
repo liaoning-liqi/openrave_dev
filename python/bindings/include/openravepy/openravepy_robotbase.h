@@ -171,7 +171,7 @@ public:
 
         py::array_t<dReal> CalculateAngularVelocityJacobian();
 
-        object GetInfo();
+        PyManipulatorInfoPtr GetInfo();
         std::string GetStructureHash() const;
         std::string GetKinematicsStructureHash() const;
         std::string GetInverseKinematicsStructureHash(IkParameterizationType iktype) const;
@@ -211,9 +211,9 @@ public:
 
         void UpdateInfo(SensorBase::SensorType type=SensorBase::ST_Invalid);
 
-        object UpdateAndGetInfo(SensorBase::SensorType type=SensorBase::ST_Invalid);
+        PyAttachedSensorInfoPtr UpdateAndGetInfo(SensorBase::SensorType type=SensorBase::ST_Invalid);
 
-        object GetInfo();
+        PyAttachedSensorInfoPtr GetInfo();
 
         std::string __repr__();
         std::string __str__();
@@ -238,7 +238,7 @@ public:
         std::string GetId() const;
         py::str GetName() const;
 
-        object GetInfo();
+        PyConnectedBodyInfoPtr GetInfo();
 
         bool SetActive(int active);
 

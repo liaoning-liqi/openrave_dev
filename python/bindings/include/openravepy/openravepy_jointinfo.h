@@ -331,7 +331,7 @@ public:
     py::str GetCalibrationBoardPatternName() const;
     py::tuple GetCalibrationBoardDotDiameterDistanceRatios() const;
     int GetNumberOfAxialSlices() const;
-    object GetInfo();
+    PyGeometryInfoPtr GetInfo();
     py::tuple ComputeInnerEmptyVolume() const;
     bool __eq__(OPENRAVE_SHARED_PTR<PyGeometry> p);
     bool __ne__(OPENRAVE_SHARED_PTR<PyGeometry> p);
@@ -436,8 +436,8 @@ public:
     void SetStringParameters(const std::string& key, object ovalue);
 
     void UpdateInfo();
-    object GetInfo();
-    object UpdateAndGetInfo();
+    PyLinkInfoPtr GetInfo();
+    PyLinkInfoPtr UpdateAndGetInfo();
 
     std::string __repr__();
     std::string __str__();
@@ -551,8 +551,8 @@ public:
 
     JointControlMode GetControlMode() const;
     void UpdateInfo();
-    object GetInfo();
-    object UpdateAndGetInfo();
+    PyJointInfoPtr GetInfo();
+    PyJointInfoPtr UpdateAndGetInfo();
 
     std::string __repr__();
     std::string __str__();

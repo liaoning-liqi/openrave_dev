@@ -1330,8 +1330,8 @@ py::array_t<dReal> PyRobotBase::PyManipulator::CalculateAngularVelocityJacobian(
     return toPyArray(vjacobian,dims);
 }
 
-object PyRobotBase::PyManipulator::GetInfo() {
-    return py::to_object(PyManipulatorInfoPtr(new PyManipulatorInfo(_pmanip->GetInfo())));
+PyManipulatorInfoPtr PyRobotBase::PyManipulator::GetInfo() {
+    return PyManipulatorInfoPtr(new PyManipulatorInfo(_pmanip->GetInfo()));
 }
 
 std::string PyRobotBase::PyManipulator::GetStructureHash() const {
@@ -1417,12 +1417,12 @@ void PyRobotBase::PyAttachedSensor::UpdateInfo(SensorBase::SensorType type) {
     _pattached->UpdateInfo(type);
 }
 
-object PyRobotBase::PyAttachedSensor::UpdateAndGetInfo(SensorBase::SensorType type) {
-    return py::to_object(PyAttachedSensorInfoPtr(new PyAttachedSensorInfo(_pattached->UpdateAndGetInfo(type))));
+PyAttachedSensorInfoPtr PyRobotBase::PyAttachedSensor::UpdateAndGetInfo(SensorBase::SensorType type) {
+    return PyAttachedSensorInfoPtr(new PyAttachedSensorInfo(_pattached->UpdateAndGetInfo(type)));
 }
 
-object PyRobotBase::PyAttachedSensor::GetInfo() {
-    return py::to_object(PyAttachedSensorInfoPtr(new PyAttachedSensorInfo(_pattached->GetInfo())));
+PyAttachedSensorInfoPtr PyRobotBase::PyAttachedSensor::GetInfo() {
+    return PyAttachedSensorInfoPtr(new PyAttachedSensorInfo(_pattached->GetInfo()));
 }
 
 std::string PyRobotBase::PyAttachedSensor::__repr__() {
@@ -1469,8 +1469,8 @@ py::str PyRobotBase::PyConnectedBody::GetName() const {
     return ConvertStringToUnicode(_pconnected->GetName());
 }
 
-object PyRobotBase::PyConnectedBody::GetInfo() {
-    return py::to_object(PyConnectedBodyInfoPtr(new PyConnectedBodyInfo(_pconnected->GetInfo())));
+PyConnectedBodyInfoPtr PyRobotBase::PyConnectedBody::GetInfo() {
+    return PyConnectedBodyInfoPtr(new PyConnectedBodyInfo(_pconnected->GetInfo()));
 }
 
 bool PyRobotBase::PyConnectedBody::SetActive(int active) {
