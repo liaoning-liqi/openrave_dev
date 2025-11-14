@@ -1153,11 +1153,11 @@ EnvironmentBase::EnvironmentBaseInfoPtr PyEnvironmentBase::PyEnvironmentBaseInfo
     return pInfo;
 }
 
-py::object PyEnvironmentBase::PyEnvironmentBaseInfo::SerializeJSON(dReal fUnitScale, py::object options) {
+py::dict PyEnvironmentBase::PyEnvironmentBaseInfo::SerializeJSON(dReal fUnitScale, py::object options) {
     rapidjson::Document doc;
     EnvironmentBase::EnvironmentBaseInfoPtr pInfo = GetEnvironmentBaseInfo();
     pInfo->SerializeJSON(doc, doc.GetAllocator(), fUnitScale, pyGetIntFromPy(options, 0));
-    return toPyObject(doc);
+    return py::dict(toPyObject(doc));
 }
 
 void PyEnvironmentBase::PyEnvironmentBaseInfo::DeserializeJSON(py::object obj, dReal fUnitScale, py::object options)

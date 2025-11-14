@@ -106,7 +106,7 @@ public:
 
     void MultiplyTransformRight(object otrans);
 
-    py::object SerializeJSON(dReal fUnitScale=1.0);
+    py::dict SerializeJSON(dReal fUnitScale=1.0);
     void DeserializeJSON(py::object obj, dReal fUnitScale=1.0);
 
     std::string __repr__();

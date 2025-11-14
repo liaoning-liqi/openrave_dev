@@ -36,7 +36,7 @@ public:
         PyRobotBaseInfo(const RobotBase::RobotBaseInfo& info);
         RobotBase::RobotBaseInfoPtr GetRobotBaseInfo() const;
 
-        py::object SerializeJSON(dReal fUnitScale=1.0, py::object options=py::none_());
+        py::dict SerializeJSON(dReal fUnitScale=1.0, py::object options=py::none_());
         void DeserializeJSON(py::object obj, dReal fUnitScale=1.0, py::object options=py::none_());
 
         py::object _vManipulatorInfos = py::none_();

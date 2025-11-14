@@ -34,7 +34,7 @@ public:
     virtual ~PyConfigurationSpecification();
 
     void DeserializeJSON(py::object obj);
-    py::object SerializeJSON();
+    py::dict SerializeJSON();
 
     int GetDOF() const;
 

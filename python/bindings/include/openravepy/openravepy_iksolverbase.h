@@ -35,7 +35,7 @@ public:
     object GetMapData(uint64_t key);
     object GetMapDataDict();
 
-    py::object SerializeJSON();
+    py::dict SerializeJSON();
 
     IkFailureInfo _ikFailureInfo;
 };

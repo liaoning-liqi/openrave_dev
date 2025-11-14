@@ -373,7 +373,7 @@ void PyGeometryInfo::ConvertUnitScale(dReal fUnitScale) {
     Init(geominfo); // init all the python structs again
 }
 
-object PyGeometryInfo::SerializeJSON(dReal fUnitScale, object options)
+py::dict PyGeometryInfo::SerializeJSON(dReal fUnitScale, object options)
 {
     rapidjson::Document doc;
     KinBody::GeometryInfoPtr pgeominfo = GetGeometryInfo();
@@ -382,7 +382,7 @@ object PyGeometryInfo::SerializeJSON(dReal fUnitScale, object options)
         openravepy::PythonThreadSaver threadsaver;
         pgeominfo->SerializeJSON(doc, doc.GetAllocator(), fUnitScale, intOptions);
     }
-    return toPyObject(doc);
+    return py::dict(toPyObject(doc));
 }
 
 void PyGeometryInfo::DeserializeJSON(object obj, dReal fUnitScale, object options)
@@ -639,7 +639,7 @@ void PyLinkInfo::_Update(const KinBody::LinkInfo& info) {
     _readableInterfaces = ReturnReadableInterfaces(info._mReadableInterfaces);
 }
 
-py::object PyLinkInfo::SerializeJSON(dReal fUnitScale, object options)
+py::dict PyLinkInfo::SerializeJSON(dReal fUnitScale, object options)
 {
     rapidjson::Document doc;
     KinBody::LinkInfoPtr pInfo = GetLinkInfo();
@@ -648,7 +648,7 @@ py::object PyLinkInfo::SerializeJSON(dReal fUnitScale, object options)
         openravepy::PythonThreadSaver threadsaver;
         pInfo->SerializeJSON(doc, doc.GetAllocator(), fUnitScale, intOptions);
     }
-    return toPyObject(doc);
+    return py::dict(toPyObject(doc));
 }
 
 void PyLinkInfo::DeserializeJSON(object obj, dReal fUnitScale, py::object options)
@@ -798,12 +798,12 @@ void PyElectricMotorActuatorInfo::_Update(const ElectricMotorActuatorInfo& info)
     coloumb_friction = info.coloumb_friction;
     viscous_friction = info.viscous_friction;
 }
-py::object PyElectricMotorActuatorInfo::SerializeJSON(dReal fUnitScale, py::object options)
+py::dict PyElectricMotorActuatorInfo::SerializeJSON(dReal fUnitScale, py::object options)
 {
     rapidjson::Document doc;
     ElectricMotorActuatorInfoPtr pInfo = GetElectricMotorActuatorInfo();
     pInfo->SerializeJSON(doc, doc.GetAllocator(), fUnitScale, pyGetIntFromPy(options, 0));
-    return toPyObject(doc);
+    return py::dict(toPyObject(doc));
 }
 void PyElectricMotorActuatorInfo::DeserializeJSON(py::object obj, dReal fUnitScale, py::object options)
 {
@@ -1404,12 +1404,12 @@ KinBody::JointInfoPtr PyJointInfo::GetJointInfo() {
     return pinfo;
 }
 
-object PyJointInfo::SerializeJSON(dReal fUnitScale, object options)
+py::dict PyJointInfo::SerializeJSON(dReal fUnitScale, object options)
 {
     rapidjson::Document doc;
     KinBody::JointInfoPtr pInfo = GetJointInfo();
     pInfo->SerializeJSON(doc, doc.GetAllocator(), fUnitScale, pyGetIntFromPy(options, 0));
-    return toPyObject(doc);
+    return py::dict(toPyObject(doc));
 }
 
 void PyJointInfo::DeserializeJSON(object obj, dReal fUnitScale, py::object options)
@@ -2541,12 +2541,12 @@ RobotBase::GrabbedInfoPtr PyKinBody::PyGrabbedInfo::GetGrabbedInfo() const
     return pinfo;
 }
 
-py::object PyKinBody::PyGrabbedInfo::SerializeJSON(dReal fUnitScale, py::object ooptions)
+py::dict PyKinBody::PyGrabbedInfo::SerializeJSON(dReal fUnitScale, py::object ooptions)
 {
     rapidjson::Document doc;
     KinBody::GrabbedInfoPtr pInfo = GetGrabbedInfo();
     pInfo->SerializeJSON(doc, doc.GetAllocator(), fUnitScale, pyGetIntFromPy(ooptions,0));
-    return toPyObject(doc);
+    return py::dict(toPyObject(doc));
 }
 
 void PyKinBody::PyGrabbedInfo::DeserializeJSON(py::object obj, dReal fUnitScale, py::object options)
@@ -2669,11 +2669,11 @@ KinBody::KinBodyInfoPtr PyKinBody::PyKinBodyInfo::GetKinBodyInfo() const {
     return pInfo;
 }
 
-py::object PyKinBody::PyKinBodyInfo::SerializeJSON(dReal fUnitScale, py::object options) {
+py::dict PyKinBody::PyKinBodyInfo::SerializeJSON(dReal fUnitScale, py::object options) {
     rapidjson::Document doc;
     KinBody::KinBodyInfoPtr pInfo = GetKinBodyInfo();
     pInfo->SerializeJSON(doc, doc.GetAllocator(), fUnitScale, pyGetIntFromPy(options, 0));
-    return toPyObject(doc);
+    return py::dict(toPyObject(doc));
 }
 
 void PyKinBody::PyKinBodyInfo::DeserializeJSON(py::object obj, dReal fUnitScale, py::object options)

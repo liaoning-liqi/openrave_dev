@@ -95,10 +95,10 @@ object PyIkFailureInfo::GetMapDataDict() {
     }
     return odata;
 }
-object PyIkFailureInfo::SerializeJSON() {
+py::dict PyIkFailureInfo::SerializeJSON() {
     rapidjson::Document rIkFailureInfo(rapidjson::kObjectType);
     _ikFailureInfo.SaveToJson(rIkFailureInfo, rIkFailureInfo.GetAllocator());
-    return toPyObject(rIkFailureInfo);
+    return py::dict(toPyObject(rIkFailureInfo));
 }
 
 PyIkFailureAccumulatorBase::PyIkFailureAccumulatorBase(IkFailureAccumulatorBasePtr pIkFailureAccumulator) {

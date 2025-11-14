@@ -156,12 +156,12 @@ RobotBase::ManipulatorInfoPtr PyManipulatorInfo::GetManipulatorInfo() const
     return pinfo;
 }
 
-object PyManipulatorInfo::SerializeJSON(dReal fUnitScale, object options)
+py::dict PyManipulatorInfo::SerializeJSON(dReal fUnitScale, object options)
 {
     rapidjson::Document doc;
     RobotBase::ManipulatorInfoPtr pInfo = GetManipulatorInfo();
     pInfo->SerializeJSON(doc, doc.GetAllocator(), fUnitScale, pyGetIntFromPy(options, 0));
-    return toPyObject(doc);
+    return py::dict(toPyObject(doc));
 }
 
 void PyManipulatorInfo::DeserializeJSON(object obj, dReal fUnitScale, object options)
@@ -235,12 +235,12 @@ RobotBase::AttachedSensorInfoPtr PyAttachedSensorInfo::GetAttachedSensorInfo() c
     return pinfo;
 }
 
-object PyAttachedSensorInfo::SerializeJSON(dReal fUnitScale, object options)
+py::dict PyAttachedSensorInfo::SerializeJSON(dReal fUnitScale, object options)
 {
     rapidjson::Document doc;
     RobotBase::AttachedSensorInfoPtr pInfo = GetAttachedSensorInfo();
     pInfo->SerializeJSON(doc, doc.GetAllocator(), fUnitScale, pyGetIntFromPy(options, 0));
-    return toPyObject(doc);
+    return py::dict(toPyObject(doc));
 }
 
 void PyAttachedSensorInfo::DeserializeJSON(object obj, dReal fUnitScale, object options)
@@ -377,12 +377,12 @@ RobotBase::ConnectedBodyInfoPtr PyConnectedBodyInfo::GetConnectedBodyInfo() cons
     return pinfo;
 }
 
-object PyConnectedBodyInfo::SerializeJSON(dReal fUnitScale, object options)
+py::dict PyConnectedBodyInfo::SerializeJSON(dReal fUnitScale, object options)
 {
     rapidjson::Document doc;
     RobotBase::ConnectedBodyInfoPtr pInfo = GetConnectedBodyInfo();
     pInfo->SerializeJSON(doc, doc.GetAllocator(), fUnitScale, pyGetIntFromPy(options, 0));
-    return toPyObject(doc);
+    return py::dict(toPyObject(doc));
 }
 
 void PyConnectedBodyInfo::DeserializeJSON(object obj, dReal fUnitScale, object options)
@@ -411,11 +411,11 @@ PyRobotBase::PyRobotBaseInfo::PyRobotBaseInfo(const RobotBase::RobotBaseInfo& in
     _Update(info);
 }
 
-py::object PyRobotBase::PyRobotBaseInfo::SerializeJSON(dReal fUnitScale, py::object options) {
+py::dict PyRobotBase::PyRobotBaseInfo::SerializeJSON(dReal fUnitScale, py::object options) {
     rapidjson::Document doc;
     RobotBase::RobotBaseInfoPtr pInfo = GetRobotBaseInfo();
     pInfo->SerializeJSON(doc, doc.GetAllocator(), fUnitScale, pyGetIntFromPy(options, 0));
-    return toPyObject(doc);
+    return py::dict(toPyObject(doc));
 }
 
 void PyRobotBase::PyRobotBaseInfo::DeserializeJSON(py::object obj, dReal fUnitScale, object options)

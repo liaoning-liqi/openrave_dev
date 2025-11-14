@@ -47,7 +47,7 @@ public:
     virtual SensorBase::SensorType GetType();
     virtual SensorBase::SensorGeometryPtr GetGeometry();
 
-    virtual object SerializeJSON(dReal fUnitScale=1.0, py::object options=py::none_());
+    virtual py::dict SerializeJSON(dReal fUnitScale=1.0, py::object options=py::none_());
     virtual void DeserializeJSON(py::object obj, dReal fUnitScale=1.0);
 
     std::string hardware_id;
@@ -102,7 +102,7 @@ public:
     virtual SensorBase::SensorType GetType();
     virtual SensorBase::SensorGeometryPtr GetGeometry();
 
-    virtual object SerializeJSON(dReal fUnitScale=1.0, py::object options=py::none_());
+    virtual py::dict SerializeJSON(dReal fUnitScale=1.0, py::object options=py::none_());
     virtual void DeserializeJSON(py::object obj, dReal fUnitScale=1.0);
 
     std::string hardware_id;

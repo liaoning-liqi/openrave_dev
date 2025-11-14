@@ -96,7 +96,7 @@ public:
 
         RobotBase::GrabbedInfoPtr GetGrabbedInfo() const;
 
-        py::object SerializeJSON(dReal fUnitScale=1.0, py::object ooptions=py::none_());
+        py::dict SerializeJSON(dReal fUnitScale=1.0, py::object ooptions=py::none_());
 
         void DeserializeJSON(py::object obj, dReal fUnitScale=1.0, py::object options=py::none_());
 
@@ -137,7 +137,7 @@ public:
 public:
         PyKinBodyInfo();
         PyKinBodyInfo(const KinBody::KinBodyInfo& info);
-        py::object SerializeJSON(dReal fUnitScale=1.0, py::object options=py::none_());
+        py::dict SerializeJSON(dReal fUnitScale=1.0, py::object options=py::none_());
         void DeserializeJSON(py::object obj, dReal fUnitScale=1.0, py::object options=py::none_());
         KinBody::KinBodyInfoPtr GetKinBodyInfo() const;
         py::object _vLinkInfos = py::none_();

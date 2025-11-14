@@ -109,11 +109,11 @@ SensorBase::SensorType PyCameraGeomData::GetType() {
     return SensorBase::ST_Camera;
 }
 
-object PyCameraGeomData::SerializeJSON(dReal fUnitScale, object options) {
+py::dict PyCameraGeomData::SerializeJSON(dReal fUnitScale, object options) {
     rapidjson::Document doc;
     SensorBase::SensorGeometryPtr pgeom = GetGeometry();
     pgeom->SerializeJSON(doc, doc.GetAllocator(), fUnitScale, pyGetIntFromPy(options, 0));
-    return toPyObject(doc);
+    return py::dict(toPyObject(doc));
 }
 
 void PyCameraGeomData::DeserializeJSON(object obj, dReal fUnitScale) {
@@ -218,11 +218,11 @@ PyForce6DGeomData::~PyForce6DGeomData() {
 SensorBase::SensorType PyForce6DGeomData::GetType() {
     return SensorBase::ST_Force6D;
 }
-object PyForce6DGeomData::SerializeJSON(dReal fUnitScale, object options) {
+py::dict PyForce6DGeomData::SerializeJSON(dReal fUnitScale, object options) {
     rapidjson::Document doc;
     SensorBase::SensorGeometryPtr pgeom = GetGeometry();
     pgeom->SerializeJSON(doc, doc.GetAllocator(), fUnitScale, pyGetIntFromPy(options, 0));
-    return toPyObject(doc);
+    return py::dict(toPyObject(doc));
 }
 
 void PyForce6DGeomData::DeserializeJSON(object obj, dReal fUnitScale) {

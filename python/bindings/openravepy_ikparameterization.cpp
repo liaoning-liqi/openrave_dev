@@ -326,11 +326,11 @@ void PyIkParameterization::MultiplyTransformRight(object otrans)
     _param.MultiplyTransformRight(ExtractTransform(otrans));
 }
 
-py::object PyIkParameterization::SerializeJSON(dReal fUnitScale)
+py::dict PyIkParameterization::SerializeJSON(dReal fUnitScale)
 {
     rapidjson::Document doc;
     _param.SerializeJSON(doc, doc.GetAllocator(), fUnitScale);
-    return toPyObject(doc);
+    return py::dict(toPyObject(doc));
 }
 void PyIkParameterization::DeserializeJSON(py::object obj, dReal fUnitScale)
 {

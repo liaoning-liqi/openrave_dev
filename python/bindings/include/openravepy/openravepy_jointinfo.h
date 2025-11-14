@@ -58,7 +58,7 @@ public:
     PyAABBPtr ComputeAABB(object otransform);
     void ConvertUnitScale(dReal fUnitScale);
 
-    object SerializeJSON(dReal fUnitScale=1.0, object options=py::none_());
+    py::dict SerializeJSON(dReal fUnitScale=1.0, object options=py::none_());
     void DeserializeJSON(object obj, dReal fUnitScale=1.0, object options=py::none_());
     KinBody::GeometryInfoPtr GetGeometryInfo();
     void FillGeometryInfo(KinBody::GeometryInfo& geominfo);
@@ -124,7 +124,7 @@ public:
     PyLinkInfo(const KinBody::LinkInfo& info);
     KinBody::LinkInfoPtr GetLinkInfo();
 
-    object SerializeJSON(dReal fUnitScale=1.0, object options=py::none_());
+    py::dict SerializeJSON(dReal fUnitScale=1.0, object options=py::none_());
     void DeserializeJSON(object obj, dReal fUnitScale=1.0, object options=py::none_());
 
     py::list _vgeometryinfos;
@@ -155,7 +155,7 @@ public:
     PyElectricMotorActuatorInfo();
     PyElectricMotorActuatorInfo(const ElectricMotorActuatorInfo& info);
     ElectricMotorActuatorInfoPtr GetElectricMotorActuatorInfo();
-    object SerializeJSON(dReal fUnitScale=1.0, object options=py::none_());
+    py::dict SerializeJSON(dReal fUnitScale=1.0, object options=py::none_());
     void DeserializeJSON(object obj, dReal fUnitScale=1.0, object options=py::none_());
 
     std::string model_type;
@@ -229,7 +229,7 @@ public:
     PyJointInfo(const KinBody::JointInfo& info);
     KinBody::JointInfoPtr GetJointInfo();
     int GetDOF();
-    object SerializeJSON(dReal fUnitScale=1.0, object options=py::none_());
+    py::dict SerializeJSON(dReal fUnitScale=1.0, object options=py::none_());
     void DeserializeJSON(object obj, dReal fUnitScale=1.0, object options=py::none_());
 
     KinBody::JointType _type = KinBody::JointNone;

@@ -595,10 +595,10 @@ void PyConfigurationSpecification::DeserializeJSON(object obj) {
     _Update(spec);
 }
 
-object PyConfigurationSpecification::SerializeJSON() {
+py::dict PyConfigurationSpecification::SerializeJSON() {
     rapidjson::Document doc;
     _spec.SerializeJSON(doc);
-    return toPyObject(doc);
+    return py::dict(toPyObject(doc));
 }
 
 const ConfigurationSpecification::Group& PyConfigurationSpecification::GetGroupFromName(const std::string& name) {
