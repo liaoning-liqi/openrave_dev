@@ -310,9 +310,9 @@ public:
 
     bool Init(object olinkinfos, object ojointinfos, object omanipinfos, object oattachedsensorinfos, const std::string& uri=std::string());
 
-    object GetManipulators();
+    py::list GetManipulators();
 
-    object GetManipulators(const std::string& manipname);
+    py::list GetManipulators(const std::string& manipname);
     PyManipulatorPtr GetManipulator(const std::string& manipname);
     PyManipulatorPtr SetActiveManipulator(const std::string& manipname);
     PyManipulatorPtr SetActiveManipulator(PyManipulatorPtr pmanip);

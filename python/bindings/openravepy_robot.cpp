@@ -1681,7 +1681,7 @@ bool PyRobotBase::Init(object olinkinfos, object ojointinfos, object omanipinfos
     return _probot->Init(vlinkinfos, vjointinfos, vmanipinfos, vattachedsensorinfos, uri);
 }
 
-object PyRobotBase::GetManipulators()
+py::list PyRobotBase::GetManipulators()
 {
     py::list manips;
     FOREACH(it, _probot->GetManipulators()) {
@@ -1690,7 +1690,7 @@ object PyRobotBase::GetManipulators()
     return manips;
 }
 
-object PyRobotBase::GetManipulators(const string& manipname)
+py::list PyRobotBase::GetManipulators(const string& manipname)
 {
     py::list manips;
     FOREACH(it, _probot->GetManipulators()) {
