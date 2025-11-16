@@ -2672,8 +2672,8 @@ void RobotBaseInitializer::init_openravepy_robot()
         PyRobotBase::PyManipulatorPtr (PyRobotBase::*setactivemanipulator2)(const std::string&) = &PyRobotBase::SetActiveManipulator;
         PyRobotBase::PyManipulatorPtr (PyRobotBase::*setactivemanipulator3)(PyRobotBase::PyManipulatorPtr) = &PyRobotBase::SetActiveManipulator;
 
-        object (PyRobotBase::*GetManipulators1)() = &PyRobotBase::GetManipulators;
-        object (PyRobotBase::*GetManipulators2)(const string &) = &PyRobotBase::GetManipulators;
+        py::list (PyRobotBase::*GetManipulators1)() = &PyRobotBase::GetManipulators;
+        py::list (PyRobotBase::*GetManipulators2)(const string &) = &PyRobotBase::GetManipulators;
         bool (PyRobotBase::*setcontroller1)(PyControllerBasePtr,const string &) = &PyRobotBase::SetController;
         bool (PyRobotBase::*setcontroller2)(PyControllerBasePtr,object,int) = &PyRobotBase::SetController;
         bool (PyRobotBase::*setcontroller3)(PyControllerBasePtr) = &PyRobotBase::SetController;
