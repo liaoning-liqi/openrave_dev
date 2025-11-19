@@ -3,6 +3,11 @@
 ChangeLog
 #########
 
+Version 0.168.4
+===============
+
+- Add support for serialization and deserialization of std::vector<bool> for openravejson.
+
 Version 0.168.3
 ===============
 
