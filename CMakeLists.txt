@@ -389,7 +389,7 @@ endif()
 #  # MSVC has prepackaged assimp libraries
 #  set(ASSIMP_PATH ${CMAKE_CURRENT_SOURCE_DIR}/msvc_assimp)
 #endif()
-find_package(ASSIMP)
+find_package(ASSIMP 5.0)
 if( NOT ASSIMP_FOUND )
   pkg_check_modules(ASSIMP assimp)
 endif()
