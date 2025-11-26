@@ -3,6 +3,22 @@
 ChangeLog
 #########
 
+Version 0.168.4
+===============
+
+- Add support for serialization and deserialization of std::vector<bool> for openravejson.
+
+Version 0.168.3
+===============
+
+- Expose `KinBody::GetDependencyOrderedJointsAll()` to python bindings.
+
+Version 0.168.2
+===============
+
+- Fix bug with not preservering `grippername` when regrabbing.
+- Fix bug with copying `grabbedUserData` in `GrabbedInfo` in python.
+
 Version 0.168.1
 ===============
 
