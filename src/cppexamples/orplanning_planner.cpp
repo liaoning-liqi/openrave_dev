@@ -90,14 +90,14 @@ namespace cppexamples
 
                     RAVELOG_INFO("starting to plan\n");
                     probot->GetActiveDOFValues(params->vinitialconfig);
-                    if (!planner->InitPlan(probot, params))
+                    if (!planner->InitPlan(probot, params).HasSolution())
                     {
                         continue;
                     }
 
                     // create a new output trajectory
                     TrajectoryBasePtr ptraj = RaveCreateTrajectory(penv, "");
-                    if (!planner->PlanPath(ptraj))
+                    if (planner->PlanPath(ptraj).HasSolution())
                     {
                         RAVELOG_WARN("plan failed, trying again\n");
                         continue;

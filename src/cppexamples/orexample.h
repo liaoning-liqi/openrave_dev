@@ -11,6 +11,8 @@
 
 #include <signal.h>
 
+using namespace OpenRAVE;
+
 namespace cppexamples
 {
 
@@ -62,7 +64,7 @@ namespace cppexamples
             }
             if (!!_viewer)
             {
-                penv->Add(_viewer);
+                penv->Add(_viewer, OpenRAVE::IAM_StrictNameChecking, "");
 
                 // create the main openrave thread
                 _bDestroyThread = false;
