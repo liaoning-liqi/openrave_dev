@@ -97,7 +97,7 @@ namespace cppexamples
 
                     // create a new output trajectory
                     TrajectoryBasePtr ptraj = RaveCreateTrajectory(penv, "");
-                    if (planner->PlanPath(ptraj).HasSolution())
+                    if (!planner->PlanPath(ptraj).HasSolution())
                     {
                         RAVELOG_WARN("plan failed, trying again\n");
                         continue;
